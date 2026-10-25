@@ -1,4 +1,4 @@
-# KPDF
+# PewDF (comming soon...)
 
 > [!IMPORTANT]
 > **Original Project:** [KillerPDF](https://github.com/SteveTheKiller/KillerPDF)  
@@ -8,11 +8,15 @@
 
 ---
 
-## About KPDF
+<img width="1723" height="1122" alt="grafik" src="https://github.com/user-attachments/assets/f3a44194-0a81-48b5-8165-9654027a020f" />
 
-**KPDF** is a new, independently developed PDF application for Windows, based on the open-source codebase of [KillerPDF](https://github.com/SteveTheKiller/KillerPDF).
 
-The original source code serves as a foundation for further development. KPDF will follow its own development direction, with a focus on the following goals:
+
+## About PewDF
+
+**PewDF** is a new, independently developed PDF application for Windows, based on the open-source codebase of [KillerPDF](https://github.com/SteveTheKiller/KillerPDF).
+
+The original source code serves as a foundation for further development. PewDF will follow its own development direction, with a focus on the following goals:
 
 > [!NOTE]
 > **Development Goals**
@@ -21,16 +25,16 @@ The original source code serves as a foundation for further development. KPDF wi
 > - **Intuitive User Experience:** Significantly improved usability through streamlined workflows, intuitive navigation, and a clean, uncluttered interface that keeps essential tools easily accessible.
 > - **Functional Optimization:** General improvements to existing functionality, focusing on performance, reliability, responsiveness, and efficiency.
 
-KPDF is an independent fork and is **not an official release of KillerPDF**.
+PewDF is an independent fork and is **not an official release of KillerPDF**.
 
 ## Development Status
 
 > [!WARNING]
-> **KPDF is currently under development.**
+> **PewDF is currently under development.**
 >
 > The repository initially contains the original KillerPDF codebase. Features, design, architecture, and functionality are subject to change.
 
-No stable KPDF release is currently available.
+No stable PewDF release is currently available.
 
 ## Credits & Acknowledgments
 
@@ -43,7 +47,7 @@ All original copyright notices and applicable third-party licenses remain in eff
 
 ## License
 
-KPDF is based on KillerPDF and is distributed under the **GNU General Public License v3.0 (GPLv3)**.
+PewDF is based on KillerPDF and is distributed under the **GNU General Public License v3.0 (GPLv3)**.
 
 See the [LICENSE](LICENSE) file for the complete license terms.
 
