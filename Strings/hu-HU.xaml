@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Hungarian (hu-HU) strings
+         PewDF  -  Hungarian (hu-HU) strings
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Oldalsáv összecsukása (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Oldalsáv kibontása (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Billentyűparancsok (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">A KillerPDF névjegye (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">A PewDF névjegye (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">VERZIÓ</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">UJJLENYOMAT</sys:String>
     <sys:String x:Key="Str_About_ExeSha">EXE SHA256</sys:String>
     <sys:String x:Key="Str_About_Computing">Számítás...</sys:String>
-    <sys:String x:Key="Str_Tagline">Gyors, ingyenes PDF-eszközkészlet Windowsra jegyzeteléssel, egyesítéssel, OCR-rel, aláírással és űrlapeszközökkel. GPLv3 segédprogram a következőtől: {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Gyors, ingyenes PDF-eszközkészlet Windowsra jegyzeteléssel, egyesítéssel, OCR-rel, aláírással és űrlapeszközökkel. A PewDF a KillerPDF egy forkja.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">OLDALAK</sys:String>
@@ -69,6 +69,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Téma</sys:String>
     <sys:String x:Key="Str_Language">Nyelv</sys:String>
+    <sys:String x:Key="Str_General">Általános</sys:String>
     <sys:String x:Key="Str_Toolbar">ESZKÖZTÁR</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">Eszköztár</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Nincs szöveg</sys:String>
@@ -137,7 +138,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Kész</sys:String>
     <sys:String x:Key="Str_Portable">HORDOZHATÓ</sys:String>
-    <sys:String x:Key="Str_InstallBtn">KillerPDF telepítése</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">Megnyitva: {0} - {1} oldal</sys:String>
@@ -212,37 +212,20 @@ A mentés lecseréli a fájlt, és eltávolítja az aláírását. Az aláírt f
 A mentés most felülírja a fájlt, és azok a módosítások elvesznek. Előbb mentse a másik ablaktáblát, ha meg szeretné őrizni őket.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Osztott ablaktábla be - F10 a bezáráshoz</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Osztott ablaktábla ki</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">KillerPDF telepítése</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">Telepíti a KillerPDF-et erre a számítógépre?
 
-A KillerPDF a programok mappájába másolódik, és bekerül a Start menübe. Ez az exe-példány a helyén marad, és bármikor eltávolíthatja a Programok telepítése/törlése segítségével.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Telepítés</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Frissítés</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Frissíti a meglévő KillerPDF-telepítést?
-
-Ez a telepített példányt a gyorsabb, többfájlos verzióra cseréli. Ezt a hordozható fájlt utána megtarthatja vagy törölheti.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Frissíti a KillerPDF minden felhasználóra érvényes meglévő telepítését?
-
-Ez a Program Files mappában lévő példányt a gyorsabb, többfájlos verzióra cseréli. A régebbi, felhasználónkénti példány eltávolításra kerül, így a KillerPDF csak egyszer jelenik meg. Ezt a hordozható fájlt utána megtarthatja vagy törölheti.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">A KillerPDF már telepítve van ezen a számítógépen minden felhasználó számára. Frissítse azt a telepítést, vagy távolítsa el, mielőtt felhasználónkénti telepítést választana.
-
-A KillerPDF nem hoz létre két telepített példányt.</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Asztali parancsikon hozzáadása</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Telepítés a számítógép minden felhasználója számára (rendszergazdai jog szükséges)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">A telepítés nem fejeződött be - a KillerPDF továbbra is hordozható módban fut.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Beállítja a KillerPDF-et alapértelmezett PDF-megjelenítőként?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Beállítja a PewDF-et alapértelmezett PDF-megjelenítőként?
 
 Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">Nem mentett módosításai vannak. Bezárja ezt a fájlt mentés nélkül?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">Nem mentett módosításai vannak. Bezárja a KillerPDF-et mentés nélkül?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Menti a módosításokat?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Menti a módosításokat?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">Ebben a dokumentumban {0} oldal mérete kívül esik az Adobe Reader által támogatott tartományon (oldalanként 3-14 400 pont) - az Adobe ezeket üres oldalként jeleníti meg.
 
 Átméretezi őket támogatott méretre? Az oldalak megtartják megjelenésüket és arányaikat.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">A PDF megnyitása sikertelen:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">{0} megnyitott dokumentuma van. Szeretné, hogy a KillerPDF mindet bezárja az alkalmazásból való kilépéskor?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">1 megnyitott dokumentuma van. Szeretné, hogy a KillerPDF bezárja az alkalmazásból való kilépéskor?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">{0} megnyitott dokumentuma van. Szeretné, hogy a PewDF mindet bezárja az alkalmazásból való kilépéskor?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">1 megnyitott dokumentuma van. Szeretné, hogy a PewDF bezárja az alkalmazásból való kilépéskor?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Választás megjegyzése</sys:String>
 
 
@@ -257,7 +240,6 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplazma</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Enyészet</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Gyász</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Filmszemcse</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Sírbolt</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Delírium</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Levertség</sys:String>
@@ -354,7 +336,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Stamp_FontSize">Betűméret (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Mégse</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Bélyegzés</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Oldalak bélyegzése</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Vízjelek és oldalszámok</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Oldalszámok</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Vízjel</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Szín</sys:String>
@@ -368,8 +350,8 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Stamp_Opacity">Átlátszatlanság</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">Tükrözés a szemközti oldalakon (külső él)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">{0} oldal bélyegezve</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Oldalak bélyegzése (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Oldalak bélyegzése</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Vízjelek és oldalszámok (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Vízjelek és oldalszámok</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Alul középen</sys:String>
     <sys:String x:Key="Str_Pos_BottomRight">Alul jobbra</sys:String>
     <sys:String x:Key="Str_Pos_BottomLeft">Alul balra</sys:String>
@@ -378,7 +360,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Pos_TopLeft">Felül balra</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Nyomtatás</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Nyomtatás</sys:String>
     <sys:String x:Key="Str_Print_Printer">Nyomtató</sys:String>
     <sys:String x:Key="Str_Print_Paper">Papírméret</sys:String>
     <sys:String x:Key="Str_Print_PaperAuto">Dokumentumhoz igazítás</sys:String>
@@ -437,7 +419,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Drop_Separate">Megnyitás külön</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Nem található megnyitható PDF vagy kép.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Ez {0} külön lapot nyit meg. Folytatja?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">Ez a mappa vagy archívum {0} fájlt tartalmaz. A KillerPDF csak az első {1} fájlt nyitja meg. Folytatja?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">Ez a mappa vagy archívum {0} fájlt tartalmaz. A PewDF csak az első {1} fájlt nyitja meg. Folytatja?</sys:String>
     <sys:String x:Key="Str_Status_Merged">{0} fájl egyesítve - még nincs mentve</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Fájlok egyesítése...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Egyesítés megszakítva</sys:String>
@@ -598,14 +580,14 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_KS_FullScreen">Teljes képernyő</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">Nyomja meg az F11 vagy Esc billentyűt a teljes képernyőből való kilépéshez</sys:String>
     <!-- Quit prompt (family standard) -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">Kilép a KillerPDF-ből?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">Kilép a PewDF-ből?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">A megnyitott lapjaim bezárása</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Kilépés</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Mégse</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Minden KillerPDF-adat törölve</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Minden PewDF-adat törölve</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">OCR terület megszakítva</sys:String>
     <sys:String x:Key="Str_St_Erased">Törölve</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Csoport bontva</sys:String>
@@ -653,8 +635,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_St_ClipEmpty">A vágólapon nincs beilleszthető tartalom</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">A frissítés előtt mentse a módosításokat.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">A KillerPDF eltávolítva.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Jelölje ki a kinyerni kívánt oldalakat.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Jelölje ki a törölni kívánt oldalakat.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Nincs elérhető nyomtató.</sys:String>
@@ -738,6 +719,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Btn_Open">Megnyitás</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Csere</sys:String>
     <sys:String x:Key="Str_Btn_Save">Mentés</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Ne mentse</sys:String>
     <sys:String x:Key="Str_Col_Modified">módosítva</sys:String>
     <sys:String x:Key="Str_Col_Name">név</sys:String>
     <sys:String x:Key="Str_Col_Size">méret</sys:String>
@@ -794,7 +776,6 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Dlg_SaveFlattened">Egyesített PDF mentése</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Kinyert oldalak mentése másként</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Kép beszúrása</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Parancsikon létrehozása az asztalon</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">VÁZLAT</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Először válasszon tanúsítványfájlt (.pfx / .p12).</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">A Windows tanúsítványtárban nem érhető el aláíró tanúsítvány.</sys:String>
@@ -909,7 +890,7 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">Kereshető PDF mentve:&#10;{0}&#10;&#10;{1} oldal feldolgozva, {2} szó felismerve.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">A(z) "{0}" sikeresen megjavítva.&#10;&#10;A könyvjelzők, űrlapok és más interaktív funkciók elveszhettek. A Mentés másként paranccsal írja a javított fájlt új helyre.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">A(z) "{0}" a PDFium általi raszterizálással lett megjavítva.&#10;&#10;A javított másolatban a szöveg nem jelölhető ki. A Mentés másként paranccsal írja új helyre.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">A(z) "{0}" szerkezete sérült, ezért nem adható hozzá.&#10;&#10;Megpróbálja a KillerPDF megjavítani? Javított másolat készül. Az eredeti fájl nem változik.&#10;&#10;Megjegyzés: a javított fájlokból hiányozhatnak a könyvjelzők, űrlapok és más interaktív funkciók.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">A(z) "{0}" szerkezete sérült, ezért nem adható hozzá.&#10;&#10;Megpróbálja a PewDF megjavítani? Javított másolat készül. Az eredeti fájl nem változik.&#10;&#10;Megjegyzés: a javított fájlokból hiányozhatnak a könyvjelzők, űrlapok és más interaktív funkciók.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">Egy nyelvi modell ({0}) letöltésre kerül, hogy az OCR futhasson.&#10;&#10;Az OCR menüből bármikor hozzáadhat további nyelveket vagy válthat jobb minőségű modellekre.</sys:String>
     <sys:String x:Key="Str_Bar_More">További beállítások</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">A vonalat a legközelebbi tengelyen tartja (vízszintes vagy függőleges)</sys:String>
@@ -923,14 +904,14 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_TT_SaveOptions">Mentési lehetőségek</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">OCR-lehetőségek</sys:String>
     <sys:String x:Key="Str_RecentHeading">LEGUTÓBBI</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Billentyűparancsok</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Frissítés érhető el: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">Letöltöd és telepíted a KillerPDF {0} verzióját?&#10;&#10;Az alkalmazás automatikusan bezárul és újraindul.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Letöltés...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Billentyűparancsok</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Minden adat törlése</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">Ez törli az összes mentett beállítást, a letöltött OCR-nyelvi csomagokat és az ideiglenes fájlokat.&#10;&#10;A PDF-fájljaidat nem érinti. Folytatod?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">A beállítások, a nyelvi csomagok és az ideiglenes fájlok törölve lettek.&#10;&#10;Indítsd újra a KillerPDF-et a munkamenetben még használt fájlok törlésének befejezéséhez.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Váratlan hiba</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">A beállítások, a nyelvi csomagok és az ideiglenes fájlok törölve lettek.&#10;&#10;Indítsd újra a PewDF-et a munkamenetben még használt fájlok törlésének befejezéséhez.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Váratlan hiba</sys:String>
     <sys:String x:Key="Str_Crash_Log">Napló: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Jelentés másolása</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Naplók megnyitása</sys:String>
@@ -989,17 +970,6 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Compare_DetailsTitle">PDF-összehasonlítás részletei</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">A KillerPDF nem tudta megnyitni a böngésző PDF-jét.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">Ez a böngészőparancs nem egy KillerPDF által ismert parancs.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">Az átadás nem tartalmazott PDF-címet.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">Az átadáskor megadott PDF-címet nem sikerült beolvasni.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">A KillerPDF csak https-en keresztül nyitja meg a böngésző átadásokat.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">A böngésző átadása nem használható.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">A PDF nagyobb, mint a 256 MB böngésző átadási korlátja.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">A letöltött fájl nem PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">A KillerPDF nem tudta letölteni a PDF-et.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">A PDF-letöltés túllépte az időkorlátot.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">A KillerPDF nem tudta menteni vagy olvasni a letöltött PDF-et.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Húzással hozzon létre kitölthető szövegmezőt</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">A kitölthető szövegmező létrehozása megszakítva</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Nem sikerült létrehozni a kitölthető szövegmezőt</sys:String>
@@ -1022,7 +992,6 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_Form_Initial">Monogram</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Előző módosított terület</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Következő módosított terület</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Hordozható mód - a telepített verzió beszerzése</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Az előnézet nem jeleníthető meg:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Nyomtatás előkészítése...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Ugrás a(z) {0}. oldalra</sys:String>
@@ -1033,10 +1002,28 @@ Megnyílik a Windows Beállítások - Alapértelmezett alkalmazások.</sys:Strin
     <sys:String x:Key="Str_KS_ToggleTip">Az alkalmazás összes billentyűparancsának be- és kikapcsolása. A Ctrl+Shift+K mindig működik.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Billentyűparancsok bekapcsolva</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Billentyűparancsok kikapcsolva. A bekapcsolásukhoz nyomd meg a Ctrl+Shift+K billentyűkombinációt.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Frissítések keresése indításkor</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">Elérhető a KillerPDF {0}. Szeretnéd most letölteni és telepíteni?&#10;&#10;Az alkalmazás automatikusan bezárul és újraindul.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Mindig keressen frissítéseket indításkor</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">A(z) „{0}” jelszóval védett.</sys:String>
     <sys:String x:Key="Str_About_Aka">Más néven</sys:String>
     <sys:String x:Key="Str_Btn_Run">Futtatás</sys:String>
+    <sys:String x:Key="Str_Settings">Beállítások</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">Névjegy</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Jelölés</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Szövegkiemelő toll</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">KillerPDF alapverzió</sys:String>
+    <sys:String x:Key="Str_About_Support">PewDF támogatása</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Képbélyegzők</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Képbélyegzők importálása és elhelyezése</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Szétválasztás</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Beállítás alapértelmezett PDF-alkalmazásként</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Hibakeresési naplózás engedélyezése</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Beállítások visszaállítása</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Konfigurációs mappa megnyitása</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Visszaállítja az összes beállítást?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Beállítások visszaállítva. Indítsa újra a PewDF-et a változásokhoz.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Ne kérdezze újra</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Igen</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Nem</sys:String>
 </ResourceDictionary>

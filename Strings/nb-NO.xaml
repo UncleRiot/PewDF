@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Norsk bokmål (nb-NO) strings
+         PewDF  -  Norsk bokmål (nb-NO) strings
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Skjul sidepanelet (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Vis sidepanelet (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Hurtigtaster (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">Om KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">Om PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">VERSJON</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">FINGERAVTRYKK</sys:String>
     <sys:String x:Key="Str_About_ExeSha">EXE SHA256</sys:String>
     <sys:String x:Key="Str_About_Computing">Beregner...</sys:String>
-    <sys:String x:Key="Str_Tagline">Et raskt, gratis PDF-verktøysett for Windows med merknader, sammenslåing, OCR, signering og skjemaverktøy. Et GPLv3-verktøy fra {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Et raskt, gratis PDF-verktøysett for Windows med merknader, sammenslåing, OCR, signering og skjemaverktøy. PewDF er en fork av KillerPDF.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">SIDER</sys:String>
@@ -69,6 +69,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Tema</sys:String>
     <sys:String x:Key="Str_Language">Språk</sys:String>
+    <sys:String x:Key="Str_General">Generelt</sys:String>
     <sys:String x:Key="Str_Toolbar">VERKTØYLINJE</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">Verktøylinje</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Ingen tekst</sys:String>
@@ -137,7 +138,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Klar</sys:String>
     <sys:String x:Key="Str_Portable">BÆRBAR</sys:String>
-    <sys:String x:Key="Str_InstallBtn">Installer KillerPDF</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">Åpnet {0} - {1} side(r)</sys:String>
@@ -212,37 +212,20 @@ Hvis du lagrer, erstattes filen, og signaturen fjernes. Avbryt og bruk Lagre som
 Hvis du lagrer nå, overskrives filen, og disse endringene går tapt. Lagre det andre panelet først hvis du vil beholde dem.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Delt panel er på. Trykk F10 for å lukke</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Delt panel er av</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">Installer KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">Vil du installere KillerPDF på denne datamaskinen?
 
-Installasjonen kopierer appen til programmappen din for raskere oppstart og legger til en oppføring i Start-menyen. Du kan beholde eller slette denne bærbare filen etterpå.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Vil du oppdatere den eksisterende installasjonen av KillerPDF for alle brukere?
-
-Dette erstatter kopien i Program Files med den raskere versjonen med flere filer. Eventuelle eldre kopier for enkeltbrukere fjernes slik at KillerPDF bare vises én gang. Du kan beholde eller slette denne bærbare filen etterpå.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Vil du oppdatere den eksisterende installasjonen av KillerPDF?
-
-Dette erstatter den installerte kopien med den raskere versjonen med flere filer. Du kan beholde eller slette denne bærbare filen etterpå.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">KillerPDF er allerede installert for alle på denne datamaskinen. Oppdater den installasjonen, eller avinstaller den før du velger installasjon for én bruker.
-
-KillerPDF oppretter ikke to installerte kopier.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Installer</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Oppdater</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Legg til snarvei på skrivebordet</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Installer for alle på denne datamaskinen (krever administrator)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">Installasjonen ble ikke fullført. KillerPDF kjører fortsatt som bærbar.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Vil du angi KillerPDF som standard PDF-leser?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Vil du angi PewDF som standard PDF-leser?
 
 Åpner Windows-innstillinger, Standardapper.</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">Du har ulagrede endringer. Vil du lukke denne filen uten å lagre?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">Du har ulagrede endringer. Vil du lukke KillerPDF uten å lagre?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Lagre endringer?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Lagre endringer?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">Dette dokumentet har {0} side(r) med størrelse utenfor det Adobe Reader støtter (3 til 14 400 punkter per side). Adobe viser disse som tomme sider.
 
 Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og proporsjoner.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">Kunne ikke åpne PDF:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">Du har {0} åpne dokumenter. Vil du at KillerPDF skal lukke dem alle når du avslutter appen?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Du har 1 åpent dokument. Vil du at KillerPDF skal lukke det når du avslutter appen?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">Du har {0} åpne dokumenter. Vil du at PewDF skal lukke dem alle når du avslutter appen?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Du har 1 åpent dokument. Vil du at PewDF skal lukke det når du avslutter appen?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Husk valget mitt</sys:String>
 
 
@@ -257,7 +240,6 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplasma</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Forfall</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Sorg</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Filmkorn</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Gravkammer</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Ubehag</sys:String>
@@ -354,7 +336,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Stamp_FontSize">Skriftstørrelse (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Avbryt</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Stempl</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Stempl sider</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Vannmerker og sidetall</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Sidetall</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Vannmerke</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Farge</sys:String>
@@ -368,8 +350,8 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Stamp_Opacity">Ugjennomsiktighet</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">Speil på motstående sider (ytterkant)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">Stemplet {0} side(r)</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Stempl sider (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Stempl sider</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Vannmerker og sidetall (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Vannmerker og sidetall</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Nederst i midten</sys:String>
     <sys:String x:Key="Str_Pos_BottomRight">Nederst til høyre</sys:String>
     <sys:String x:Key="Str_Pos_BottomLeft">Nederst til venstre</sys:String>
@@ -378,7 +360,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Pos_TopLeft">Øverst til venstre</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Skriv ut</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Skriv ut</sys:String>
     <sys:String x:Key="Str_Print_Printer">Skriver</sys:String>
     <sys:String x:Key="Str_Print_Paper">Papirstørrelse</sys:String>
     <sys:String x:Key="Str_Print_PaperAuto">Tilpass dokumentet</sys:String>
@@ -437,7 +419,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Drop_Separate">Åpne hver for seg</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Fant ingen PDF-er eller bilder å åpne.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Dette åpner {0} separate faner. Vil du fortsette?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">Denne mappen eller dette arkivet har {0} filer. KillerPDF åpner bare de første {1}. Vil du fortsette?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">Denne mappen eller dette arkivet har {0} filer. PewDF åpner bare de første {1}. Vil du fortsette?</sys:String>
     <sys:String x:Key="Str_Status_Merged">Slo sammen {0} filer - ikke lagret ennå</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Slår sammen filer...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Sammenslåingen er avbrutt</sys:String>
@@ -598,14 +580,14 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_KS_FullScreen">Fullskjerm</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">Trykk F11 eller Esc for å avslutte fullskjerm</sys:String>
     <!-- Quit prompt (family standard) -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">Avslutte KillerPDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">Avslutte PewDF?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">Lukk de åpne fanene mine</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Avslutt</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Avbryt</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Alle KillerPDF-data er tømt</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Alle PewDF-data er tømt</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">OCR-område avbrutt</sys:String>
     <sys:String x:Key="Str_St_Erased">Visket ut</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Gruppering opphevet</sys:String>
@@ -653,8 +635,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_St_ClipEmpty">Utklippstavlen har ingenting å lime inn</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">Lagre endringene dine før du oppdaterer.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">KillerPDF er avinstallert.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Velg sider som skal trekkes ut.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Velg sider som skal slettes.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Ingen skriver er tilgjengelig.</sys:String>
@@ -740,6 +721,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Btn_Open">Åpne</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Erstatt</sys:String>
     <sys:String x:Key="Str_Btn_Save">Lagre</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Ikke lagre</sys:String>
     <sys:String x:Key="Str_Col_Modified">endret</sys:String>
     <sys:String x:Key="Str_Col_Name">navn</sys:String>
     <sys:String x:Key="Str_Col_Size">størrelse</sys:String>
@@ -798,7 +780,6 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Dlg_SaveFlattened">Lagre flatet PDF</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Lagre uttrukne sider som</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Sett inn bilde</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Opprett snarvei på skrivebordet</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">UTKAST</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Velg en sertifikatfil (.pfx / .p12) først.</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">Det finnes ingen tilgjengelige signeringssertifikater i Windows-sertifikatlageret.</sys:String>
@@ -921,7 +902,7 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">Lagret søkbar PDF:&#10;{0}&#10;&#10;{1} sider behandlet, {2} ord gjenkjent.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">«{0}» ble reparert.&#10;&#10;Bokmerker, skjemaer og andre interaktive funksjoner kan ha gått tapt. Bruk Lagre som for å skrive den reparerte filen til et nytt sted.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">«{0}» ble reparert ved å rasterisere gjennom PDFium.&#10;&#10;Tekst kan ikke markeres i den reparerte kopien. Bruk Lagre som for å skrive den til et nytt sted.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">«{0}» har en skadet struktur og kunne ikke legges til.&#10;&#10;Vil du at KillerPDF skal prøve å reparere den? Det opprettes en reparert kopi, og originalfilen endres ikke.&#10;&#10;Merk: reparerte filer kan mangle bokmerker, skjemaer og andre interaktive funksjoner.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">«{0}» har en skadet struktur og kunne ikke legges til.&#10;&#10;Vil du at PewDF skal prøve å reparere den? Det opprettes en reparert kopi, og originalfilen endres ikke.&#10;&#10;Merk: reparerte filer kan mangle bokmerker, skjemaer og andre interaktive funksjoner.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">En språkmodell ({0}) lastes ned nå slik at OCR kan kjøre.&#10;&#10;Du kan når som helst legge til flere språk eller bytte til modeller med høyere kvalitet fra OCR-menyen.</sys:String>
     <sys:String x:Key="Str_Bar_More">Flere innstillinger</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">Hold linjen på nærmeste akse (vannrett eller loddrett)</sys:String>
@@ -935,14 +916,14 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_TT_SaveOptions">Lagringsvalg</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">OCR-valg</sys:String>
     <sys:String x:Key="Str_RecentHeading">NYLIG</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Hurtigtaster</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Oppdatering tilgjengelig: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">Vil du laste ned og installere KillerPDF {0}?&#10;&#10;Appen lukkes og åpnes på nytt automatisk.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Laster ned...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Hurtigtaster</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Tøm alle data</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">Dette sletter alle lagrede innstillinger, nedlastede OCR-språkpakker og midlertidige filer.&#10;&#10;PDF-filene dine påvirkes ikke. Vil du fortsette?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Innstillinger, språkpakker og midlertidige filer er tømt.&#10;&#10;Start KillerPDF på nytt for å fullføre tømmingen av filer som fortsatt er i bruk i denne økten.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Uventet feil</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Innstillinger, språkpakker og midlertidige filer er tømt.&#10;&#10;Start PewDF på nytt for å fullføre tømmingen av filer som fortsatt er i bruk i denne økten.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Uventet feil</sys:String>
     <sys:String x:Key="Str_Crash_Log">Logg: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Kopier rapport</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Åpne logger</sys:String>
@@ -1002,17 +983,6 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Compare_DetailsTitle">Detaljer om PDF-sammenligning</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">KillerPDF kunne ikke åpne nettleser-PDF-en.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">Den nettleserkommandoen er ukjent for KillerPDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">Overleveringen inneholdt ingen PDF-adresse.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">PDF-adressen i overleveringen kunne ikke leses.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">KillerPDF åpner bare nettleseroverleveringer over https.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">Nettleseroverleveringen kunne ikke brukes.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">PDF-en er større enn grensen på 256 MB for nettleseroverlevering.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">Den nedlastede filen er ikke en PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">KillerPDF kunne ikke laste ned PDF-en.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">PDF-nedlastingen fikk tidsavbrudd.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">KillerPDF kunne ikke lagre eller lese den nedlastede PDF-en.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Dra for å opprette et fyllbart tekstfelt</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">Fyllbart tekstfelt er avbrutt</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Kunne ikke opprette det fyllbare tekstfeltet</sys:String>
@@ -1035,7 +1005,6 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_Form_Initial">Initialer</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Forrige endrede område</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Neste endrede område</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Bærbar modus: skaff den installerte versjonen</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Kunne ikke gjengi forhåndsvisningen:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Klargjør utskrift...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Gå til side {0}</sys:String>
@@ -1046,10 +1015,28 @@ Vil du skalere dem til en støttet størrelse? Sidene beholder utseende og propo
     <sys:String x:Key="Str_KS_ToggleTip">Slå alle apphurtigtaster på eller av. Ctrl+Shift+K fungerer alltid.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Hurtigtaster er slått på</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Hurtigtaster er slått av. Trykk Ctrl+Shift+K for å slå dem på.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Se etter oppdateringer ved oppstart</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">KillerPDF {0} er tilgjengelig. Vil du laste den ned og installere den nå?&#10;&#10;Appen lukkes og åpnes på nytt automatisk.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Se alltid etter ved oppstart</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">«{0}» er passordbeskyttet.</sys:String>
     <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Kjør</sys:String>
+    <sys:String x:Key="Str_Settings">Innstillinger</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">Om</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Markere</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Tusjmarkør</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">KillerPDF-grunnversjon</sys:String>
+    <sys:String x:Key="Str_About_Support">Støtt PewDF</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Image stamps</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Import and place reusable image stamps</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Del opp</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Angi som standard PDF-app</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Aktiver feilsøkingslogging</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Tilbakestill innstillinger</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Åpne konfigurasjonsmappe</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Tilbakestille alle innstillinger?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Innstillingene er tilbakestilt. Start PewDF på nytt for å bruke endringene.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Ikke spør igjen</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Ja</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Nei</sys:String>
 </ResourceDictionary>

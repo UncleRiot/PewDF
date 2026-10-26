@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -731,7 +731,7 @@ namespace KillerPDF
                 string msg = targets.Count == 1
                     ? string.Format(Loc("Str_Bm_DeleteKids"), total - 1)
                     : string.Format(Loc("Str_Bm_DeleteMulti"), total);
-                var r = KillerDialog.Show(this, msg, Loc("Str_Dlg_AppTitle"),
+                var r = PewDialog.Show(this, msg, Loc("Str_Dlg_AppTitle"),
                                           MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r != MessageBoxResult.Yes) return;
             }
@@ -767,7 +767,7 @@ namespace KillerPDF
         {
             if (!CanEditBookmarks || _doc is null) return;
             if (ReadEngineBookmarks().Count == 0) return;
-            var r = KillerDialog.Show(this, Loc("Str_Bm_DeleteAllConfirm"), Loc("Str_Dlg_AppTitle"),
+            var r = PewDialog.Show(this, Loc("Str_Bm_DeleteAllConfirm"), Loc("Str_Dlg_AppTitle"),
                                       MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (r != MessageBoxResult.Yes) return;
             ApplyEngineBookmarkEdit(_ => []);
@@ -878,22 +878,38 @@ namespace KillerPDF
         private void ToolSelect_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Select);
         private void ToolText_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Text);
         private void ToolFormField_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.FormField);
+        // SEMANTIC ANCHOR: MARK_TOOL_MENU_SSOT. The ribbon menu only selects a tool;
+        // the EditTool state remains owned by SetTool and the viewer annotations.
+        private void ToolMarkMenu_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.ContextMenu is ContextMenu menu)
+            {
+                menu.PlacementTarget = button;
+                menu.IsOpen = true;
+            }
+        }
+
         private void ToolHighlight_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Highlight);
+        private void ToolTextMarker_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.TextMarker);
         private void ToolLine_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Line);
         private void ToolDraw_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Draw);
         private void ToolShape_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Shape);
         private void ToolImage_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Image);
         private void ToolCrop_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Crop);
         private void ToolMeasure_Click(object sender, RoutedEventArgs e) => SetTool(EditTool.Measure);
+        // SEMANTIC ANCHOR: SIGNATURE_PICKER_SINGLE_OWNER
+        // The ribbon toggles whichever signature surface is active, never both.
+        // The shared tool pane owns regular signatures; image stamps retain their popup.
         private void ToolSignature_Click(object sender, RoutedEventArgs e)
         {
-            if (_signaturePopup is not null)
+            if (_signaturePopup is not null || _signaturePane is not null)
             {
                 HideSignaturePopup();
                 if (_currentTool == EditTool.Signature && _pendingSignature is null)
                     SetTool(EditTool.Select);
                 return;
             }
+            _imageStampPicker = false;
             SetTool(EditTool.Signature);
             ShowSignaturePopup();
         }

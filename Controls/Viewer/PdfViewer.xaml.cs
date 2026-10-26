@@ -1,9 +1,9 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Features;
+using PewDF.Features;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     /// <summary>
     /// One document view: its tab strip, its card and everything inside. Two instances make the
@@ -63,7 +63,7 @@ namespace KillerPDF.Controls
         /// SetResourceReference, not a brush snapshot, on both states: an assigned brush would not
         /// follow a live theme switch.
         ///
-        /// "SelectionAccent", not "AccentBrush". KillerPDF uses the older family resource set
+        /// "SelectionAccent", not "AccentBrush". PewDF uses the older family resource set
         /// (BgCanvas / AccentLogo / TextPrimary) and has no AccentBrush key in any theme.
         /// SetResourceReference to a missing key does not throw, it silently leaves the property
         /// unset, which blanks the border instead of accenting it.
@@ -117,29 +117,12 @@ namespace KillerPDF.Controls
             if (e.WidthChanged) SyncRecentBoxWidth();
         }
 
-        /// <summary>Size the start screen's Recent panel to this pane, and drop it entirely once the
-        /// pane is too narrow to carry both it and the drop target. At its old fixed 340 it took
-        /// most of a half-width pane and left the "Drop PDF here" zone as a sliver. Owns the
-        /// panel's visibility outright, so PopulateRecentFilesList defers to it rather than the two
-        /// of them setting it from different rules.</summary>
-        private bool _syncingRecentBox;
+        // RECENT_FILES_RIBBON_ONLY: the right-hand recent-files panel was retired.
+        // Keep this entry point for existing callers, but never reveal the old sidebar.
         internal void SyncRecentBoxWidth()
         {
-            if (RecentFilesBox is null || RecentFilesList is null || _syncingRecentBox) return;
-            _syncingRecentBox = true;
-            try
-            {
-                double w = ActualWidth;
-                double want = Math.Min(340, Math.Max(220, w * 0.4));
-                var vis = RecentFilesList.Items.Count > 0 && w >= 560
-                    ? Visibility.Visible : Visibility.Collapsed;
-                // Only write when the value actually changes. Both of these re-trigger layout, and
-                // this runs FROM a size handler - an unconditional assignment gives the layout pass
-                // something new to react to every time round and it never settles.
-                if (Math.Abs(RecentFilesBox.Width - want) > 0.5) RecentFilesBox.Width = want;
-                if (RecentFilesBox.Visibility != vis) RecentFilesBox.Visibility = vis;
-            }
-            finally { _syncingRecentBox = false; }
+            if (RecentFilesBox != null && RecentFilesBox.Visibility != Visibility.Collapsed)
+                RecentFilesBox.Visibility = Visibility.Collapsed;
         }
 
         // Focus THIS pane before forwarding: the open path routes through ActiveViewer, and a

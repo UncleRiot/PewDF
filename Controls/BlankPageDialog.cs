@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace KillerPDF;
+namespace PewDF;
 
 internal sealed class BlankPageDialog : Window
 {
@@ -20,7 +20,7 @@ internal sealed class BlankPageDialog : Window
     {
         _currentWidth = currentWidth;
         _currentHeight = currentHeight;
-        Title = "KillerPDF - " + L("Str_Ctx_AddBlankPage");
+        Title = "PewDF - " + L("Str_Ctx_AddBlankPage");
         Width = 380;
         SizeToContent = SizeToContent.Height;
         UseLayoutRounding = true;
@@ -107,7 +107,7 @@ internal sealed class BlankPageDialog : Window
         double? height = ReadPoints(_height);
         if (width is null || height is null)
         {
-            KillerDialog.Show(this, L("Str_Blank_InvalidSize"), "KillerPDF",
+            PewDialog.Show(this, L("Str_Blank_InvalidSize"), "PewDF",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

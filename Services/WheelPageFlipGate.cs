@@ -1,4 +1,4 @@
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     /// <summary>
     /// Separates fast in-page wheel scrolling from page navigation at the edge. Momentum events

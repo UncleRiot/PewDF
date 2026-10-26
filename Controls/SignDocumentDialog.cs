@@ -8,17 +8,17 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Services.Signing;
-using KillerPDF.Services;
+using PewDF.Services.Signing;
+using PewDF.Services;
 using Microsoft.Win32;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// Themed modal dialog that cryptographically signs the open PDF with a certificate (a .pfx/.p12
     /// file, or one from the Windows store) and writes a NEW signed copy. This is the real digital
     /// signature - distinct from the drawn "Signature" stamp tool, which only places a picture.
-    /// Chrome and colors mirror PrintPreviewWindow so every KillerPDF dialog looks identical.
+    /// Chrome and colors mirror PrintPreviewWindow so every PewDF dialog looks identical.
     /// </summary>
     internal sealed class SignDocumentDialog : Window
     {
@@ -55,7 +55,7 @@ namespace KillerPDF
         public SignDocumentDialog(Window? owner, string sourcePdf)
         {
             _sourcePdf = sourcePdf;
-            Title = "KillerPDF - " + L("Str_Sign_Name");
+            Title = "PewDF - " + L("Str_Sign_Name");
             Width = 720;
             MaxHeight = 860;
             SizeToContent = SizeToContent.Height;
@@ -239,7 +239,7 @@ namespace KillerPDF
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
             };
-            Content = DialogChrome.Frame(this, Owner, "KillerPDF - " + L("Str_Sign_TitleSuffix"),
+            Content = DialogChrome.Frame(this, Owner, "PewDF - " + L("Str_Sign_TitleSuffix"),
                 () => { DialogResult = false; Close(); }, scroll);
         }
 
@@ -260,15 +260,26 @@ namespace KillerPDF
 
         private void BrowsePfx()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Open)
+            var dlg = new Microsoft.Win32.OpenFileDialog()
                           { Filter = L("Str_Filter_Cert") + "|*.pfx;*.p12|" + L("Str_Filter_AllFiles") + "|*.*", Title = L("Str_Sign_ChooseCert") };
             if (dlg.ShowDialog(this) == true) _pfxBox.Text = dlg.FileName;
         }
 
         private void BrowseOutput()
         {
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
-                          { Filter = L("Str_Filter_Pdf") + "|*.pdf", Title = L("Str_Sign_SaveAs"), FileName = Path.GetFileName(_outputBox.Text) };
+            // SEMANTIC ANCHOR: SIGNED_PDF_SAVE_DIALOG_SSOT
+            // INVARIANT: Certificate selection and output selection use native Windows dialogs;
+            // cancel must preserve the existing output path and must never initiate signing.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
+            {
+                Filter = L("Str_Filter_Pdf") + "|*.pdf",
+                Title = L("Str_Sign_SaveAs"),
+                FileName = Path.GetFileName(_outputBox.Text),
+                InitialDirectory = Path.GetDirectoryName(_outputBox.Text) ?? "",
+                DefaultExt = ".pdf",
+                AddExtension = true,
+                OverwritePrompt = true
+            };
             if (dlg.ShowDialog(this) == true) _outputBox.Text = dlg.FileName;
         }
 
@@ -324,12 +335,12 @@ namespace KillerPDF
                 return;
             }
 
-            KillerDialog.Show(this, L("Str_Dlg_SignedSavedTo") + "\n" + output, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
+            PewDialog.Show(this, L("Str_Dlg_SignedSavedTo") + "\n" + output, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }
 
-        private void Warn(string msg) => KillerDialog.Show(this, msg, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
+        private void Warn(string msg) => PewDialog.Show(this, msg, L("Str_Sign_Name"), MessageBoxButton.OK, MessageBoxImage.Warning);
 
         private static StackPanel DimensionField(string label, string value, out TextBox box)
         {

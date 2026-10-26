@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -67,6 +67,15 @@ namespace KillerPDF
 
         private static void ApplyLetterSpacing(DependencyObject control, string text, double spacing)
         {
+            // SEMANTIC ANCHOR: INLINE_CARET_TEXT_EFFECTS_AB_TEST
+            // Diagnostic only: exclude the live TextBox editor from TextEffects
+            // while preserving the existing formatting of all other controls.
+            // Restore after confirming whether initial caret visibility changes.
+            if (control is TextBox)
+            {
+                control.ClearValue(TextBlock.TextEffectsProperty);
+                return;
+            }
             var effects = new TextEffectCollection();
             if (Math.Abs(spacing) >= .01)
             {
@@ -211,20 +220,167 @@ namespace KillerPDF
             }
         }
 
+        // TEXT SIDEBAR: a real column of the main window, sharing the left sidebar's theme.
+        // In a normal window the outer right edge grows; when maximized, the document yields space.
+        private bool _textSidebarCollapsed = true;
+        private bool _textSidebarToggleWired;
+        // SEMANTIC ANCHOR: TEXT_SIDEBAR_WIDTH_SSOT
+        // Single source of truth for the shared right tool-pane width.
+        // Keep it only as wide as needed for the widest unwrapped settings row (including
+        // the font selector and all four style toggles); preserve consistent pane sizing
+        // across tools instead of introducing tool-specific width overrides.
+        // Expand/collapse and normal-window resizing must use this same value;
+        // maximized/fullscreen windows keep their outer dimensions unchanged.
+        private const double TextSidebarToolsWidth = 350;
+        private const double TextSidebarRailWidth = 24;
+        // SEMANTIC ANCHOR: TOOL_PANE_SSOT: Both text and annotation tools share this column, width, toggle, and resize policy. Never resize independently for a tool switch.
+        private bool _textSidebarChangingWidth;
+
+        private void SetTextSidebarCollapsed(bool collapsed)
+        {
+            if (_textSidebarChangingWidth) return;
+            _textSidebarChangingWidth = true;
+            try
+            {
+                bool wasExpanded = TextSidebarCol.Width.Value > TextSidebarRailWidth;
+                bool requestedExpanded = TextSidebarToggle.Visibility == Visibility.Visible && !collapsed;
+                // A format refresh must never resize the main window a second time.
+                if (wasExpanded == requestedExpanded && _textSidebarCollapsed == collapsed)
+                    return;
+                LogTextSidebar("COLLAPSE_REQUEST", $"collapsed={collapsed}; previousWidth={TextSidebarCol.Width.Value}; windowWidth={Width}; state={WindowState}");
+                bool willExpand = TextSidebarToggle.Visibility == Visibility.Visible && !collapsed;
+                _textSidebarCollapsed = collapsed;
+                TextSidebarBody.Visibility = willExpand ? Visibility.Visible : Visibility.Collapsed;
+                TextSidebarCol.Width = new GridLength(TextSidebarRailWidth + (willExpand ? TextSidebarToolsWidth : 0));
+                TextSidebarToggle.Content = collapsed ? "" : "";
+
+                // Do not modify Left: the outer window grows to the right only.
+                // Maximized and fullscreen windows keep their outer bounds unchanged.
+                if (WindowState == WindowState.Normal && wasExpanded != willExpand)
+                    Width = Math.Max(MinWidth, Width + (willExpand ? TextSidebarToolsWidth : -TextSidebarToolsWidth));
+            }
+            finally { _textSidebarChangingWidth = false; }
+        }
+
+        // TEXT SIDEBAR DIAGNOSTICS: no document contents or typed text are written.
+        private string? _lastRenderedTextSettingsSignature;
+        private static readonly string TextSidebarDebugPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "PewDF", "text-sidebar-debug.log");
+
+        private void LogTextSidebar(string eventName, string details)
+        {
+            if (!Services.DebugLogging.Enabled) return;
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(TextSidebarDebugPath)!);
+                System.IO.File.AppendAllText(TextSidebarDebugPath,
+                    $"{DateTimeOffset.Now:O} | {eventName} | {details}{Environment.NewLine}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Text sidebar diagnostics failed: {ex.Message}");
+            }
+        }
+
+        // TEXT SIDEBAR DIAGNOSTICS: measure after WPF layout; never modify layout or scroll state.
+        private void LogTextSidebarLayout(string trigger)
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+            {
+                if (TextSidebarContent.Children.Count != 1 || _textSettingsBar == null ||
+                    !ReferenceEquals(TextSidebarContent.Children[0], _textSettingsBar)) return;
+
+                var offsets = $"offsetX={TextSidebarScroll.HorizontalOffset:F2}; offsetY={TextSidebarScroll.VerticalOffset:F2}; " +
+                    $"viewportW={TextSidebarScroll.ViewportWidth:F2}; extentW={TextSidebarScroll.ExtentWidth:F2}; " +
+                    $"contentW={TextSidebarContent.ActualWidth:F2}; contentH={TextSidebarContent.ActualHeight:F2}";
+                var positions = new System.Text.StringBuilder();
+                if (_textSettingsBar.Child is StackPanel rows)
+                {
+                    for (int i = 0; i < rows.Children.Count; i++)
+                    {
+                        if (rows.Children[i] is not FrameworkElement row || !row.IsArrangeValid) continue;
+                        Point point = row.TranslatePoint(new Point(0, 0), TextSidebarScroll);
+                        positions.Append($"; row{i}=({point.X:F2},{point.Y:F2},{row.ActualWidth:F2},{row.ActualHeight:F2})");
+                    }
+                }
+                // SEMANTIC ANCHOR: Diagnose only. Compare effective layout values and their
+                // WPF value sources before/after refresh, without changing any UI properties.
+                string Source(DependencyObject element, DependencyProperty property)
+                {
+                    var valueSource = DependencyPropertyHelper.GetValueSource(element, property);
+                    return $"{valueSource.BaseValueSource}" +
+                        (valueSource.IsAnimated ? "+Animated" : "") +
+                        (valueSource.IsCoerced ? "+Coerced" : "");
+                }
+                string Describe(FrameworkElement element)
+                {
+                    string result = $"{element.GetType().Name}({element.Name})" +
+                        $" size={element.ActualWidth:F2}x{element.ActualHeight:F2}" +
+                        $" margin={element.Margin} [{Source(element, FrameworkElement.MarginProperty)}]" +
+                        $" align={element.HorizontalAlignment}/{element.VerticalAlignment}" +
+                        $" [{Source(element, FrameworkElement.HorizontalAlignmentProperty)}]";
+                    if (element is Control control)
+                        result += $" padding={control.Padding} [{Source(control, Control.PaddingProperty)}]";
+                    if (element is Border border)
+                        result += $" padding={border.Padding} [{Source(border, Border.PaddingProperty)}]" +
+                            $" border={border.BorderThickness}";
+                    return result;
+                }
+                var tree = new System.Text.StringBuilder();
+                DependencyObject? current = _textSettingsBar;
+                for (int depth = 0; current != null && depth < 12; depth++)
+                {
+                    if (current is FrameworkElement element)
+                    {
+                        Point origin = element.TranslatePoint(new Point(0, 0), TextSidebarScroll);
+                        tree.Append($"; node{depth}={Describe(element)} origin=({origin.X:F2},{origin.Y:F2})");
+                    }
+                    if (ReferenceEquals(current, TextSidebarScroll)) break;
+                    current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+                }
+                tree.Append($"; scroll={Describe(TextSidebarScroll)}" +
+                    $" content={Describe(TextSidebarContent)}");
+                LogTextSidebar("LAYOUT", $"trigger={trigger}; {offsets}{positions}{tree}");
+            }));
+        }
+
+        private string CurrentTextSettingsSignature() => string.Join("|",
+            _textFontName, _textBold, _textItalic, _textStrike, _textUnderline,
+            _textFontSize.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+            _textLetterSpacing.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+            _textColor.ToString(), _textFillColor.ToString(), _textOpacity.ToString());
+
+        // TEXT SIDEBAR: WPF focus changes can request BringIntoView on the new editor/controls.
+        // Such requests must not change the tool panel's scroll offset or apparent layout.
+        // Wheel and scrollbar scrolling are intentionally unaffected.
+        private void TextSidebarScroll_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void ShowTextSettings()
         {
-            bool appearing = _annotBarTool != EditTool.Text;   // real appear/switch vs same-tool refresh
-            if (_textSettingsBar is not null)
+            string signature = CurrentTextSettingsSignature();
+            bool alreadyVisible = _textSettingsBar != null &&
+                TextSidebarContent.Children.Count == 1 &&
+                ReferenceEquals(TextSidebarContent.Children[0], _textSettingsBar) &&
+                TextSidebarToggle.Visibility == Visibility.Visible;
+            if (alreadyVisible && signature == _lastRenderedTextSettingsSignature)
             {
-                if (appearing) FadeOutAndRemoveBar(_textSettingsBar);
-                else (PagePreviewPanel.Parent as Grid)?.Children.Remove(_textSettingsBar);
-                _textSettingsBar = null;
+                LogTextSidebar("REFRESH_SKIPPED", $"unchanged; expanded={!_textSidebarCollapsed}; width={TextSidebarCol.Width.Value}");
+                LogTextSidebarLayout("refresh-skipped");
+                return;
             }
+            LogTextSidebar("REFRESH_START", $"visible={alreadyVisible}; expanded={!_textSidebarCollapsed}; width={TextSidebarCol.Width.Value}; settingsChanged={signature != _lastRenderedTextSettingsSignature}");
+            bool appearing = _annotBarTool != EditTool.Text;   // real appear/switch vs same-tool refresh
+            // Keep the currently displayed controls visible while the replacement is constructed.
+            // Clearing here causes a visible empty frame whenever an existing text box is selected.
 
-            // Six self-contained single-row groups. The finished text bar deliberately pairs them
-            // into two aligned rows: font/style over size, text color over fill color, and text
-            // opacity over fill opacity. This avoids a lone Fill Opacity group looking like an
-            // accidental wrap at otherwise comfortable window widths.
+            // SEMANTIC ANCHOR: TEXT_TOOL_PANE_VISUAL_SSOT
+            // Text uses shared pane metrics for recurring labels, swatches and sliders.
+            // Preserve the existing text controls and actions; only visual metrics are shared.
+            double PaneMetric(string key) => (double)FindResource(key);
             StackPanel Group()
             {
                 return new StackPanel
@@ -232,7 +388,7 @@ namespace KillerPDF
                     Orientation = Orientation.Horizontal,
                     VerticalAlignment = VerticalAlignment.Center,
                     // Right margin = the gap to the next group; top/bottom = the gap between wrapped rows.
-                    Margin = new Thickness(0, 3, 16, 3)
+                    Margin = new Thickness(0, 1, 16, 1)
                 };
             }
             TextBlock DimLabel(string text, int top, bool rightAlign = false)
@@ -241,27 +397,28 @@ namespace KillerPDF
                 {
                     Text = text,
                     FontFamily = UiKit.UiFont,
-                    FontSize = 11,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = rightAlign ? HorizontalAlignment.Right : HorizontalAlignment.Left,
-                    Margin = new Thickness(0, top, 6, 0)
+                    Margin = new Thickness(0, top, PaneMetric("ToolPaneLabelControlGap"), 0)
                 };
                 t.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
                 return t;
             }
+            // SEMANTIC ANCHOR: TOOL_PANE_COLOR_SELECTION_INVARIANT
+            // Active swatches share SelectionAccent and the globally defined border metrics.
             Border ColorSwatch(Color c, bool isActive, MouseButtonEventHandler onClick)
             {
                 var sw = new Border
                 {
-                    Width = 18,
-                    Height = 18,
+                    Width = PaneMetric("ToolPaneColorSwatchSize"),
+                    Height = PaneMetric("ToolPaneColorSwatchSize"),
                     Background = new SolidColorBrush(c),
-                    BorderThickness = new Thickness(isActive ? 2 : 1),
-                    CornerRadius = new CornerRadius(3),
-                    Margin = new Thickness(1),
+                    BorderThickness = new Thickness(PaneMetric(isActive ? "ToolPaneColorSwatchSelectedBorderThickness" : "ToolPaneColorSwatchIdleBorderThickness")),
+                    CornerRadius = new CornerRadius(PaneMetric("ToolPaneColorSwatchCornerRadius")),
+                    Margin = new Thickness(PaneMetric("ToolPaneColorSwatchMargin")),
                     Cursor = Cursors.Hand
                 };
-                if (isActive) sw.SetResourceReference(Border.BorderBrushProperty, "PrimaryBrush");
+                if (isActive) sw.SetResourceReference(Border.BorderBrushProperty, "SelectionAccent");
                 else sw.BorderBrush = _swatchDimBorder;
                 sw.MouseLeftButtonDown += onClick;
                 return sw;
@@ -270,21 +427,21 @@ namespace KillerPDF
             // color with an accent ring (and a small rainbow corner), so the bar reflects a custom pick.
             Grid MoreColorsSwatch(Color current, bool customActive, MouseButtonEventHandler onClick)
             {
-                var grid = new Grid { Width = 18, Height = 18, Margin = new Thickness(1), Cursor = Cursors.Hand, ToolTip = Loc("Str_Bar_MoreColors") };
+                var grid = new Grid { Width = PaneMetric("ToolPaneColorSwatchSize"), Height = PaneMetric("ToolPaneColorSwatchSize"), Margin = new Thickness(PaneMetric("ToolPaneColorSwatchMargin")), Cursor = Cursors.Hand, ToolTip = Loc("Str_Bar_MoreColors") };
                 var bg = new Border
                 {
-                    CornerRadius = new CornerRadius(3),
-                    BorderThickness = new Thickness(customActive ? 2 : 1),
+                    CornerRadius = new CornerRadius(PaneMetric("ToolPaneColorSwatchCornerRadius")),
+                    BorderThickness = new Thickness(PaneMetric(customActive ? "ToolPaneColorSwatchSelectedBorderThickness" : "ToolPaneColorSwatchIdleBorderThickness")),
                     Background = customActive
                         ? (Brush)new SolidColorBrush(Color.FromRgb(current.R, current.G, current.B))
                         : RainbowBrush()
                 };
-                if (customActive) bg.SetResourceReference(Border.BorderBrushProperty, "PrimaryBrush"); else bg.BorderBrush = _swatchDimBorder;
+                if (customActive) bg.SetResourceReference(Border.BorderBrushProperty, "SelectionAccent"); else bg.BorderBrush = _swatchDimBorder;
                 grid.Children.Add(bg);
                 if (customActive)
                     grid.Children.Add(new System.Windows.Shapes.Polygon
                     {
-                        Points = [new Point(18, 7), new Point(18, 18), new Point(7, 18)],
+                        Points = [new Point(PaneMetric("ToolPaneColorSwatchSize"), PaneMetric("ToolPaneColorSwatchSize") * 0.4), new Point(PaneMetric("ToolPaneColorSwatchSize"), PaneMetric("ToolPaneColorSwatchSize")), new Point(PaneMetric("ToolPaneColorSwatchSize") * 0.4, PaneMetric("ToolPaneColorSwatchSize"))],
                         Fill = RainbowBrush(),
                         IsHitTestVisible = false
                     });
@@ -297,7 +454,7 @@ namespace KillerPDF
             textGrip.VerticalAlignment = VerticalAlignment.Center;
             // (grip is added to the WrapPanel host directly, below.)
 
-            var swatchRow1 = new StackPanel { Orientation = Orientation.Horizontal };
+            var swatchRow1 = new WrapPanel { Orientation = Orientation.Horizontal, MaxWidth = PaneMetric("ToolPaneSwatchRowMaxWidth") };
             foreach (var color in SwatchColors)
             {
                 var c = color;
@@ -317,16 +474,17 @@ namespace KillerPDF
                 ShowTextSettings();
             }, () => ShowTextSettings())));
             var grpColor = Group();
+            grpColor.Orientation = Orientation.Vertical;
             grpColor.Children.Add(DimLabel(Loc("Str_Bar_Color"), 0));
             grpColor.Children.Add(swatchRow1);
 
-            var swatchRow2 = new StackPanel { Orientation = Orientation.Horizontal };
+            var swatchRow2 = new WrapPanel { Orientation = Orientation.Horizontal, MaxWidth = PaneMetric("ToolPaneSwatchRowMaxWidth") };
             bool noneActive = _textFillColor.A == 0;
-            var noneGrid = new Grid { Width = 18, Height = 18, Margin = new Thickness(1), Cursor = Cursors.Hand };
-            var noneBg = new Border { CornerRadius = new CornerRadius(3), Background = Brushes.White, BorderThickness = new Thickness(noneActive ? 2 : 1) };
-            if (noneActive) noneBg.SetResourceReference(Border.BorderBrushProperty, "PrimaryBrush"); else noneBg.BorderBrush = _swatchDimBorder;
+            var noneGrid = new Grid { Width = PaneMetric("ToolPaneColorSwatchSize"), Height = PaneMetric("ToolPaneColorSwatchSize"), Margin = new Thickness(PaneMetric("ToolPaneColorSwatchMargin")), Cursor = Cursors.Hand };
+            var noneBg = new Border { CornerRadius = new CornerRadius(PaneMetric("ToolPaneColorSwatchCornerRadius")), Background = Brushes.White, BorderThickness = new Thickness(PaneMetric(noneActive ? "ToolPaneColorSwatchSelectedBorderThickness" : "ToolPaneColorSwatchIdleBorderThickness")) };
+            if (noneActive) noneBg.SetResourceReference(Border.BorderBrushProperty, "SelectionAccent"); else noneBg.BorderBrush = _swatchDimBorder;
             noneGrid.Children.Add(noneBg);
-            noneGrid.Children.Add(new System.Windows.Shapes.Line { X1 = 3, Y1 = 15, X2 = 15, Y2 = 3, Stroke = Brushes.Red, StrokeThickness = 1.5 });
+            noneGrid.Children.Add(new System.Windows.Shapes.Line { X1 = PaneMetric("ToolPaneColorSwatchSize") * 0.17, Y1 = PaneMetric("ToolPaneColorSwatchSize") * 0.83, X2 = PaneMetric("ToolPaneColorSwatchSize") * 0.83, Y2 = PaneMetric("ToolPaneColorSwatchSize") * 0.17, Stroke = Brushes.Red, StrokeThickness = 1.5 });
             noneGrid.MouseLeftButtonDown += (_, _) =>
             {
                 _textFillColor = Color.FromArgb(0, _textFillColor.R, _textFillColor.G, _textFillColor.B);
@@ -355,154 +513,98 @@ namespace KillerPDF
                 ShowTextSettings();
             }, () => ShowTextSettings())));
             var grpFill = Group();
+            grpFill.Orientation = Orientation.Vertical;
             grpFill.Children.Add(DimLabel(Loc("Str_Bar_Fill"), 0));
             grpFill.Children.Add(swatchRow2);
 
-            // Size group: its own single-row group, packed beside Font whenever the width allows.
-            var sizeStack = Group();
-            sizeStack.Children.Add(DimLabel(Loc("Str_Bar_Size"), 0));
-            var sizeSlider = new Slider
+            // SEMANTIC ANCHOR: TEXT_TOOL_NUMERIC_SSOT
+            // Font size and letter spacing use the shared tool-pane numeric field and stepper.
+            // Persisted text properties remain authoritative; preserve each control's original
+            // permitted range and step size independently of visual metrics.
+            StackPanel NumericSetting(string label, Func<double> current, Action<double> apply,
+                double min, double max, double step)
             {
-                Minimum = 8,
-                Maximum = 72,
-                Value = Math.Max(8, Math.Min(72, _textFontSize)),
-                Width = 90,
-                VerticalAlignment = VerticalAlignment.Center,
-                TickFrequency = 1,
-                IsSnapToTickEnabled = true,
-                Style = (Style)FindResource("DarkSlider")
-            };
-            // Editable size box (type an exact value; the slider stays for quick coarse adjustment).
-            var sizeBox = new TextBox
-            {
-                Text = $"{_textFontSize:0.##}",
-                FontFamily = UiKit.UiFont,
-                FontSize = 11,
-                Width = 32,
-                MaxLength = 4,
-                VerticalAlignment = VerticalAlignment.Center,
-                VerticalContentAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(4, 0, 0, 0),
-                BorderThickness = new Thickness(1),
-                Template = FlatTextBoxTemplate()
-            };
-            sizeBox.SetResourceReference(TextBox.BackgroundProperty, "TextFieldBrush");
-            sizeBox.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
-            sizeBox.SetResourceReference(TextBox.BorderBrushProperty, "CardBorderBrush");
-            sizeBox.SetResourceReference(TextBox.CaretBrushProperty, "PrimaryBrush");
-            sizeBox.SetResourceReference(TextBox.SelectionBrushProperty, "RowSelectedBrush");   // no WPF-default blue
-            var ptLabel = new TextBlock
-            {
-                Text = "pt",
-                FontFamily = UiKit.UiFont,
-                FontSize = 11,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(2, 0, 0, 0)
-            };
-            ptLabel.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-            // Slider drives the box; the box drives the slider. _suppressSizeSync breaks the feedback loop.
-            sizeSlider.ValueChanged += (s, e) =>
-            {
-                if (_suppressSizeSync) return;
-                _textFontSize = e.NewValue;
-                sizeBox.Text = $"{e.NewValue:0.##}";
-                ApplyTextStyleToSelection();
-            };
-            void CommitSizeBox()
-            {
-                if (double.TryParse(sizeBox.Text, out double v) && double.IsFinite(v))
+                var group = new StackPanel { Orientation = Orientation.Vertical,
+                    Margin = new Thickness(0, 1, 16, 1) };
+                group.Children.Add(DimLabel(label, 0));
+                var row = new StackPanel { Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(0, PaneMetric("ToolPaneLabelControlGap"), 0, 0) };
+                var box = UiKit.Field(PaneMetric("ToolPaneNumericFieldWidth"));
+                box.Height = PaneMetric("ToolPaneNumericFieldHeight");
+                box.MaxLength = 8;
+                box.TextAlignment = TextAlignment.Center;
+                box.VerticalContentAlignment = VerticalAlignment.Center;
+                box.Padding = new Thickness(3, 0, 3, 0);
+                box.Text = $"{current():0.##}";
+                box.SetResourceReference(TextBox.BackgroundProperty, "TextFieldBrush");
+                box.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
+                box.SetResourceReference(TextBox.BorderBrushProperty, "CardBorderBrush");
+                box.SetResourceReference(TextBox.CaretBrushProperty, "PrimaryBrush");
+                box.SetResourceReference(TextBox.SelectionBrushProperty, "RowSelectedBrush");
+                void SetValue(double value)
                 {
-                    _textFontSize = Math.Clamp(v, 1, 400);
-                    _suppressSizeSync = true;
-                    sizeSlider.Value = Math.Max(8, Math.Min(72, _textFontSize));   // thumb clamps; box keeps exact
-                    _suppressSizeSync = false;
+                    if (!double.IsFinite(value)) return;
+                    apply(Math.Clamp(Math.Round(value, 2), min, max));
+                    box.Text = $"{current():0.##}";
                     ApplyTextStyleToSelection();
                 }
-                sizeBox.Text = $"{_textFontSize:0.##}";   // normalize / revert invalid input
-            }
-            // Set an exact size and keep the slider + box in step (slider thumb clamps to 8-72).
-            void SetSize(double v)
-            {
-                _textFontSize = Math.Clamp(v, 1, 400);
-                _suppressSizeSync = true;
-                sizeSlider.Value = Math.Max(8, Math.Min(72, _textFontSize));
-                _suppressSizeSync = false;
-                sizeBox.Text = $"{_textFontSize:0.##}";
-                ApplyTextStyleToSelection();
-            }
-            // Tiny stepper button (− / +) for one-point nudges next to the slider.
-            Border StepButton(string glyph, Action onClick)
-            {
-                var st = new TextBlock
+                void Commit()
                 {
-                    Text = glyph,
-                    FontFamily = UiKit.UiFont,
-                    FontSize = 13,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center
-                };
-                st.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-                var sb = new Border
+                    if (double.TryParse(box.Text, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.CurrentCulture, out double value) && double.IsFinite(value))
+                        SetValue(value);
+                    else
+                        box.Text = $"{current():0.##}";
+                }
+                box.LostKeyboardFocus += (_, _) => Commit();
+                box.PreviewKeyDown += (_, e) =>
                 {
-                    Width = 18,
-                    Height = 20,
-                    CornerRadius = new CornerRadius(3),
-                    Margin = new Thickness(3, 0, 0, 0),
-                    Cursor = Cursors.Hand,
-                    BorderThickness = new Thickness(1),
-                    Background = Brushes.Transparent,
-                    Child = st,
-                    BorderBrush = _swatchDimBorder
+                    if (e.Key == Key.Enter) { Commit(); e.Handled = true; }
+                    else if (e.Key == Key.Escape) { box.Text = $"{current():0.##}"; e.Handled = true; }
+                    else if (e.Key == Key.Up || e.Key == Key.Down)
+                    {
+                        Commit();
+                        SetValue(current() + (e.Key == Key.Up ? step : -step));
+                        e.Handled = true;
+                    }
                 };
-                sb.MouseLeftButtonDown += (_, _) => onClick();
-                return sb;
+                box.GotKeyboardFocus += (_, _) => box.SelectAll();
+                row.Children.Add(box);
+                var spinner = new Grid
+                {
+                    Width = PaneMetric("ToolPaneNumericStepperWidth"),
+                    Height = PaneMetric("ToolPaneNumericFieldHeight"),
+                    Margin = new Thickness(PaneMetric("ToolPaneNumericStepperGap"), 0, 0, 0)
+                };
+                spinner.RowDefinitions.Add(new RowDefinition());
+                spinner.RowDefinitions.Add(new RowDefinition());
+                System.Windows.Controls.Primitives.RepeatButton StepButton(string glyph, double delta, int rowIndex)
+                {
+                    var button = new System.Windows.Controls.Primitives.RepeatButton
+                    {
+                        Content = glyph,
+                        FontSize = PaneMetric("ToolPaneNumericStepperGlyphSize"),
+                        Padding = new Thickness(0),
+                        Style = (Style)FindResource("ToolPaneNumericStepButton"),
+                        Delay = 350, Interval = 100, Cursor = Cursors.Hand
+                    };
+                    button.Click += (_, _) => { Commit(); SetValue(current() + delta); };
+                    Grid.SetRow(button, rowIndex);
+                    return button;
+                }
+                spinner.Children.Add(StepButton("▲", step, 0));
+                spinner.Children.Add(StepButton("▼", -step, 1));
+                row.Children.Add(spinner);
+                var unit = DimLabel("pt", 0);
+                unit.Margin = new Thickness(PaneMetric("ToolPaneLabelControlGap"), 0, 0, 0);
+                row.Children.Add(unit);
+                group.Children.Add(row);
+                return group;
             }
-            sizeBox.PreviewKeyDown += (s, e) =>
-            {
-                if (e.Key == Key.Enter) { CommitSizeBox(); e.Handled = true; }
-                else if (e.Key == Key.Escape) { sizeBox.Text = $"{_textFontSize:0.##}"; e.Handled = true; }
-            };
-            sizeBox.LostFocus += (s, e) => CommitSizeBox();
-            sizeBox.GotFocus += (s, e) => sizeBox.SelectAll();
-            sizeStack.Children.Add(sizeSlider);
-            sizeStack.Children.Add(StepButton("−", () => SetSize(_textFontSize - 1)));   // minus
-            sizeStack.Children.Add(StepButton("+", () => SetSize(_textFontSize + 1)));
-            sizeStack.Children.Add(sizeBox);
-            sizeStack.Children.Add(ptLabel);
-
-            var spacingStack = Group();
-            spacingStack.Children.Add(DimLabel(Loc("Str_Bar_LetterSpacing"), 0));
-            var spacingSlider = new Slider
-            {
-                Minimum = -2,
-                Maximum = 20,
-                Value = _textLetterSpacing,
-                Width = 90,
-                TickFrequency = .25,
-                IsSnapToTickEnabled = true,
-                VerticalAlignment = VerticalAlignment.Center,
-                Style = (Style)FindResource("DarkSlider")
-            };
-            var spacingLabel = new TextBlock
-            {
-                Text = $"{_textLetterSpacing:0.##} pt",
-                Width = 48,
-                FontFamily = UiKit.MonoFont,
-                FontSize = 11,
-                Margin = new Thickness(4, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                TextAlignment = TextAlignment.Right
-            };
-            spacingLabel.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-            spacingSlider.ValueChanged += (_, e) =>
-            {
-                _textLetterSpacing = Math.Round(e.NewValue, 2);
-                spacingLabel.Text = $"{_textLetterSpacing:0.##} pt";
-                ApplyTextStyleToSelection();
-            };
-            spacingStack.Children.Add(spacingSlider);
-            spacingStack.Children.Add(spacingLabel);
+            var sizeStack = NumericSetting(Loc("Str_Bar_Size"), () => _textFontSize,
+                value => _textFontSize = value, 1, 400, 1);
+            var spacingStack = NumericSetting(Loc("Str_Bar_LetterSpacing"), () => _textLetterSpacing,
+                value => _textLetterSpacing = value, -2, 20, 0.25);
 
             // Font group: typeface selector + Bold / Italic / Strikethrough / Underline.
             // A small square toggle whose glyph previews its own effect (bold B, italic I, struck-through S).
@@ -575,7 +677,7 @@ namespace KillerPDF
                 Minimum = 10,
                 Maximum = 255,
                 Value = _textOpacity,
-                Width = 90,
+                Width = PaneMetric("ToolPaneControlSliderWidth"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Style = (Style)FindResource("DarkSlider")
             };
@@ -586,8 +688,8 @@ namespace KillerPDF
                 FontFamily = UiKit.UiFont,
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(4, 0, 0, 0),
-                Width = 40,
+                Margin = new Thickness(PaneMetric("ToolPaneOpacityValueGap"), 0, 0, 0),
+                Width = PaneMetric("ToolPaneOpacityValueWidth"),
                 TextAlignment = TextAlignment.Right
             };
             opacityLabel.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
@@ -609,7 +711,7 @@ namespace KillerPDF
                 Minimum = 10,
                 Maximum = 255,
                 Value = curFillA,
-                Width = 90,
+                Width = PaneMetric("ToolPaneControlSliderWidth"),
                 VerticalAlignment = VerticalAlignment.Center,
                 Style = (Style)FindResource("DarkSlider")
             };
@@ -620,8 +722,8 @@ namespace KillerPDF
                 FontFamily = UiKit.UiFont,
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(4, 0, 0, 0),
-                Width = 40,
+                Margin = new Thickness(PaneMetric("ToolPaneOpacityValueGap"), 0, 0, 0),
+                Width = PaneMetric("ToolPaneOpacityValueWidth"),
                 TextAlignment = TextAlignment.Right
             };
             fillOpLabel.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
@@ -635,83 +737,96 @@ namespace KillerPDF
                 ApplyTextStyleToSelection();
             };
 
-            // Intentional two-row interim layout for 1.7.5, assembled as three vertical pairs so
-            // related controls share an exact left edge: Font over Size, Text Color over Fill, and
-            // Text Opacity over Fill Opacity. The outer WrapPanel moves a whole pair at narrow split-
-            // pane widths instead of separating a label from the control directly beneath it.
-            var fontPair = new StackPanel();
-            fontPair.Children.Add(fontStack);
-            fontPair.Children.Add(sizeStack);
-            fontPair.Children.Add(spacingStack);
-
-            var colorPair = new StackPanel();
-            colorPair.Children.Add(grpColor);
-            colorPair.Children.Add(grpFill);
-
-            var opacityPair = new StackPanel();
-            opacityPair.Children.Add(grpOpacity);
-            opacityPair.Children.Add(grpFillOp);
-
-            var pairHost = new WrapPanel
+            // Vertical order requested for the right-hand tool sidebar.
+            var contentStack = new StackPanel { Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Left };
+            // SEMANTIC ANCHOR: TOOL_PANE_SECTION_GAP_INVARIANT
+            // Section spacing is app-scoped SSOT; inline control margins remain unchanged.
+            double sectionGap = (double)FindResource("ToolPaneSectionGap");
+            var textSections = new FrameworkElement[]
             {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(8, 2, 8, 2),
-                Background = Brushes.Transparent
+                fontStack, sizeStack, spacingStack, grpColor, grpFill, grpOpacity, grpFillOp
             };
-            pairHost.Children.Add(textGrip);
-            pairHost.Children.Add(fontPair);
-            pairHost.Children.Add(colorPair);
-            pairHost.Children.Add(opacityPair);
+            for (int i = 0; i < textSections.Length; i++)
+            {
+                if (i > 0) textSections[i].Margin = new Thickness(0, sectionGap, 0, 0);
+                contentStack.Children.Add(textSections[i]);
+            }
             _annotBarDragInners.Clear();
 
             _textSettingsBar = new Border
             {
-                BorderThickness = new Thickness(1, 0, 1, 1),   // no top border - the toolbar above already separates
-                HorizontalAlignment = HorizontalAlignment.Right,  // right-anchored; slid via the grip
+                BorderThickness = new Thickness(0),
+                HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
-                CornerRadius = new CornerRadius(0),
-                Padding = new Thickness(4),
-                Effect = AnnotBarShadow(),
-                Child = BuildBarHost(pairHost),
-                Margin = new Thickness(0, 0, 0, 0)
+                Padding = new Thickness(0),
+                Child = contentStack
             };
-            _textSettingsBar.SetResourceReference(Border.BackgroundProperty, "AnnotationBarBrush");
-            _textSettingsBar.SetResourceReference(Border.BorderBrushProperty, "AnnotationBarBorderBrush");
-            _textSettingsBar.SetResourceReference(Border.CornerRadiusProperty, "AnnotationBarCornerRadius");
-
-            var previewArea = PagePreviewPanel.Parent as Grid;
-            if (previewArea is not null)
+            _textSettingsBar.SetResourceReference(Border.BackgroundProperty, "BackgroundBrush");
+            // Swap the completed bar in one synchronous UI operation instead of exposing an
+            // empty sidebar for the whole control-construction phase.
+            TextSidebarContent.Children.Clear();
+            TextSidebarContent.HorizontalAlignment = HorizontalAlignment.Left;
+            TextSidebarContent.Children.Add(_textSettingsBar);
+            ToolSidebarHeader.SetResourceReference(TextBlock.TextProperty, "Str_Ribbon_Text");
+            // Reopening an editor must not inherit a shifted horizontal viewport.
+            // Keep the content anchored to the document-side edge of the sidebar.
+            TextSidebarScroll.ScrollToHorizontalOffset(0);
+            TextSidebarScroll.ScrollToVerticalOffset(0);
+            _lastRenderedTextSettingsSignature = CurrentTextSettingsSignature();
+            LogTextSidebar("REFRESH_SWAP", $"controls={TextSidebarContent.Children.Count}; width={TextSidebarCol.Width.Value}");
+            if (!_textSidebarToggleWired)
             {
-                Panel.SetZIndex(_textSettingsBar, 100);
-                previewArea.Children.Add(_textSettingsBar);
-                // Cap the paired layout to the document area. At split-pane widths whole columns wrap
-                // together; at normal widths the two rows retain their deliberate vertical alignment.
-                pairHost.SetBinding(FrameworkElement.MaxWidthProperty, new System.Windows.Data.Binding("ActualWidth")
-                    { Source = previewArea, Converter = _barWidthInset });
-                WireBarWrapAdaptation(pairHost, textGrip, fontPair, previewArea);
-                PlaceAnnotationBar(_textSettingsBar, textGrip, fadeIn: appearing);
+                TextSidebarToggle.Click += (_, _) => SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                TextSidebarScroll.ScrollChanged += (_, e) =>
+                {
+                    if (e.HorizontalChange != 0 || e.VerticalChange != 0 ||
+                        e.ViewportWidthChange != 0 || e.ExtentWidthChange != 0)
+                        LogTextSidebarLayout("scroll-changed");
+                };
+                _textSidebarToggleWired = true;
             }
+            TextSidebarToggle.Visibility = Visibility.Visible;
+            SetTextSidebarCollapsed(appearing ? false : _textSidebarCollapsed);
             _annotBarTool = EditTool.Text;
             _annotBarMinimized = false;   // a freshly built bar is full-size
+            LogTextSidebarLayout("refresh-swap");
         }
 
         // (The shared overflow machinery - MakeBarOverflow and WireBarOverflow - lives in
         // AnnotationBars.cs, used by this bar and the draw/highlight/line/shape bar alike.)
 
-        private void HideTextSettings()
+        // SEMANTIC ANCHOR: TOOL_PANE_OWNERSHIP_INVARIANT: Only the displayed owner may close
+        // the shared pane. Replacing its contents must not shrink/re-expand the outer window.
+        private void HideToolPaneContent(Border? owner, bool keepPane = false)
         {
-            FadeOutAndRemoveBar(_textSettingsBar);
+            if (owner is null || TextSidebarContent.Children.Count != 1 ||
+                !ReferenceEquals(TextSidebarContent.Children[0], owner)) return;
+            TextSidebarContent.Children.Clear();
+            if (keepPane) return; // replacing a tool retains the existing window geometry
+            if (TextSidebarCol.Width.Value > TextSidebarRailWidth && WindowState == WindowState.Normal)
+                Width = Math.Max(MinWidth, Width - TextSidebarToolsWidth);
+            _textSidebarCollapsed = true;
+            TextSidebarBody.Visibility = Visibility.Collapsed;
+            TextSidebarToggle.Visibility = Visibility.Collapsed;
+            TextSidebarCol.Width = new GridLength(TextSidebarRailWidth);
+        }
+
+        private void HideTextSettings(bool keepPane = false)
+        {
+            LogTextSidebar("HIDE", $"expanded={!_textSidebarCollapsed}; width={TextSidebarCol.Width.Value}");
+            _lastRenderedTextSettingsSignature = null;
+            // The pane is shared: closing Text must not dispose a different tool's contents.
+            HideToolPaneContent(_textSettingsBar, keepPane);
             _textSettingsBar = null;
             if (_annotBarTool == EditTool.Text) _annotBarTool = null;
         }
 
         private void PlaceImageFromDialog(Point pos, int pageIdx)
         {
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
+            var dlg = new Microsoft.Win32.OpenFileDialog()
             {
                 Title = Loc("Str_Dlg_InsertImage"),
-                Filter = Loc("Str_Filter_Images") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.tif|" + Loc("Str_Filter_AllFiles") + "|*.*",
-                ShowImagePreview = true
+                Filter = Loc("Str_Filter_Images") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.tif|" + Loc("Str_Filter_AllFiles") + "|*.*"
             };
             if (dlg.ShowDialog(this) != true) return;
 
@@ -757,7 +872,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_LoadImageFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_LoadImageFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -838,7 +953,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_PasteFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_PasteFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

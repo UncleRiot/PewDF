@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Deutsch (de-DE) strings
+         PewDF  -  Deutsch (de-DE) strings
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -32,7 +32,7 @@
     <sys:String x:Key="Str_TT_UnderlineTool">Unterstreichen - über Text ziehen</sys:String>
     <sys:String x:Key="Str_TT_DrawTool">Zeichenwerkzeug - Freihandzeichnung (D)</sys:String>
     <sys:String x:Key="Str_TT_ShapeTool">Formen - Rechteck, Ellipse oder Freiform-Polygon</sys:String>
-    <sys:String x:Key="Str_TT_SignatureTool">Signatur - Signaturen erstellen und platzieren (G)</sys:String>
+    <sys:String x:Key="Str_TT_SignatureTool">Unterschrift - Unterschriften erstellen und platzieren (G)</sys:String>
     <sys:String x:Key="Str_TT_ImageTool">Bildwerkzeug - klicken, um ein Bild einzufügen (I)</sys:String>
     <sys:String x:Key="Str_TT_CropTool">Zuschneidewerkzeug - Bereich wählen und auf Seiten anwenden (C)</sys:String>
     <sys:String x:Key="Str_TT_MeasureTool">Abstand messen und Seitengröße anzeigen</sys:String>
@@ -46,7 +46,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Seitenleiste einklappen (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Seitenleiste ausklappen (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Tastenkürzel (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">Über KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">Über PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">VERSION</sys:String>
@@ -54,7 +54,7 @@
     <sys:String x:Key="Str_About_Thumbprint">FINGERABDRUCK</sys:String>
     <sys:String x:Key="Str_About_ExeSha">EXE SHA256</sys:String>
     <sys:String x:Key="Str_About_Computing">Wird berechnet...</sys:String>
-    <sys:String x:Key="Str_Tagline">Ein schnelles, kostenloses PDF-Toolkit für Windows mit Anmerkungs-, Zusammenführungs-, OCR-, Signatur- und Formularwerkzeugen. Ein GPLv3-Tool von {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Ein schnelles, kostenloses PDF-Toolkit für Windows mit Anmerkungs-, Zusammenführungs-, OCR-, Signatur- und Formularwerkzeugen. PewDF ist ein Fork von KillerPDF.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">SEITEN</sys:String>
@@ -65,6 +65,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Design</sys:String>
     <sys:String x:Key="Str_Language">Sprache</sys:String>
+    <sys:String x:Key="Str_General">Allgemein</sys:String>
     <sys:String x:Key="Str_Toolbar">SYMBOLLEISTE</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">Symbolleiste</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Kein Text</sys:String>
@@ -120,7 +121,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Bereit</sys:String>
     <sys:String x:Key="Str_Portable">PORTABEL</sys:String>
-    <sys:String x:Key="Str_InstallBtn">KillerPDF installieren</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">Geöffnet: {0} - {1} Seite(n)</sys:String>
@@ -157,37 +157,20 @@ Beim Speichern wird die Datei ersetzt und ihre Signatur entfernt. Um die signier
 Beim Speichern wird die Datei überschrieben und diese Änderungen gehen verloren. Speichern Sie zuerst den anderen Bereich, wenn Sie sie behalten möchten.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Geteilte Ansicht an - F10 zum Schließen</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Geteilte Ansicht aus</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">KillerPDF installieren</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">KillerPDF auf diesem Computer installieren?
 
-KillerPDF wird in Ihren Programmordner kopiert und eine Verknüpfung im Startmenü erstellt. Diese Kopie der EXE bleibt, wo sie ist, und Sie können das Programm jederzeit über „Programme und Features“ deinstallieren.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Installieren</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Aktualisieren</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Die bestehende KillerPDF-Installation aktualisieren?
-
-Dies ersetzt die installierte Kopie durch die schnellere Version mit mehreren Dateien. Diese portable Datei können Sie danach behalten oder löschen.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Die bestehende Installation von KillerPDF für alle Benutzer aktualisieren?
-
-Dies ersetzt die Kopie in „Program Files“ durch die schnellere Version mit mehreren Dateien. Eine ältere Kopie für den aktuellen Benutzer wird entfernt, sodass KillerPDF nur einmal erscheint. Diese portable Datei können Sie danach behalten oder löschen.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">KillerPDF ist auf diesem Computer bereits für alle Benutzer installiert. Aktualisieren Sie diese Installation oder deinstallieren Sie sie, bevor Sie eine Installation nur für Ihr Konto wählen.
-
-KillerPDF legt keine zwei installierten Kopien an.</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Desktopverknüpfung hinzufügen</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Für alle Benutzer dieses Computers installieren (erfordert Administrator)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">Installation nicht abgeschlossen - KillerPDF läuft weiterhin portabel.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Möchten Sie KillerPDF als Standard-PDF-Betrachter festlegen?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Möchten Sie PewDF als Standard-PDF-Betrachter festlegen?
 
 Öffnet die Windows-Einstellungen - Standard-Apps.</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">Es gibt ungespeicherte Änderungen. Diese Datei ohne Speichern schließen?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">Es gibt ungespeicherte Änderungen. KillerPDF ohne Speichern beenden?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Änderungen speichern?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Änderungen speichern?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">Dieses Dokument enthält {0} Seite(n) außerhalb des von Adobe Reader unterstützten Größenbereichs (3 bis 14.400 Punkte je Seite) - Adobe zeigt diese als leere Seiten an.
 
 Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten bleiben erhalten.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">PDF konnte nicht geöffnet werden:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">Sie haben {0} geöffnete Dokumente. Soll KillerPDF diese alle schließen, wenn Sie die App beenden?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Sie haben 1 geöffnetes Dokument. Soll KillerPDF es schließen, wenn Sie die App beenden?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">Sie haben {0} geöffnete Dokumente. Soll PewDF diese alle schließen, wenn Sie die App beenden?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Sie haben 1 geöffnetes Dokument. Soll PewDF es schließen, wenn Sie die App beenden?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Meine Auswahl merken</sys:String>
 
 
@@ -202,7 +185,6 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Theme_Ectoplasm">Ektoplasma</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Verfall</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Trauer</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Filmkorn</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Grab</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Unwohlsein</sys:String>
@@ -244,7 +226,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Lbl_Crop">Zuschneiden</sys:String>
     <sys:String x:Key="Str_Lbl_Measure">Messen</sys:String>
     <sys:String x:Key="Str_Lbl_Image">Bild hinzufügen</sys:String>
-    <sys:String x:Key="Str_Lbl_Signature">Signatur</sys:String>
+    <sys:String x:Key="Str_Lbl_Signature">Unterschrift</sys:String>
     <sys:String x:Key="Str_Lbl_Undo">Rückgängig</sys:String>
     <sys:String x:Key="Str_Lbl_Clear">Anmerkungen löschen</sys:String>
     <sys:String x:Key="Str_Lbl_New">Neu</sys:String>
@@ -285,7 +267,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Stamp_Position">Position</sys:String>
     <sys:String x:Key="Str_Stamp_FontSize">Schriftgröße (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Hint2">Beispiel: „Seite {n} von {N}“</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Seiten stempeln</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Wasserzeichen &amp; Seitenzahlen</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Seitenzahlen</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Wasserzeichen</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Farbe</sys:String>
@@ -300,8 +282,8 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Stamp_Mirror">Auf gegenüberliegenden Seiten spiegeln (Außenrand)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">{0} Seite(n) gestempelt</sys:String>
     <sys:String x:Key="Str_Pos_Custom">Benutzerdefiniert (in der Vorschau ziehen)</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Seiten stempeln (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Seiten stempeln</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Wasserzeichen &amp; Seitenzahlen (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Wasserzeichen &amp; Seitenzahlen</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Abbrechen</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Einfügen</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Unten Mitte</sys:String>
@@ -312,7 +294,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Pos_TopLeft">Oben links</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Drucken</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Drucken</sys:String>
     <sys:String x:Key="Str_Print_Printer">Drucker</sys:String>
     <sys:String x:Key="Str_Print_Orientation">Ausrichtung</sys:String>
     <sys:String x:Key="Str_Print_Portrait">Hochformat</sys:String>
@@ -363,7 +345,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Drop_Separate">Einzeln öffnen</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Keine PDFs oder Bilder zum Öffnen gefunden.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Dies öffnet {0} separate Tabs. Fortfahren?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">Dieser Ordner bzw. dieses Archiv enthält {0} Dateien. KillerPDF öffnet nur die ersten {1}. Fortfahren?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">Dieser Ordner bzw. dieses Archiv enthält {0} Dateien. PewDF öffnet nur die ersten {1}. Fortfahren?</sys:String>
     <sys:String x:Key="Str_Status_Merged">{0} Dateien zusammengeführt - noch nicht gespeichert</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Dateien werden zusammengeführt...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Zusammenführen abgebrochen</sys:String>
@@ -372,7 +354,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Dlg_SaveBeforeZip">Änderungen vor dem Komprimieren in ZIP speichern?</sys:String>
     <sys:String x:Key="Str_Status_Zipped">Als ZIP gespeichert: {0} - {1} (vorher {2})</sys:String>
     <sys:String x:Key="Str_Err_ZipFailed">Komprimierung in ZIP fehlgeschlagen:</sys:String>
-    <sys:String x:Key="Str_Sig_Title">Signaturen</sys:String>
+    <sys:String x:Key="Str_Sig_Title">Unterschriften</sys:String>
     <sys:String x:Key="Str_Sig_None">Keine gespeicherten Signaturen</sys:String>
     <sys:String x:Key="Str_Sig_Create">Signatur erstellen</sys:String>
     <sys:String x:Key="Str_Sig_Import">Bild importieren</sys:String>
@@ -413,7 +395,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Bar_Eraser">Radierer</sys:String>
     <sys:String x:Key="Str_Bar_AnnotationEraser">Anmerkungen löschen</sys:String>
     <sys:String x:Key="Str_Bar_MoreColors">Weitere Farben...</sys:String>
-    <sys:String x:Key="Str_Sig_Signatures">Signaturen</sys:String>
+    <sys:String x:Key="Str_Sig_Signatures">Unterschriften</sys:String>
     <sys:String x:Key="Str_Sig_Initials">Initialen</sys:String>
     <sys:String x:Key="Str_Sig_Pen">Stift</sys:String>
     <sys:String x:Key="Str_Sig_Thin">Dünn</sys:String>
@@ -526,14 +508,14 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_KS_FullScreen">Vollbild</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">F11 oder Esc drücken, um den Vollbildmodus zu beenden</sys:String>
     <!-- Quit prompt -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">KillerPDF beenden?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">PewDF beenden?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">Meine offenen Tabs schließen</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Beenden</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Abbrechen</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Alle KillerPDF-Daten gelöscht</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Alle PewDF-Daten gelöscht</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">OCR-Bereich abgebrochen</sys:String>
     <sys:String x:Key="Str_St_Erased">Gelöscht</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Gruppierung aufgehoben</sys:String>
@@ -581,8 +563,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_St_ClipEmpty">Zwischenablage enthält nichts zum Einfügen</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">Bitte speichern Sie Ihre Änderungen vor der Aktualisierung.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">KillerPDF wurde deinstalliert.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Wählen Sie die zu extrahierenden Seiten aus.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Wählen Sie die zu löschenden Seiten aus.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Kein Drucker verfügbar.</sys:String>
@@ -716,6 +697,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Btn_Open">Öffnen</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Ersetzen</sys:String>
     <sys:String x:Key="Str_Btn_Save">Speichern</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Nicht speichern</sys:String>
     <sys:String x:Key="Str_Col_Modified">geändert</sys:String>
     <sys:String x:Key="Str_Col_Name">Name</sys:String>
     <sys:String x:Key="Str_Col_Size">Größe</sys:String>
@@ -793,7 +775,6 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Dlg_SaveFlattened">Reduzierte PDF speichern</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Extrahierte Seiten speichern unter</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Bild einfügen</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Desktopverknüpfung erstellen</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">ENTWURF</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Wählen Sie zuerst eine Zertifikatdatei (.pfx / .p12).</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">Im Windows-Zertifikatspeicher ist kein Signaturzertifikat verfügbar.</sys:String>
@@ -885,7 +866,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_St_InsertedBlank">Leere Seite an Position {0} eingefügt</sys:String>
     <sys:String x:Key="Str_St_AddedBlank">Leere Seite hinzugefügt (jetzt {0} Seiten)</sys:String>
     <sys:String x:Key="Str_St_RestorePane">Der zweite Bereich konnte nicht wiederhergestellt werden: {0}</sys:String>
-    <sys:String x:Key="Str_Annot_Signature">Signatur</sys:String>
+    <sys:String x:Key="Str_Annot_Signature">Unterschrift</sys:String>
     <sys:String x:Key="Str_Annot_Image">Bild</sys:String>
     <sys:String x:Key="Str_Annot_TextBox">Textfeld</sys:String>
     <sys:String x:Key="Str_Annot_Cover">Textabdeckung</sys:String>
@@ -908,7 +889,7 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">Durchsuchbare PDF gespeichert:&#10;{0}&#10;&#10;{1} Seiten verarbeitet, {2} Wörter erkannt.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">„{0}“ wurde erfolgreich repariert.&#10;&#10;Lesezeichen, Formulare und andere interaktive Funktionen können verloren gegangen sein. Verwenden Sie „Speichern unter“, um die reparierte Datei an einem neuen Ort zu speichern.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">„{0}“ wurde durch Rastern über PDFium repariert.&#10;&#10;Text ist in der reparierten Kopie nicht auswählbar. Verwenden Sie „Speichern unter“, um sie an einem neuen Ort zu speichern.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">„{0}“ hat eine beschädigte Struktur und konnte nicht hinzugefügt werden.&#10;&#10;Soll KillerPDF eine Reparatur versuchen? Es wird eine reparierte Kopie erstellt. Die Originaldatei wird nicht verändert.&#10;&#10;Hinweis: Reparierten Dateien können Lesezeichen, Formulare und andere interaktive Funktionen fehlen.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">„{0}“ hat eine beschädigte Struktur und konnte nicht hinzugefügt werden.&#10;&#10;Soll PewDF eine Reparatur versuchen? Es wird eine reparierte Kopie erstellt. Die Originaldatei wird nicht verändert.&#10;&#10;Hinweis: Reparierten Dateien können Lesezeichen, Formulare und andere interaktive Funktionen fehlen.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">Ein Sprachmodell ({0}) wird jetzt heruntergeladen, damit OCR laufen kann.&#10;&#10;Sie können jederzeit über das OCR-Menü weitere Sprachen hinzufügen oder zu Modellen höherer Qualität wechseln.</sys:String>
     <sys:String x:Key="Str_Bar_More">Weitere Einstellungen</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">Hält die Linie auf der nächstgelegenen Achse (horizontal oder vertikal)</sys:String>
@@ -922,14 +903,14 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_TT_SaveOptions">Speicheroptionen</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">OCR-Optionen</sys:String>
     <sys:String x:Key="Str_RecentHeading">ZULETZT</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Tastenkürzel</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Update verfügbar: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">KillerPDF {0} herunterladen und installieren?&#10;&#10;Die App wird geschlossen und automatisch neu geöffnet.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Wird heruntergeladen...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Tastenkürzel</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Alle Daten löschen</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">Dies löscht alle gespeicherten Einstellungen, heruntergeladenen OCR-Sprachpakete und temporären Dateien.&#10;&#10;Ihre PDF-Dateien sind nicht betroffen. Fortfahren?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Einstellungen, Sprachpakete und temporäre Dateien wurden gelöscht.&#10;&#10;Starten Sie KillerPDF neu, um Dateien zu entfernen, die in dieser Sitzung noch verwendet werden.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Unerwarteter Fehler</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Einstellungen, Sprachpakete und temporäre Dateien wurden gelöscht.&#10;&#10;Starten Sie PewDF neu, um Dateien zu entfernen, die in dieser Sitzung noch verwendet werden.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Unerwarteter Fehler</sys:String>
     <sys:String x:Key="Str_Crash_Log">Protokoll: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Bericht kopieren</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Protokolle öffnen</sys:String>
@@ -988,17 +969,6 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Compare_DetailsTitle">PDF-Vergleichsdetails</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">KillerPDF konnte die Browser-PDF nicht öffnen.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">Dieser Browserbefehl ist KillerPDF nicht bekannt.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">Die Übergabe enthielt keine PDF-Adresse.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">Die PDF-Adresse in der Übergabe konnte nicht gelesen werden.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">KillerPDF öffnet nur Browser-Übergaben über HTTPS.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">Die Browser-Übergabe konnte nicht verwendet werden.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">Die PDF-Datei ist größer als das Limit für die Browser-Übergabe von 256 MB.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">Die heruntergeladene Datei ist kein PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">KillerPDF konnte das PDF nicht herunterladen.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">Die Zeit für den PDF-Download ist abgelaufen.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">KillerPDF konnte die heruntergeladene PDF-Datei nicht speichern oder lesen.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Ziehen Sie, um ein ausfüllbares Textfeld zu erstellen</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">Ausfüllbares Textfeld abgebrochen</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Das ausfüllbare Textfeld konnte nicht erstellt werden</sys:String>
@@ -1021,7 +991,6 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_Form_Initial">Initialen</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Vorheriger geänderter Bereich</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Nächster geänderter Bereich</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Portabler Modus - installierte Version herunterladen</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Vorschau konnte nicht gerendert werden:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Druck wird vorbereitet...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Zu Seite {0} wechseln</sys:String>
@@ -1032,10 +1001,93 @@ Auf eine unterstützte Größe skalieren? Aussehen und Proportionen der Seiten b
     <sys:String x:Key="Str_KS_ToggleTip">Alle Tastenkürzel der App ein- oder ausschalten. Ctrl+Shift+K funktioniert immer.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Tastenkürzel aktiviert</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Tastenkürzel deaktiviert. Zum Aktivieren Ctrl+Shift+K drücken.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Beim Start nach Updates suchen</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">KillerPDF {0} ist verfügbar. Möchten Sie diese Version jetzt herunterladen und installieren?&#10;&#10;Die App wird geschlossen und automatisch neu geöffnet.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Beim Start immer nach Updates suchen</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">„{0}“ ist passwortgeschützt.</sys:String>
     <sys:String x:Key="Str_About_Aka">Auch bekannt als</sys:String>
     <sys:String x:Key="Str_Btn_Run">Starten</sys:String>
+    <sys:String x:Key="Str_Settings">Einstellungen</sys:String>
+    <!-- SEMANTIC ANCHOR: UI_LOCALIZATION_CONTRACT: Ribbon strings share the global locale dictionary; other locales fall back to English. -->
+    <sys:String x:Key="Str_Ribbon_Abflachen">Abflachen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Anmerkungen_l00F6schen">Anmerkungen löschen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Ansicht">Ansicht</sys:String>
+    <sys:String x:Key="Str_Ribbon_Ausgew00E4hltes_Formularfeld_l00F6schen">Ausgewähltes Formularfeld löschen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Ausw00E4hlen">Auswählen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Bearbeiten">Bearbeiten</sys:String>
+    <sys:String x:Key="Str_Ribbon_Bild">Bild</sys:String>
+    <sys:String x:Key="Str_Ribbon_Breite_einpassen">Breite einpassen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Datei">Datei</sys:String>
+    <sys:String x:Key="Str_Ribbon_Dokument">Dokument</sys:String>
+    <sys:String x:Key="Str_Ribbon_Dokumenteninfo">Dokumenteninfo</sys:String>
+    <sys:String x:Key="Str_Ribbon_Doppelseite">Doppelseite</sys:String>
+    <sys:String x:Key="Str_Ribbon_Drucken">Drucken</sys:String>
+    <sys:String x:Key="Str_Ribbon_Einzelseite">Einzelseite</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Trennen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Feld_l00F6schen">Feld löschen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Fenster">Fenster</sys:String>
+    <sys:String x:Key="Str_Ribbon_Formen">Formen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Formular">Formular</sys:String>
+    <sys:String x:Key="Str_Ribbon_Formulare">Formulare</sys:String>
+    <sys:String x:Key="Str_Ribbon_Formularfeld">Formularfeld</sys:String>
+    <sys:String x:Key="Str_Ribbon_Formularfeld_ausw00E4hlen_oder_bearbeiten">Formularfeld auswählen oder bearbeiten</sys:String>
+    <sys:String x:Key="Str_Ribbon_Fortlaufend">Fortlaufend</sys:String>
+    <sys:String x:Key="Str_Ribbon_Geteilte_Ansicht">Geteilte Ansicht</sys:String>
+    <sys:String x:Key="Str_Ribbon_Hervorheben">Hervorheben</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Markieren</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Textmarker</sys:String>
+    <sys:String x:Key="Str_Ribbon_Hilfe">Hilfe</sys:String>
+    <sys:String x:Key="Str_Ribbon_Kommentar">Bearbeiten</sys:String>
+    <sys:String x:Key="Str_Ribbon_Linie">Linie</sys:String>
+    <sys:String x:Key="Str_Ribbon_L00F6schen">Löschen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Messen">Messen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Nach_oben">Nach oben</sys:String>
+    <sys:String x:Key="Str_Ribbon_Nach_unten">Nach unten</sys:String>
+    <sys:String x:Key="Str_Ribbon_Navigation">Navigation</sys:String>
+    <sys:String x:Key="Str_Ribbon_Neu">Neu</sys:String>
+    <sys:String x:Key="Str_Ribbon_OCR">OCR</sys:String>
+    <sys:String x:Key="Str_Ribbon_OCR_Optionen">OCR-Optionen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Online_Hilfe">Online-Hilfe</sys:String>
+    <sys:String x:Key="Str_Ribbon_R00FCckg00E4ngig">Rückgängig</sys:String>
+    <sys:String x:Key="Str_Ribbon_Schlie00DFen">Schließen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Seite_einpassen">Seite einpassen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Seiten">Seiten</sys:String>
+    <sys:String x:Key="Str_Ribbon_Seitenansicht">Seitenansicht</sys:String>
+    <sys:String x:Key="Str_Ribbon_Signatur">Unterschrift</sys:String>
+    <sys:String x:Key="Str_Ribbon_Speichern">Speichern</sys:String>
+    <sys:String x:Key="Str_Ribbon_Speichern___Speichern_unter">Speichern / Speichern unter</sys:String>
+    <sys:String x:Key="Str_Ribbon_Startseite">Startseite</sys:String>
+    <sys:String x:Key="Str_Ribbon_Stempel">Wasserzeichen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Suchen">Suchen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Tastenkombinationen">Tastenkombinationen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Tastenk00FCrzel">Tastenkürzel</sys:String>
+    <sys:String x:Key="Str_Ribbon_Text">Text</sys:String>
+    <sys:String x:Key="Str_Ribbon_Text_und_Markieren">Text und Markieren</sys:String>
+    <sys:String x:Key="Str_Ribbon_Transformieren">Transformieren</sys:String>
+    <sys:String x:Key="Str_Ribbon_Vergleichen">Vergleichen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Vergr00F600DFern">Vergrößern</sys:String>
+    <sys:String x:Key="Str_Ribbon_Verkleinern">Verkleinern</sys:String>
+    <sys:String x:Key="Str_Ribbon_Weitere_Kommentare">Dokumentgestaltung</sys:String>
+    <sys:String x:Key="Str_Ribbon_Weitere_Werkzeuge">Weitere Werkzeuge</sys:String>
+    <sys:String x:Key="Str_Ribbon_Zeichnen">Zeichnen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Zoom">Zoom</sys:String>
+    <sys:String x:Key="Str_Ribbon_Zuletzt_ge00F6ffnet">Zuletzt geöffnet</sys:String>
+    <sys:String x:Key="Str_Ribbon_Zusammenf00FChren">Zusammenführen</sys:String>
+    <sys:String x:Key="Str_Ribbon_Zuschneiden">Zuschneiden</sys:String>
+    <sys:String x:Key="Str_Ribbon_00D6ffnen">Öffnen</sys:String>
+    <sys:String x:Key="Str_Ribbon_00DCbersicht">Übersicht</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">Über</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">KillerPDF-Basisversion</sys:String>
+    <sys:String x:Key="Str_About_Support">PewDF unterstützen</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Bildstempel</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Bildstempel als Bild importieren und platzieren</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Als Standard-PDF-App festlegen</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Debug-Logging aktivieren</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Einstellungen zurücksetzen</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Konfigurationsordner öffnen</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Alle Anwendungseinstellungen zurücksetzen?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Einstellungen zurückgesetzt. Starten Sie PewDF neu, damit alle Änderungen wirksam werden.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Nicht erneut fragen</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Ja</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Nein</sys:String>
 </ResourceDictionary>

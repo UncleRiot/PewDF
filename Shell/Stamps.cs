@@ -4,9 +4,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -78,11 +78,10 @@ namespace KillerPDF
         // has active stamps, as a subtle indicator. Cleared when there are no stamps.
         private void UpdateStampIndicator()
         {
-            if (ToolStampBtn is null) return;
-            if (_docStampSpec is not null)
-                ToolStampBtn.SetResourceReference(Control.BackgroundProperty, "RowHoverBrush");
-            else
-                ToolStampBtn.ClearValue(Control.BackgroundProperty);
+            // SEMANTIC ANCHOR: STAMP_SELECTION_DISPLAY_INVARIANT.
+            // The active ribbon reflects EditTool.Stamp via the shared selection refresh;
+            // no visual state may be applied to a retired toolbar button.
+            UpdateRibbonPreviewSelection();
         }
 
         private void AddStamp(int page, StampKind kind)

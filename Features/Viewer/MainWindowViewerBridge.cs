@@ -5,7 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// The window's half of the viewer bridge. Read this alongside

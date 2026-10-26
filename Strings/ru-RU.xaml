@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Russian (ru-RU) strings
+         PewDF  -  Russian (ru-RU) strings
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Свернуть боковую панель (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Развернуть боковую панель (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Сочетания клавиш (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">О программе KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">О программе PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">ВЕРСИЯ</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">ПОДПИСЬ</sys:String>
     <sys:String x:Key="Str_About_ExeSha">EXE SHA256</sys:String>
     <sys:String x:Key="Str_About_Computing">Вычисляю...</sys:String>
-    <sys:String x:Key="Str_Tagline">Быстрый бесплатный PDF-инструментарий для Windows с аннотациями, объединением, распознаванием текста, подписью и инструментами формирования форм. Утилита на базе GPLv3 {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Быстрый бесплатный PDF-инструментарий для Windows с аннотациями, объединением, распознаванием текста, подписью и инструментами формирования форм. PewDF — форк KillerPDF.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">СТРАНИЦЫ</sys:String>
@@ -69,6 +69,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Тема</sys:String>
     <sys:String x:Key="Str_Language">Язык</sys:String>
+    <sys:String x:Key="Str_General">Общие</sys:String>
     <sys:String x:Key="Str_Toolbar">ПАНЕЛЬ ИНСТРУМЕНТОВ</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">панель инструментов</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Нет текста</sys:String>
@@ -137,7 +138,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Готово</sys:String>
     <sys:String x:Key="Str_Portable">Портабельный</sys:String>
-    <sys:String x:Key="Str_InstallBtn">Установить KillerPDF</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">Открыто{0} - {1} страниц(ы)</sys:String>
@@ -212,37 +212,20 @@
 При сохранении сейчас файл будет перезаписан, и эти изменения будут потеряны. Если вы хотите сохранить их, сначала сохраните другую панель.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Раздельная панель, на - F10, чтобы закрыть</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Отключить Раздельную панель</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">Установить KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">Установить KillerPDF на этот компьютер?
 
-При установке приложение копируется в папку "Программы" для более быстрого запуска и добавляется пункт меню "Пуск". Впоследствии вы можете сохранить или удалить этот переносимый файл.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Обновить существующую установку KillerPDF для всех пользователей ?
-
-Это заменяет копию в Program Files на более быструю версию с несколькими файлами. Все старые копии, предназначенные для каждого пользователя, удаляются, поэтому KillerPDF отображается только один раз. Впоследствии вы можете сохранить или удалить этот переносимый файл.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Обновите существующую установку KillerPDF?
-
-Это заменит установленную копию на более быструю версию с несколькими файлами. Впоследствии вы можете сохранить или удалить этот переносимый файл.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">KillerPDF уже установлен для всех пользователей на этом компьютере. Обновите эту программу или удалите ее, прежде чем выбирать установку для каждого пользователя.
-
-KillerPDF не будет создавать две установленные копии.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Установить</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Обновить</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Добавить ярлык на рабочий стол</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Установка для всех пользователей этого компьютера (требуется администратор)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">Установка не завершена - KillerPDF все еще работает в режиме portable.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Хотите ли вы установить KillerPDF в качестве средства просмотра PDF-файлов по умолчанию?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Хотите ли вы установить PewDF в качестве средства просмотра PDF-файлов по умолчанию?
 
 Открывает настройки Windows - Приложения по умолчанию.</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">У вас есть несохраненные изменения. Закрыть этот файл без сохранения?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">У вас есть несохраненные изменения. Закрыть KillerPDF без сохранения?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Сохранить изменения?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Сохранить изменения?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">Этот документ имеет {0} страниц(ы) с размером, отличным от того, который поддерживает Adobe Reader (от 3 до 14,400 точек на сторону) - Adobe отображает их как пустые.
 
 Масштабируйте их до поддерживаемого размера? Страницы сохраняют свой внешний вид и пропорции.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">Не удалось открыть PDF-файл:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">У Вас {0} открытых документов. Хотели бы вы, чтобы KillerPDF закрывал их все, когда вы выходите из приложения?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">У вас открыт 1 документ. Хотите ли вы, чтобы KillerPDF закрывал его при выходе из приложения?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">У Вас {0} открытых документов. Хотели бы вы, чтобы PewDF закрывал их все, когда вы выходите из приложения?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">У вас открыт 1 документ. Хотите ли вы, чтобы PewDF закрывал его при выходе из приложения?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Запомнить мой выбор</sys:String>
 
 
@@ -257,7 +240,6 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Theme_Ectoplasm">Эктоплазма</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Распад</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Траур</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Зернистость плёнки</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Гробница</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Делирий</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Недомогание</sys:String>
@@ -354,7 +336,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Stamp_FontSize">Размер шрифта (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Отменить</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Штамп</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Добавить штампы поверх страницы</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Водяные знаки и номера страниц</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Номера страниц</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Водяной знак</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Цвет</sys:String>
@@ -368,8 +350,8 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Stamp_Opacity">Непрозрачность</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">Зеркальное отображение на лицевой стороне страницы (внешний край)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">Проштамповано {0} страница(ы)</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Добавить штампы поверх страницы (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Добавить штампы поверх страницы</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Водяные знаки и номера страниц (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Водяные знаки и номера страниц</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Нижний центр</sys:String>
     <sys:String x:Key="Str_Pos_BottomRight">Внизу справа</sys:String>
     <sys:String x:Key="Str_Pos_BottomLeft">Внизу слева</sys:String>
@@ -378,7 +360,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Pos_TopLeft">Вверху слева</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Печать</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Печать</sys:String>
     <sys:String x:Key="Str_Print_Printer">Принтер</sys:String>
     <sys:String x:Key="Str_Print_Paper">Размер бумаги</sys:String>
     <sys:String x:Key="Str_Print_PaperAuto">В соответствии с документом</sys:String>
@@ -437,7 +419,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Drop_Separate">Открыть отдельно</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Не найдено PDF или изображений чтобы открыть.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Будет открыто {0} отдельных вкладок. Продолжить?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">Эта папка или архив имеет {0} файлов. KillerPDF откроет только первый {1}. Продолжить?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">Эта папка или архив имеет {0} файлов. PewDF откроет только первый {1}. Продолжить?</sys:String>
     <sys:String x:Key="Str_Status_Merged">Объединено {0} файлов - пока не сохранены</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Объединяем файлы...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Объединение отменено</sys:String>
@@ -598,14 +580,14 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_KS_FullScreen">Полноэкранный режим</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">Нажмите F11 или Esc, чтобы выйти из полноэкранного режима</sys:String>
     <!-- Quit prompt (family standard) -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">Закрыть KillerPDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">Закрыть PewDF?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">Закрыть мои открытые вкладки</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Выход</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Отмена</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Все данные KillerPDF очищены</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Все данные PewDF очищены</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">Распознование области отменено</sys:String>
     <sys:String x:Key="Str_St_Erased">Стерто</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Разгруппировано</sys:String>
@@ -653,8 +635,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_St_ClipEmpty">В буфер обмена нечего вставлять</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">Пожалуйста, сохраните внесенные изменения перед обновлением.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">KillerPDF был удален.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Выберите страницы для извлечения.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Выберите страницы для удаления.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Принтер недоступен.</sys:String>
@@ -740,6 +721,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Btn_Open">Открыть</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Заменить</sys:String>
     <sys:String x:Key="Str_Btn_Save">Сохранить</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Не сохранять</sys:String>
     <sys:String x:Key="Str_Col_Modified">изменено</sys:String>
     <sys:String x:Key="Str_Col_Name">имя</sys:String>
     <sys:String x:Key="Str_Col_Size">размер</sys:String>
@@ -798,7 +780,6 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Dlg_SaveFlattened">Сохранить сжатый PDF-файл</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Сохраните извлеченные страницы как</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Вставить изображение</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Создать ярлык на рабочем столе</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">ПРОЕКТ</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Выберите файл сертификата (.pfx / .p12) сперва.</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">Сертификат подписи недоступен в магазине Windows Store.</sys:String>
@@ -921,7 +902,7 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">Сохранен PDF-файл с возможностью поиска:&#10;{0}&#10;&#10;{1} обработано страниц, {2} распознано слова.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">"{0}" был успешно отремонтирован.&#10;&#10;Возможно, были утеряны закладки, формы и другие интерактивные функции. Используйте функцию Сохранить как, чтобы записать восстановленный файл в новое место.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">"{0}" был восстановлен путем растеризации с помощью PDFium.&#10;&#10;Текст в восстановленной копии невозможно выбрать. Используйте "Сохранить как", чтобы записать его в новое место.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">"{0}" имеет поврежденную структуру и не может быть добавлен.&#10;&#10;Хотите, чтобы KillerPDF попытался выполнить восстановление? Будет создана восстановленная копия. Исходный файл изменен не будет.&#10;&#10;Примечание: в восстановленных файлах могут отсутствовать закладки, формы и другие интерактивные функции.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">"{0}" имеет поврежденную структуру и не может быть добавлен.&#10;&#10;Хотите, чтобы PewDF попытался выполнить восстановление? Будет создана восстановленная копия. Исходный файл изменен не будет.&#10;&#10;Примечание: в восстановленных файлах могут отсутствовать закладки, формы и другие интерактивные функции.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">Языковая модель ({0}) будет загружена сейчас, чтобы можно было запустить распознавание текста.&#10;&#10;Вы можете в любое время добавить дополнительные языки или переключиться на модели более высокого качества из меню распознавания текста.</sys:String>
     <sys:String x:Key="Str_Bar_More">Дополнительные настройки</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">Держите линию на ближайшей оси (горизонтальной или вертикальной).</sys:String>
@@ -935,14 +916,14 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_TT_SaveOptions">Сохранить параметры</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">Параметры распознавания текста</sys:String>
     <sys:String x:Key="Str_RecentHeading">НЕДАВНЕЕ</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Сочетания клавиш</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Доступно обновление: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">Скачать и установить KillerPDF {0}?&#10;&#10;Приложение закроется и снова откроется автоматически.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Загрузка...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Сочетания клавиш</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Очистить все данные</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">При этом будут удалены все сохраненные настройки, загруженные языковые пакеты распознавания текста и временные файлы.&#10;&#10;Это не повлияет на ваши PDF-файлы. Продолжить?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Настройки, языковые пакеты и временные файлы были удалены.&#10;&#10;Перезапустите KillerPDF, чтобы завершить очистку всех файлов, которые все еще используются в этом сеансе.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Непредвиденная ошибка</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Настройки, языковые пакеты и временные файлы были удалены.&#10;&#10;Перезапустите PewDF, чтобы завершить очистку всех файлов, которые все еще используются в этом сеансе.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Непредвиденная ошибка</sys:String>
     <sys:String x:Key="Str_Crash_Log">Журнал: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Копия отчета</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Открытые журналы</sys:String>
@@ -1002,17 +983,6 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Compare_DetailsTitle">Подробные сведения о сравнении PDF-файлов</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">KillerPDF не удалось открыть файл PDF в браузере.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">Эта команда браузера не является той, которую знает KillerPDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">При передаче не был указан адрес PDF файла.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">Не удалось прочитать адрес PDF-файла при передаче данных.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">KillerPDF открывает доступ к браузеру только по протоколу https.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">Не удалось использовать передачу управления браузером.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">Размер PDF-файла превышает установленный браузером лимит на передачу данных в размере 256 МБ.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">Загруженный файл не является PDF-файлом.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">KillerPDF не удалось загрузить PDF-файл.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">Время загрузки PDF-файла истекло.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">KillerPDF не удалось сохранить или прочитать загруженный PDF-файл.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Перетащите, чтобы создать заполняемое текстовое поле</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">Создание текстового поля отменено</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Не удалось создать заполняемое текстовое поле</sys:String>
@@ -1035,7 +1005,6 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_Form_Initial">Инициалы</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Предыдущая измененная область</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Следующая измененная область</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Портативный режим - получить устанавливаемую версию</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Не удалось отобразить предварительный просмотр:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Подготовка к печати...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Перейти на страницу {0}</sys:String>
@@ -1046,10 +1015,28 @@ KillerPDF не будет создавать две установленные �
     <sys:String x:Key="Str_KS_ToggleTip">Включить или отключить все сочетания клавиш приложения. Ctrl+Shift+K работает всегда.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Сочетания клавиш включены</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Сочетания клавиш отключены. Нажмите Ctrl+Shift+K, чтобы включить их.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Проверять обновления при запуске</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">Доступен KillerPDF {0}. Хотите скачать и установить его сейчас?&#10;&#10;Приложение закроется и снова откроется автоматически.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Всегда проверять обновления при запуске</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">«{0}» защищен паролем.</sys:String>
     <sys:String x:Key="Str_About_Aka">Также известен как</sys:String>
     <sys:String x:Key="Str_Btn_Run">Запустить</sys:String>
+    <sys:String x:Key="Str_Settings">Настройки</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">О программе</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Выделить</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Маркер</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">Базовая версия KillerPDF</sys:String>
+    <sys:String x:Key="Str_About_Support">Поддержать PewDF</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Штампы-изображения</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Импорт и размещение штампов-изображений</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Разделить</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Сделать приложением PDF по умолчанию</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Включить журнал отладки</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Сбросить настройки</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Открыть папку конфигурации</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Сбросить все настройки?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Настройки сброшены. Перезапустите PewDF для применения изменений.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Больше не спрашивать</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Да</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Нет</sys:String>
 </ResourceDictionary>

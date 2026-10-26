@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -11,7 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // ═══════════════════════════════════════════════════════════
     //  FOLDER TREE  -  the file dialog's left pane, below places
@@ -55,6 +55,16 @@ namespace KillerPDF.Controls
             Path    = d.RootDirectory.FullName;
             IsDrive = true;
             Name    = DriveLabel(d);
+            Children.Add(Placeholder);
+        }
+
+        // Allows callers that already queried drive metadata off-thread to avoid a second
+        // synchronous volume query when populating the UI.
+        public FolderNode(DriveInfo d, string label)
+        {
+            Path = d.RootDirectory.FullName;
+            IsDrive = true;
+            Name = label;
             Children.Add(Placeholder);
         }
 

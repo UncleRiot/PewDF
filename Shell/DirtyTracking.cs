@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -58,7 +58,7 @@ namespace KillerPDF
         {
             if (_doc is null || string.IsNullOrEmpty(_currentFile))
             {
-                KillerDialog.Show(this, Loc("Str_Msg_OpenFirst"));
+                PewDialog.Show(this, Loc("Str_Msg_OpenFirst"));
                 return;
             }
             // Sign the user's real document, not the temp working copy. Operations like print/crop/repair

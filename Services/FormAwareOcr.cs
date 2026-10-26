@@ -1,6 +1,6 @@
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 internal static class FormAwareOcr
 {

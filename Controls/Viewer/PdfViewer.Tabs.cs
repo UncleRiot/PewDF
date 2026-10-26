@@ -1,14 +1,14 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
-    // Tabbed document support. KillerPDF keeps one window and one live "working set" of
+    // Tabbed document support. PewDF keeps one window and one live "working set" of
     // per-document fields (in MainWindow.xaml.cs). Each open PDF is a DocumentSession that
     // owns its own copy of those fields. Switching tabs captures the live fields into the
     // outgoing session and applies the incoming session's fields, then re-renders.
@@ -181,6 +181,12 @@ namespace KillerPDF.Controls
         // Session state capture / apply
         // ============================================================
 
+        // SEMANTIC ANCHOR: TAB_SESSION_STATE_TRANSFER
+        // INVARIANT: Capture precedes a change of the active session; Apply restores
+        // the incoming session's document and view state together. Neither operation
+        // may use a window-global tab collection as a second source of session state.
+        // SSOT: DocumentSession owns each tab's persisted state; the viewer fields are
+        // only the live working set for the active tab in this pane.
         // Copy the live working set INTO the session (call before switching away from it).
         private void CaptureSessionState(DocumentSession s)
         {
@@ -297,6 +303,10 @@ namespace KillerPDF.Controls
             return false;
         }
 
+        // SEMANTIC ANCHOR: TAB_SESSION_STATE_TRANSFER (restore half).
+        // INVARIANT: Keep fields added to DocumentSession synchronized between Capture
+        // and Apply; state that is intentionally reset on tab change must be explicit.
+        // SSOT: The incoming DocumentSession remains authoritative for the active tab.
         // Point the live working set AT the session's state. Pure field assignment - no UI.
         private void ApplySessionState(DocumentSession s)
         {
@@ -840,9 +850,9 @@ namespace KillerPDF.Controls
             {
                 if (s.IsDirty)
                 {
-                    var res = KillerDialog.Show(Host!.Window,
+                    var res = PewDialog.Show(Host!.Window,
                         Loc("Str_Dlg_UnsavedClose"),
-                        "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (res != MessageBoxResult.Yes) return;
                 }
                 if (!_sessions.Contains(s) || ReferenceEquals(s, _active)) return;
@@ -872,9 +882,9 @@ namespace KillerPDF.Controls
 
             if (_isDirty)
             {
-                var res = KillerDialog.Show(Host!.Window,
+                var res = PewDialog.Show(Host!.Window,
                     Loc("Str_Dlg_UnsavedClose"),
-                    "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (res != MessageBoxResult.Yes) { RebuildTabStrip(); return; }
             }
 
@@ -924,15 +934,26 @@ namespace KillerPDF.Controls
 
             if (docTabs.Any(t => t.IsDirty))
             {
-                var res = KillerDialog.Show(Host!.Window, Loc("Str_Dlg_UnsavedCloseAll"),
-                    "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var res = PewDialog.Show(Host!.Window, Loc("Str_Dlg_UnsavedCloseAll"),
+                    "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (res != MessageBoxResult.Yes) { RebuildTabStrip(); return; }
             }
 
+            // SEMANTIC ANCHOR: DOCUMENT_SESSION_LIFETIME
+            // INVARIANT: A removed session cannot retain thumbnail work or cached bitmaps.
+            // SSOT: CancelAndRelease and the per-session cache collections own this cleanup.
             CancelRenderWork();
-            foreach (var s in docTabs) { try { s.Doc?.Close(); } catch { } }
-            try { _doc?.Close(); } catch { }
+            foreach (var s in _sessions)
+            {
+                CancelAndRelease(s.ThumbCts);
+                s.ThumbCts = null;
+                try { s.Doc?.Close(); } catch { }
+                s.RenderCache.Clear();
+                s.RenderCacheSize.Clear();
+            }
+            _renderLru.Clear();
             _doc = null;
+            CompactLohSoon();
 
             _sessions.Clear();
             App.RemoveSetting("LastFile");   // a manually emptied window won't reopen on launch
@@ -942,6 +963,26 @@ namespace KillerPDF.Controls
             ApplySessionState(blank2);
             ShowEmptyState();
             RebuildTabStrip();
+        }
+
+        // SEMANTIC ANCHOR: VIEWER_WINDOW_SHUTDOWN
+        // INVARIANT: Closing the window releases resources of every tab in this pane,
+        // including inactive and deferred sessions, without re-rendering or prompting.
+        // SSOT: CancelRenderWork and CancelAndRelease implement cancellation for all paths.
+        internal void ReleaseSessionsOnWindowClosedExt()
+        {
+            CancelRenderWork();
+            foreach (var s in _sessions)
+            {
+                CancelAndRelease(s.ThumbCts);
+                s.ThumbCts = null;
+                try { s.Doc?.Close(); } catch { }
+                s.RenderCache.Clear();
+                s.RenderCacheSize.Clear();
+            }
+            _renderLru.Clear();
+            _sessions.Clear();
+            _doc = null;
         }
 
         // OpenFromExternal / RestoreAndActivate moved BACK to Shell/ExternalOpen.cs on MainWindow.

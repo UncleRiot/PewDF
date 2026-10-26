@@ -6,7 +6,7 @@ using System.Windows.Controls;
 using KillerPdf.Engine.Authoring;
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF
+namespace PewDF
 {
     // Read/edit the PDF Document Info dictionary (Title, Author, Subject, Keywords, Creator). Themed via
     // DialogChrome, no preview pane. Producer/dates/structure are shown read-only.
@@ -23,7 +23,7 @@ namespace KillerPDF
         {
             _info = info;
             _save = save;
-            Title = "KillerPDF - " + L("Str_DocInfo_Suffix");
+            Title = "PewDF - " + L("Str_DocInfo_Suffix");
             Width = 460;
             SizeToContent = SizeToContent.Height;
             UseLayoutRounding = true;
@@ -60,7 +60,7 @@ namespace KillerPDF
             row.Margin = new Thickness(0, 16, 0, 0);
             body.Children.Add(row);
 
-            Content = DialogChrome.Frame(this, Owner, "KillerPDF - " + L("Str_DocInfo_Suffix"),
+            Content = DialogChrome.Frame(this, Owner, "PewDF - " + L("Str_DocInfo_Suffix"),
                 () => { DialogResult = false; Close(); }, body);
 
             Loaded += (_, _2) => _title.Focus();

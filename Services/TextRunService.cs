@@ -2,7 +2,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using UglyToad.PdfPig;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     /// <summary>One selectable character on a page, in reading order. Coordinates are PDF space
     /// (points, bottom-left origin), matching SearchService and ExtractTextFromRegion.</summary>

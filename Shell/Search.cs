@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,11 +13,11 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Features;
-using KillerPDF.Services;
+using PewDF.Features;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow : ISearchHost
     {
@@ -53,248 +53,56 @@ namespace KillerPDF
         void ISearchHost.ClearHighlights() => ClearSearchHighlights();
         void ISearchHost.RepaintHighlights() => HighlightSearchResultsOnCurrentPage();
 
-        private void Search_Click(object sender, RoutedEventArgs e) => ToggleSearchBar();
+        // SEMANTIC ANCHOR: Search SSOT is the inline toolbar TextBox and existing SearchController.
+        // No floating duplicate field; no OS focus rectangle or duplicated search state.
 
-        private void ToggleSearchBar()
+        private void ToolbarSearchInput_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (_searchBar is not null && _searchBar.Visibility == Visibility.Visible)
-            {
-                CloseSearchBar();
-                return;
-            }
-            ShowSearchBar();
+            _searchBox = ToolbarSearchInput;
+            _searchStatus = ToolbarSearchCount;
+            SearchBox_TextChanged(sender, e);
         }
 
-        private void ShowSearchBar()
+        private void ToolbarSearchInput_KeyDown(object sender, KeyEventArgs e)
         {
-            if (_searchBar is null)
-            {
-                // Build search bar programmatically and inject into the preview area grid
-                _searchBox = new TextBox
-                {
-                    Width = 200,
-                    Height = 26,
-                    FontFamily = UiKit.UiFont,
-                    FontSize = 13,
-                    SelectionBrush = AccentBrush(),
-                    BorderThickness = new Thickness(1),
-                    Padding = new Thickness(6, 2, 6, 2),
-                    VerticalContentAlignment = VerticalAlignment.Center
-                };
-                // Live (DynamicResource-style) brushes so the box recolors on a theme switch while the
-                // bar is open, instead of baking colors in at build time. Background uses the dark
-                // toolbar/titlebar tone (BgSidebar).
-                _searchBox.SetResourceReference(Control.BackgroundProperty, "BackgroundBrush");
-                _searchBox.SetResourceReference(Control.ForegroundProperty, "TextBrush");
-                _searchBox.SetResourceReference(System.Windows.Controls.Primitives.TextBoxBase.CaretBrushProperty, "TextBrush");
-                _searchBox.SetResourceReference(Control.BorderBrushProperty, "CardBorderBrush");
-                _searchBox.KeyDown += SearchBox_KeyDown;
-                _searchBox.TextChanged += SearchBox_TextChanged;
-
-                // Custom template so the default WPF blue focus/hover border never shows; keep our themed border.
-                var tbTemplate = new ControlTemplate(typeof(TextBox));
-                var tbBorder = new FrameworkElementFactory(typeof(Border));
-                tbBorder.SetValue(Border.BackgroundProperty, new System.Windows.TemplateBindingExtension(Control.BackgroundProperty));
-                tbBorder.SetValue(Border.BorderBrushProperty, new System.Windows.TemplateBindingExtension(Control.BorderBrushProperty));
-                tbBorder.SetValue(Border.BorderThicknessProperty, new System.Windows.TemplateBindingExtension(Control.BorderThicknessProperty));
-                tbBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(3));
-                var tbHost = new FrameworkElementFactory(typeof(ScrollViewer)) { Name = "PART_ContentHost" };
-                tbHost.SetValue(ScrollViewer.PaddingProperty, new System.Windows.TemplateBindingExtension(Control.PaddingProperty));
-                tbHost.SetValue(ScrollViewer.VerticalAlignmentProperty, VerticalAlignment.Center);
-                tbBorder.AppendChild(tbHost);
-                tbTemplate.VisualTree = tbBorder;
-                _searchBox.Template = tbTemplate;
-                _searchBox.FocusVisualStyle = null;
-
-                // Wide enough for translated empty/error states while keeping the count stable.
-                _searchStatus = new TextBlock
-                {
-                    FontFamily = UiKit.UiFont,
-                    FontSize = 11,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    TextAlignment = TextAlignment.Center,
-                    Width = 96,
-                    Margin = new Thickness(2, 0, 2, 0)
-                };
-                _searchStatus.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-
-                // Small VSCode-style prev / next / close buttons. Hover tooltips carry the shortcuts.
-                Button SearchNavBtn(string glyph, string tip, Action onClick, bool danger = false)
-                {
-                    var b = new Button
-                    {
-                        Content    = glyph,
-                        FontFamily = UiKit.IconFont,
-                        FontSize   = 12,
-                        Width = 26, Height = 24,
-                        Padding    = new Thickness(0),   // ToolbarButton's 10,6 padding clips the glyph in a 26px button
-                        // The close X uses the shared danger style so its glyph turns red on hover like
-                        // every other close X (window chrome, tabs, overlay headers).
-                        Style      = (Style)FindResource(danger ? "DangerCloseButton" : "ToolbarButton"),
-                        ToolTip    = tip
-                    };
-                    b.Click += (_, _) => onClick();
-                    return b;
-                }
-                var prevBtn  = SearchNavBtn("", Loc("Str_Search_PreviousTT"), SearchPrevResult); // ChevronUp
-                var nextBtn  = SearchNavBtn("", Loc("Str_Search_NextTT"), SearchNextResult);     // ChevronDown
-                var closeBtn = SearchNavBtn("", Loc("Str_Search_CloseTT"), CloseSearchBar, danger: true); // Cancel
-
-                var searchIcon = new TextBlock
-                {
-                    Text = "",  // Segoe MDL2 Search / magnifying glass
-                    FontFamily = UiKit.IconFont,
-                    FontSize = 12,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 6, 0),
-                    IsHitTestVisible = false
-                };
-                searchIcon.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-
-                // Drag grip: two columns of three dots on the left (same look as the sidebar splitter and
-                // the annotate bars). Grabbing it moves the whole bar anywhere in the document area.
-                var gripBrush = TryFindResource("MutedTextBrush") as Brush ?? Brushes.Gray;
-                var gripDots = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(2, 0, 6, 0)
-                };
-                for (int gcol = 0; gcol < 2; gcol++)
-                {
-                    var colDots = new StackPanel { Orientation = Orientation.Vertical, VerticalAlignment = VerticalAlignment.Center };
-                    for (int grow = 0; grow < 3; grow++)
-                        colDots.Children.Add(new Ellipse { Width = 3, Height = 3, Margin = new Thickness(1.5), Fill = gripBrush });
-                    gripDots.Children.Add(colDots);
-                }
-                var searchGrip = new Border
-                {
-                    Background = Brushes.Transparent,   // transparent yet hit-testable, so it can be grabbed
-                    // No Cursor here: EnablePanelDrag sets the grab hand when it wires the drag,
-                    // so the affordance has one source of truth.
-                    VerticalAlignment = VerticalAlignment.Stretch,
-                    Child = gripDots,
-                    ToolTip = Loc("Str_Search_DragTT")
-                };
-
-                var panel = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(8, 6, 8, 6)
-                };
-                panel.Children.Add(searchGrip);
-                panel.Children.Add(searchIcon);
-                panel.Children.Add(_searchBox);
-                panel.Children.Add(_searchStatus);
-                panel.Children.Add(prevBtn);
-                panel.Children.Add(nextBtn);
-                panel.Children.Add(closeBtn);
-
-                _searchBar = new Border
-                {
-                    BorderThickness = new Thickness(1),
-                    // Free-floating like the Signatures popup: positioned by Left/Top margin (set after
-                    // layout from the saved spot) and draggable by the grip, so it can sit anywhere.
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(4),
-                    Child = GrainWrap(panel),
-                    Margin = new Thickness(0),
-                    Effect = new System.Windows.Media.Effects.DropShadowEffect { Color = Colors.Black, BlurRadius = 16, ShadowDepth = 3, Direction = 270, Opacity = 0.55 }
-                };
-                _searchBar.SetResourceReference(Border.BackgroundProperty, "BgFlyout");
-                // PaneBorderBrush, the same key the annotate settings bars use (AnnotationBars.cs).
-                // The find bar is the same class of floating tool surface, so it takes the same
-                // edge; on MenuBorderBrush the two sat side by side drawing different borders.
-                _searchBar.SetResourceReference(Border.BorderBrushProperty, "PaneBorderBrush");
-
-                // Add to the preview area grid (parent of ScrollViewer)
-                var previewGrid = PagePreviewPanel.Parent as Grid;
-                if (previewGrid is not null)
-                {
-                    // Above the annotate settings bars (ZIndex 100) so Ctrl+F is never hidden under
-                    // the highlight/draw/text toolbar when both are open.
-                    Panel.SetZIndex(_searchBar, 200);
-                    previewGrid.Children.Add(_searchBar);
-                    // Keep the whole bar on screen: when the preview area is resized, shrink the text box
-                    // (not the buttons) so it never overflows, and re-clamp the floating bar back inside.
-                    previewGrid.SizeChanged += (_, _) =>
-                    {
-                        FitSearchBox();
-                        if (_searchBar is { Visibility: Visibility.Visible })
-                        {
-                            double cl = _searchBar.Margin.Left, ct = _searchBar.Margin.Top;
-                            ClampPanelToBounds(_searchBar, previewGrid, ref cl, ref ct);
-                            _searchBar.Margin = new Thickness(cl, ct, 0, 0);
-                        }
-                    };
-                    // Place it (saved spot, or default near the old top-right position) and wire the grip
-                    // for dragging once it's laid out and has a real width - mirrors the Signatures popup.
-                    var bar = _searchBar;
-                    var grip = searchGrip;
-                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, (Action)(() =>
-                    {
-                        ApplySavedPanelPosition(bar, previewGrid, "SearchBar", fallbackRightInset: 16, fallbackTop: 6);
-                        EnablePanelDrag(grip, bar, previewGrid, "SearchBar");
-                    }));
-                }
-            }
-
-            _searchBar.Visibility = Visibility.Visible;
-            _searchBox!.Text = "";
-            _searchStatus?.Text = "";
-            FitSearchBox();
-            _searchBox.Focus();
-            Keyboard.Focus(_searchBox);
-        }
-
-        // Sizes the search text box to whatever width is left after the icon, status, and nav
-        // buttons, capped at a comfortable 200px, so the full bar always fits the preview area.
-        private void FitSearchBox()
-        {
-            if (_searchBar is null || _searchBox is null) return;
-            double avail = (PagePreviewPanel.Parent as Grid)?.ActualWidth ?? 0;
-            const double reserved = 232;   // grip + icon + status + 3 buttons + paddings/margins
-            _searchBox.Width = Math.Max(60, Math.Min(200, avail - reserved));
-        }
-
-        private void CloseSearchBar()
-        {
-            if (_searchBar is { Visibility: Visibility.Visible } bar)
-            {
-                // Fade out rather than blink away. On completion, collapse and restore opacity so the
-                // next open shows it cleanly.
-                var fade = new DoubleAnimation(bar.Opacity, 0, new Duration(TimeSpan.FromMilliseconds(150)))
-                    { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut } };
-                fade.Completed += (_, _) =>
-                {
-                    bar.Visibility = Visibility.Collapsed;
-                    bar.BeginAnimation(UIElement.OpacityProperty, null);
-                    bar.Opacity = 1;
-                };
-                bar.BeginAnimation(UIElement.OpacityProperty, fade);
-            }
-            ClearSearchHighlights();
-        }
-
-        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
-        {
+            _searchBox = ToolbarSearchInput;
+            _searchStatus = ToolbarSearchCount;
             if (e.Key == Key.Escape)
             {
-                CloseSearchBar();
+                ToolbarSearchInput.Clear();
+                Keyboard.ClearFocus();
                 e.Handled = true;
             }
             else if (e.Key == Key.Enter)
             {
-                if (Keyboard.Modifiers == ModifierKeys.Shift)
-                    SearchPrevResult();
-                else
-                    SearchNextResult();
+                _searchDebounce?.Stop();
+                if (!Search.HasResults && ToolbarSearchInput.Text.Length >= 2)
+                    Search.Run(ToolbarSearchInput.Text);
+                else if (Keyboard.Modifiers == ModifierKeys.Shift) SearchPrevResult();
+                else SearchNextResult();
                 e.Handled = true;
             }
         }
+
+        private void ToolbarSearchPrevious_Click(object sender, RoutedEventArgs e) => SearchPrevResult();
+        private void ToolbarSearchNext_Click(object sender, RoutedEventArgs e) => SearchNextResult();
+
+        private void ToggleSearchBar()
+        {
+            _searchBox = ToolbarSearchInput;
+            _searchStatus = ToolbarSearchCount;
+            ToolbarSearchInput.Focus();
+            Keyboard.Focus(ToolbarSearchInput);
+            ToolbarSearchInput.SelectAll();
+        }
+
+        // SEMANTIC ANCHOR: INLINE_SEARCH_UI_SSOT.
+        // The persistent ToolbarSearchInput and SearchController are the only search UI/state.
+        // INVARIANT: Keyboard shortcuts focus the inline field; no duplicate floating bar.
+
+        // VIEWER_SEARCH_HOST_COMPAT_INVARIANT: Viewer-host tab changes still clear highlights,
+        // but the obsolete floating search UI must never be instantiated.
+        private void CloseSearchBar() => ClearSearchHighlights();
 
         private System.Windows.Threading.DispatcherTimer? _searchDebounce;
 
@@ -334,7 +142,6 @@ namespace KillerPDF
         // what keeps highlights alive instead of being wiped by re-renders and continuous scrolling.
         private void ApplySearchHighlights(int page, Canvas canvas)
         {
-            if (_searchBar is null || _searchBar.Visibility != Visibility.Visible) return;
             if (_doc is null || page < 0 || page >= EnsureEngineDocumentSession().PageCount) return;
             if (!Search.TryGetPageRects(page, out var rects)) return;
             if (!_renderDims.TryGetValue(page, out var rd)) return;

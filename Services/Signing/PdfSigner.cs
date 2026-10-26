@@ -4,9 +4,9 @@ using System.Security.Cryptography.X509Certificates;
 using KillerPdf.Engine.Documents;
 using KillerPdf.Engine.Signing;
 
-namespace KillerPDF.Services.Signing
+namespace PewDF.Services.Signing
 {
-    /// <summary>Creates detached-CMS approval signatures through The KillerPDF.Engine.</summary>
+    /// <summary>Creates detached-CMS approval signatures through The PewDF.Engine.</summary>
     internal sealed class PdfSigner
     {
         public sealed record SignInfo(string Reason, string Location, string Contact,

@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Moved from Shell/Links.cs; the namespace and class line are the only changes. Window members
     // spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -64,7 +64,7 @@ namespace KillerPDF.Controls
         private bool ConfirmOpenLink(string url)
         {
             if (App.GetSetting(ConfirmLinksSetting) != "1") return true;
-            var (result, dontAsk) = KillerDialog.ShowWithCheckbox(
+            var (result, dontAsk) = PewDialog.ShowWithCheckbox(
                 Host!.Window,
                 $"{Loc("Str_LinkConfirmBody")}\n\n{url}",
                 Loc("Str_LinkDontAsk"),
@@ -333,7 +333,7 @@ namespace KillerPDF.Controls
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(Host!.Window, $"{Loc("Str_LinkRemoveFailed")}\n{ex.Message}", "KillerPDF",
+                PewDialog.Show(Host!.Window, $"{Loc("Str_LinkRemoveFailed")}\n{ex.Message}", "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

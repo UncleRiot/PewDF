@@ -14,18 +14,18 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Controls;
-using KillerPDF.Services;
+using PewDF.Controls;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// In-process page transfer captured before a drag can move focus to another pane.
     /// The source working file and overlay annotations are snapshots of what the user dragged.
     /// </summary>
     internal sealed record PageDragPayload(
-        KillerPDF.Controls.PdfViewer SourceViewer,
+        PewDF.Controls.PdfViewer SourceViewer,
         string SourcePath,
         int[] PageIndices,
         Dictionary<int, int> PageRotations,
@@ -304,7 +304,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Err_PageCopyFailed"), ex.Message),
+                PewDialog.Show(this, string.Format(Loc("Str_Err_PageCopyFailed"), ex.Message),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -507,9 +507,9 @@ namespace KillerPDF
         /// </summary>
         private async System.Threading.Tasks.Task<string?> RepairPdfForImportAsync(string path)
         {
-            var ask = KillerDialog.Show(this,
+            var ask = PewDialog.Show(this,
                 string.Format(Loc("Str_Dlg_RepairAsk"), System.IO.Path.GetFileName(path)),
-                "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (ask != MessageBoxResult.Yes) return null;
 
             var busy = ShowBusyOverlay(Loc("Str_Busy_Repairing"));
@@ -527,10 +527,10 @@ namespace KillerPDF
                 repaired ??= await System.Threading.Tasks.Task.Run(() => PdfImport.RepairViaDocnetRasterizeToFile(path));
 
                 if (repaired is null)
-                    KillerDialog.Show(this,
+                    PewDialog.Show(this,
                         string.Format(Loc("Str_Err_FileRepairFailed"),
                             System.IO.Path.GetFileName(path)),
-                        "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                        "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                 return repaired;
             }
             finally { HideBusyOverlay(busy); }

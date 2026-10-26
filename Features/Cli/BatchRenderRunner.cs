@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -7,15 +7,15 @@ using System.Text;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Docnet.Core.Readers;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     // ============================================================
     // Headless CLI render benchmark
     // ============================================================
     //
-    // KillerPDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--log <file.csv>] [--quiet]
+    // PewDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--log <file.csv>] [--quiet]
     //
     // Renders the first N pages of one PDF (or every *.pdf under a folder tree)
     // through the same page-render path the viewer, print, flatten, and image
@@ -46,7 +46,11 @@ namespace KillerPDF.Features
                 var a = args[i];
                 if (string.Equals(a, "--log", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (i + 1 < args.Length) logPath = args[++i];
+                    // INVARIANT: Value-taking CLI options consume a path, never another option.
+                    // Keep this validation aligned with the batch-render CLI parser.
+                    if (i + 1 < args.Length && !string.IsNullOrWhiteSpace(args[i + 1])
+                        && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
+                        logPath = args[++i];
                     else badUsage = true;
                 }
                 else if (string.Equals(a, "--size", StringComparison.OrdinalIgnoreCase))
@@ -67,6 +71,14 @@ namespace KillerPDF.Features
                 {
                     quiet = true;
                 }
+                // SEMANTIC ANCHOR: BATCH_CLI_ARGUMENT_CONTRACT
+                // INVARIANT: Both batch entry points reject unknown long options and
+                // require explicit values for value-taking options before any file I/O.
+                // SSOT: This parser owns its mode's grammar; keep shared switches and
+                // exit-code meanings consistent with the other batch entry point.
+                // INVARIANT: Unknown long options are invalid, never positional file paths.
+                // Keep the batch-render and batch-resave parsers consistent.
+                else if (a.StartsWith("--", StringComparison.Ordinal)) badUsage = true;
                 else if (input is null) input = a;
                 else if (output is null) output = a;
                 else badUsage = true;
@@ -74,7 +86,7 @@ namespace KillerPDF.Features
 
             if (badUsage || string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(output))
             {
-                con.WriteLine("Usage: KillerPDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--log <file.csv>] [--quiet]");
+                con.WriteLine("Usage: PewDF.exe --batch-render <input.pdf|inputDir> <outputDir> [--size <px>] [--pages <n>] [--log <file.csv>] [--quiet]");
                 exitCode = 2;
                 return true;
             }
@@ -101,7 +113,10 @@ namespace KillerPDF.Features
             }
             else if (Directory.Exists(input))
             {
-                string inRoot = Path.GetFullPath(input).TrimEnd('\\', '/');
+                // SEMANTIC ANCHOR: CLI_DIRECTORY_ROOT_CANONICALIZATION
+                // INVARIANT: Normalizing a directory path must preserve its volume/root identity.
+                // SSOT: Use Path.TrimEndingDirectorySeparator rather than trimming separators manually.
+                string inRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
                 foreach (var f in Directory.GetFiles(inRoot, "*.pdf", SearchOption.AllDirectories))
                     work.Add((f[inRoot.Length..].TrimStart('\\', '/'), f));
             }
@@ -111,7 +126,39 @@ namespace KillerPDF.Features
                 return 2;
             }
 
-            string outRoot = Path.GetFullPath(output).TrimEnd('\\', '/');
+            string outRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(output));
+            // SEMANTIC ANCHOR: CLI_RENDER_OUTPUT_PATH_INTEGRITY
+            // INVARIANT: The requested CSV log must not replace an input PDF or a rendered PNG.
+            // Validate against the exact centralized output-naming convention before writing.
+            if (!string.IsNullOrWhiteSpace(logPath))
+            {
+                string fullLogPath = Path.GetFullPath(logPath);
+                foreach (var (rel, src) in work)
+                {
+                    if (string.Equals(fullLogPath, Path.GetFullPath(src), StringComparison.OrdinalIgnoreCase))
+                    {
+                        con.WriteLine($"Log conflicts with input PDF: {fullLogPath}");
+                        return 2;
+                    }
+                    string dstBase = Path.Combine(outRoot, rel);
+                    string pngPrefix = Path.GetFullPath(dstBase + "-page-");
+                    const string pngSuffix = ".png";
+                    if (fullLogPath.StartsWith(pngPrefix, StringComparison.OrdinalIgnoreCase)
+                        && fullLogPath.EndsWith(pngSuffix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string pagePart = fullLogPath.Substring(pngPrefix.Length,
+                            fullLogPath.Length - pngPrefix.Length - pngSuffix.Length);
+                        if (int.TryParse(pagePart, NumberStyles.None, CultureInfo.InvariantCulture, out int page)
+                            && page >= 1 && page <= pageLimit
+                            && string.Equals(pagePart, page.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0'),
+                                StringComparison.Ordinal))
+                        {
+                            con.WriteLine($"Log conflicts with rendered output: {fullLogPath}");
+                            return 2;
+                        }
+                    }
+                }
+            }
             Directory.CreateDirectory(outRoot);
             var log = new List<string> { "File,Page,Status,Milliseconds,Width,Height,Detail" };
             int ok = 0, skip = 0, fail = 0;
@@ -121,9 +168,22 @@ namespace KillerPDF.Features
             foreach (var (rel, src) in work)
             {
                 string dstBase = Path.Combine(outRoot, rel);
-                var dstDir = Path.GetDirectoryName(dstBase);
-                if (!string.IsNullOrEmpty(dstDir)) Directory.CreateDirectory(dstDir);
-                foreach (var row in RenderFile(src, dstBase, size, pageLimit))
+                // SEMANTIC ANCHOR: BATCH_RENDER_PER_FILE_ISOLATION
+                // INVARIANT: A destination-directory failure belongs to its source file;
+                // it must not suppress the remaining inputs or the requested CSV log.
+                List<RenderRow> rows;
+                try
+                {
+                    var dstDir = Path.GetDirectoryName(dstBase);
+                    if (!string.IsNullOrEmpty(dstDir)) Directory.CreateDirectory(dstDir);
+                    rows = RenderFile(src, dstBase, size, pageLimit);
+                }
+                catch (Exception ex)
+                {
+                    rows = new List<RenderRow> { new RenderRow { Page = 0, Status = "FAIL",
+                        Detail = "destination failed: " + BatchRunner.FlattenBatchDetail(ex.Message) } };
+                }
+                foreach (var row in rows)
                 {
                     if (row.Status == "OK") ok++;
                     else if (row.Status == "SKIP") skip++;
@@ -152,6 +212,9 @@ namespace KillerPDF.Features
                 catch (Exception ex)
                 {
                     con.WriteLine("Could not write log: " + BatchRunner.FlattenBatchDetail(ex.Message));
+                    // INVARIANT: An explicitly requested log is part of the CLI result.
+                    // Preserve file-render failure precedence; never signal success on log failure.
+                    return fail > 0 ? 1 : 2;
                 }
             }
             return fail > 0 ? 1 : 0;
@@ -214,8 +277,22 @@ namespace KillerPDF.Features
                         sw.Stop();
                         row.Width = w;
                         row.Height = h;
-                        File.WriteAllBytes($"{dstBase}-page-{(idx + 1).ToString(CultureInfo.InvariantCulture).PadLeft(3, '0')}.png",
-                            BitmapHelpers.RenderToPng(raw, w, h));
+                        // SEMANTIC ANCHOR: BATCH_RENDER_ATOMIC_PAGE_OUTPUT
+                        // INVARIANT: Failed page writes must not leave truncated final PNGs.
+                        // SSOT: The final page filename is defined here and reused for commit.
+                        string finalPath = $"{dstBase}-page-{(idx + 1).ToString(CultureInfo.InvariantCulture).PadLeft(3, '0')}.png";
+                        string tempPath = finalPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                        try
+                        {
+                            File.WriteAllBytes(tempPath, BitmapHelpers.RenderToPng(raw, w, h));
+                            File.Move(tempPath, finalPath, overwrite: true);
+                        }
+                        finally
+                        {
+                            try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+                            catch (IOException) { /* Preserve the original write/commit outcome. */ }
+                            catch (UnauthorizedAccessException) { /* Preserve the original write/commit outcome. */ }
+                        }
                     }
                     catch (Exception ex)
                     {

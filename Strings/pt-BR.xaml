@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Português (Brasil) (pt-BR) strings
+         PewDF  -  Português (Brasil) (pt-BR) strings
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Recolher barra lateral (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Expandir barra lateral (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Atalhos de teclado (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">Sobre o KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">Sobre o PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">VERSÃO</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">IMPRESSÃO DIGITAL</sys:String>
     <sys:String x:Key="Str_About_ExeSha">SHA256 DO EXE</sys:String>
     <sys:String x:Key="Str_About_Computing">Calculando...</sys:String>
-    <sys:String x:Key="Str_Tagline">Um kit de ferramentas de PDF rápido e gratuito para Windows, com anotação, mesclagem, OCR, assinatura e formulários. Um utilitário GPLv3 de {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Um kit de ferramentas de PDF rápido e gratuito para Windows, com anotação, mesclagem, OCR, assinatura e formulários. PewDF é um fork do KillerPDF.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">PÁGINAS</sys:String>
@@ -69,6 +69,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Tema</sys:String>
     <sys:String x:Key="Str_Language">Idioma</sys:String>
+    <sys:String x:Key="Str_General">Geral</sys:String>
     <sys:String x:Key="Str_Toolbar">BARRA DE FERRAMENTAS</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">Barra de ferramentas</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Sem texto</sys:String>
@@ -137,7 +138,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Pronto</sys:String>
     <sys:String x:Key="Str_Portable">PORTÁTIL</sys:String>
-    <sys:String x:Key="Str_InstallBtn">Instalar o KillerPDF</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">{0} aberto - {1} página(s)</sys:String>
@@ -212,37 +212,20 @@ Salvar substitui o arquivo e remove a assinatura. Para manter o arquivo assinado
 Salvar agora sobrescreve o arquivo e essas alterações serão perdidas. Salve o outro painel primeiro se quiser mantê-las.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Painel dividido ativado - F10 para fechar</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Painel dividido desativado</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">Instalar o KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">Instalar o KillerPDF neste computador?
 
-A instalação copia o aplicativo para a pasta Programas, para uma inicialização mais rápida, e adiciona uma entrada no menu Iniciar. Depois, você pode manter ou excluir este arquivo portátil.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Atualizar a instalação existente do KillerPDF para todos os usuários?
-
-Isso substitui a cópia em Arquivos de Programas pela versão mais rápida de vários arquivos. Qualquer cópia antiga por usuário é removida para que o KillerPDF apareça apenas uma vez. Depois, você pode manter ou excluir este arquivo portátil.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Atualizar a sua instalação existente do KillerPDF?
-
-Isso substitui a cópia instalada pela versão mais rápida de vários arquivos. Depois, você pode manter ou excluir este arquivo portátil.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">O KillerPDF já está instalado para todos neste computador. Atualize essa instalação ou desinstale-a antes de escolher uma instalação por usuário.
-
-O KillerPDF não criará duas cópias instaladas.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Instalar</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Atualizar</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Adicionar um atalho na área de trabalho</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Instalar para todos neste computador (requer administrador)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">A instalação não foi concluída - o KillerPDF continua em execução no modo portátil.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Deseja definir o KillerPDF como seu visualizador de PDF padrão?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Deseja definir o PewDF como seu visualizador de PDF padrão?
 
 Abre as Configurações do Windows - Aplicativos padrão.</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">Você tem alterações não salvas. Fechar este arquivo sem salvar?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">Você tem alterações não salvas. Fechar o KillerPDF sem salvar?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Salvar alterações?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Salvar alterações?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">Este documento tem {0} página(s) com tamanho fora do que o Adobe Reader aceita (3 a 14.400 pontos por lado) - o Adobe as exibe como páginas em branco.
 
 Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as proporções.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">Falha ao abrir o PDF:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">Você tem {0} documentos abertos. Deseja que o KillerPDF feche todos ao sair do aplicativo?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Você tem 1 documento aberto. Deseja que o KillerPDF o feche ao sair do aplicativo?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">Você tem {0} documentos abertos. Deseja que o PewDF feche todos ao sair do aplicativo?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Você tem 1 documento aberto. Deseja que o PewDF o feche ao sair do aplicativo?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Lembrar minha escolha</sys:String>
 
 
@@ -257,7 +240,6 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasma</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Decadência</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Luto</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Granulação de filme</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Sepulcro</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Delírio</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Mal-estar</sys:String>
@@ -354,7 +336,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Stamp_FontSize">Tamanho da fonte (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Cancelar</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Carimbar</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Carimbar páginas</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Marcas d’água e números de página</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Números de página</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Marca d'água</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Cor</sys:String>
@@ -368,8 +350,8 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Stamp_Opacity">Opacidade</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">Espelhar em páginas opostas (borda externa)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">{0} página(s) carimbada(s)</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Carimbar páginas (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Carimbar páginas</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Marcas d’água e números de página (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Marcas d’água e números de página</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Inferior central</sys:String>
     <sys:String x:Key="Str_Pos_BottomRight">Inferior direita</sys:String>
     <sys:String x:Key="Str_Pos_BottomLeft">Inferior esquerda</sys:String>
@@ -378,7 +360,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Pos_TopLeft">Superior esquerda</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Imprimir</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Imprimir</sys:String>
     <sys:String x:Key="Str_Print_Printer">Impressora</sys:String>
     <sys:String x:Key="Str_Print_Paper">Tamanho do papel</sys:String>
     <sys:String x:Key="Str_Print_PaperAuto">Igual ao documento</sys:String>
@@ -437,7 +419,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Drop_Separate">Abrir separadamente</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Nenhum PDF ou imagem encontrado para abrir.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Isso abrirá {0} guias separadas. Continuar?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">Esta pasta ou arquivo compactado tem {0} arquivos. O KillerPDF abrirá apenas os primeiros {1}. Continuar?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">Esta pasta ou arquivo compactado tem {0} arquivos. O PewDF abrirá apenas os primeiros {1}. Continuar?</sys:String>
     <sys:String x:Key="Str_Status_Merged">{0} arquivos mesclados - ainda não salvo</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Mesclando arquivos...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Mesclagem cancelada</sys:String>
@@ -598,14 +580,14 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_KS_FullScreen">Tela cheia</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">Pressione F11 ou Esc para sair da tela cheia</sys:String>
     <!-- Quit prompt (family standard) -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">Sair do KillerPDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">Sair do PewDF?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">Fechar minhas guias abertas</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Sair</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Cancelar</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Todos os dados do KillerPDF foram apagados</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Todos os dados do PewDF foram apagados</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">OCR de região cancelado</sys:String>
     <sys:String x:Key="Str_St_Erased">Apagado</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Desagrupado</sys:String>
@@ -653,8 +635,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_St_ClipEmpty">A área de transferência não tem nada para colar</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">Salve suas alterações antes de atualizar.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">O KillerPDF foi desinstalado.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Selecione as páginas a extrair.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Selecione as páginas a excluir.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Nenhuma impressora disponível.</sys:String>
@@ -740,6 +721,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Btn_Open">Abrir</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Substituir</sys:String>
     <sys:String x:Key="Str_Btn_Save">Salvar</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Não salvar</sys:String>
     <sys:String x:Key="Str_Col_Modified">modificado</sys:String>
     <sys:String x:Key="Str_Col_Name">nome</sys:String>
     <sys:String x:Key="Str_Col_Size">tamanho</sys:String>
@@ -798,7 +780,6 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Dlg_SaveFlattened">Salvar PDF nivelado</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Salvar páginas extraídas como</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Inserir imagem</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Criar atalho na área de trabalho</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">RASCUNHO</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Escolha primeiro um arquivo de certificado (.pfx / .p12).</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">Nenhum certificado de assinatura está disponível no repositório do Windows.</sys:String>
@@ -921,7 +902,7 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">PDF pesquisável salvo:&#10;{0}&#10;&#10;{1} páginas processadas, {2} palavras reconhecidas.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">“{0}” foi reparado com sucesso.&#10;&#10;Marcadores, formulários e outros recursos interativos podem ter sido perdidos. Use Salvar como para gravar o arquivo reparado em um novo local.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">“{0}” foi reparado por rasterização via PDFium.&#10;&#10;O texto não pode ser selecionado na cópia reparada. Use Salvar como para gravá-la em um novo local.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">“{0}” tem a estrutura danificada e não pôde ser adicionado.&#10;&#10;Deseja que o KillerPDF tente um reparo? Uma cópia reparada será criada. O arquivo original não será alterado.&#10;&#10;Observação: os arquivos reparados podem perder marcadores, formulários e outros recursos interativos.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">“{0}” tem a estrutura danificada e não pôde ser adicionado.&#10;&#10;Deseja que o PewDF tente um reparo? Uma cópia reparada será criada. O arquivo original não será alterado.&#10;&#10;Observação: os arquivos reparados podem perder marcadores, formulários e outros recursos interativos.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">Um modelo de idioma ({0}) será baixado agora para que o OCR possa ser executado.&#10;&#10;Você pode adicionar mais idiomas ou mudar para modelos de maior qualidade a qualquer momento pelo menu OCR.</sys:String>
     <sys:String x:Key="Str_Bar_More">Mais configurações</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">Manter a linha no eixo mais próximo (horizontal ou vertical)</sys:String>
@@ -935,14 +916,14 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_TT_SaveOptions">Opções de salvamento</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">Opções de OCR</sys:String>
     <sys:String x:Key="Str_RecentHeading">RECENTES</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Atalhos de teclado</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Atualização disponível: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">Baixar e instalar o KillerPDF {0}?&#10;&#10;O aplicativo será fechado e reaberto automaticamente.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Baixando...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Atalhos de teclado</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Apagar todos os dados</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">Isso excluirá todas as configurações salvas, os pacotes de idioma de OCR baixados e os arquivos temporários.&#10;&#10;Seus arquivos PDF não serão afetados. Continuar?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">As configurações, os pacotes de idioma e os arquivos temporários foram apagados.&#10;&#10;Reinicie o KillerPDF para concluir a limpeza de quaisquer arquivos ainda em uso nesta sessão.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Erro inesperado</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">As configurações, os pacotes de idioma e os arquivos temporários foram apagados.&#10;&#10;Reinicie o PewDF para concluir a limpeza de quaisquer arquivos ainda em uso nesta sessão.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Erro inesperado</sys:String>
     <sys:String x:Key="Str_Crash_Log">Log: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Copiar relatório</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Abrir logs</sys:String>
@@ -1002,17 +983,6 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Compare_DetailsTitle">Detalhes da comparação de PDFs</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">O KillerPDF não conseguiu abrir o PDF do navegador.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">Esse comando do navegador não é reconhecido pelo KillerPDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">A transferência não incluiu um endereço de PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">Não foi possível ler o endereço do PDF na transferência.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">O KillerPDF só abre transferências do navegador por https.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">Não foi possível usar a transferência do navegador.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">O PDF é maior que o limite de 256 MB para transferência do navegador.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">O arquivo baixado não é um PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">O KillerPDF não conseguiu baixar o PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">O download do PDF expirou.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">O KillerPDF não conseguiu salvar ou ler o PDF baixado.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Arraste para criar um campo de texto preenchível</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">Campo de texto preenchível cancelado</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Não foi possível criar o campo de texto preenchível</sys:String>
@@ -1035,7 +1005,6 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_Form_Initial">Iniciais</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Região alterada anterior</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Próxima região alterada</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Modo portátil - obtenha a versão instalada</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Não foi possível renderizar a visualização:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Preparando a impressão...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Ir para a página {0}</sys:String>
@@ -1046,10 +1015,28 @@ Dimensioná-las para um tamanho aceito? As páginas mantêm a aparência e as pr
     <sys:String x:Key="Str_KS_ToggleTip">Ativa ou desativa todos os atalhos do aplicativo. Ctrl+Shift+K sempre funciona.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Atalhos de teclado ativados</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Atalhos de teclado desativados. Pressione Ctrl+Shift+K para ativá-los.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Verificar atualizações ao iniciar</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">O KillerPDF {0} está disponível. Deseja baixá-lo e instalá-lo agora?&#10;&#10;O aplicativo será fechado e reaberto automaticamente.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Sempre verificar ao iniciar</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">“{0}” é protegido por senha.</sys:String>
     <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Executar</sys:String>
+    <sys:String x:Key="Str_Settings">Configurações</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">Sobre</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Marcar</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Marca-texto livre</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">Versão base do KillerPDF</sys:String>
+    <sys:String x:Key="Str_About_Support">Apoie o PewDF</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Carimbos de imagem</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Importar e inserir carimbos de imagem</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Dividir</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Definir como aplicativo PDF padrão</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Ativar log de depuração</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Redefinir configurações</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Abrir pasta de configuração</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Redefinir todas as configurações?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Configurações redefinidas. Reinicie o PewDF para aplicar as alterações.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Não perguntar novamente</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Sim</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Não</sys:String>
 </ResourceDictionary>

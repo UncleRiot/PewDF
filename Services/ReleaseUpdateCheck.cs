@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 internal static partial class ReleaseUpdateCheck
 {
@@ -14,8 +14,8 @@ internal static partial class ReleaseUpdateCheck
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get,
-                "https://api.github.com/repos/SteveTheKiller/KillerPDF/releases/latest");
-            request.Headers.UserAgent.ParseAdd("KillerPDF-UpdateCheck");
+                "https://api.github.com/repos/UncleRiot/KPDF/releases/latest");
+            request.Headers.UserAgent.ParseAdd("KPDF-UpdateCheck");
             using var response = await http.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return ParseNewerRelease(await response.Content.ReadAsStringAsync().ConfigureAwait(false), current);
@@ -40,10 +40,11 @@ internal static partial class ReleaseUpdateCheck
         if (tag is null || !StableTag().IsMatch(tag)
             || !Version.TryParse(tag[1..], out var latest))
             return null;
-        var installed = new Version(current.Major, current.Minor, Math.Max(0, current.Build));
-        return latest > installed ? tag : null;
+        var installed = new Version(current.Major, current.Minor, Math.Max(0, current.Build), Math.Max(0, current.Revision));
+        var available = new Version(latest.Major, latest.Minor, Math.Max(0, latest.Build), Math.Max(0, latest.Revision));
+        return available > installed ? tag : null;
     }
 
-[GeneratedRegex(@"\Av[0-9]+\.[0-9]+\.[0-9]+\z", RegexOptions.CultureInvariant)]
+[GeneratedRegex(@"\Av[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?\z", RegexOptions.CultureInvariant)]
     private static partial Regex StableTag();
 }

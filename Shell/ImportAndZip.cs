@@ -7,9 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF
+namespace PewDF
 {
     // Import images as a PDF, and compress the current PDF to a .zip. Kept in its own partial-class
     // file rather than the MainWindow monolith. User-facing strings go through Loc() (keys live in
@@ -20,12 +20,11 @@ namespace KillerPDF
 
         private void ImportImages_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
+            var dlg = new Microsoft.Win32.OpenFileDialog()
             {
                 Title       = Loc("Str_Menu_Import"),
                 Filter      = $"{Loc("Str_Filter_Images")}|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tif;*.tiff|{Loc("Str_Filter_AllFiles")}|*.*",
-                Multiselect = true,
-                ShowImagePreview = true
+                Multiselect = true
             };
             if (dlg.ShowDialog(this) != true) return;
 
@@ -41,14 +40,14 @@ namespace KillerPDF
                 MarkDirty(true);        // unsaved -> orange icon + close warns
                 SetStatus(string.Format(Loc("Str_Status_Imported"), dlg.FileNames.Length));
                 CaptureSessionState(_active!);
-                SetTool(_currentTool);
+                SetTool(_currentTool, restoringPane: true);
                 RebuildTabStrip();
             }
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -96,8 +95,8 @@ namespace KillerPDF
             catch (Exception ex)
             {
                 CleanupDirs(tempDirs);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -113,9 +112,9 @@ namespace KillerPDF
             const int MaxDropFiles = 50;
             if (found.Count > MaxDropFiles)
             {
-                var proceed = KillerDialog.Show(this,
+                var proceed = PewDialog.Show(this,
                     string.Format(Loc("Str_Drop_TooMany"), found.Count, MaxDropFiles),
-                    "KillerPDF", MessageBoxButton.OKCancel);
+                    "PewDF", MessageBoxButton.OKCancel);
                 if (proceed != MessageBoxResult.OK) { CleanupDirs(tempDirs); return; }
                 found = found.GetRange(0, MaxDropFiles);
             }
@@ -124,7 +123,7 @@ namespace KillerPDF
             // zip is kept for the session since the opened doc references it.
             if (!expanded && found.Count == 1) { OpenDropped(found[0]); return; }
 
-            int choice = KillerDialog.ShowChoices(this,
+            int choice = PewDialog.ShowChoices(this,
                 string.Format(Loc("Str_Drop_Prompt"), found.Count),
                 [Loc("Str_Drop_Merge"), Loc("Str_Drop_Separate"), Loc("Str_Stamp_Cancel")],
                 accentIndex: 0);
@@ -153,8 +152,8 @@ namespace KillerPDF
         {
             if (found.Count > 30)
             {
-                var ok = KillerDialog.Show(this, string.Format(Loc("Str_Drop_ManyTabs"), found.Count),
-                    "KillerPDF", MessageBoxButton.OKCancel);
+                var ok = PewDialog.Show(this, string.Format(Loc("Str_Drop_ManyTabs"), found.Count),
+                    "PewDF", MessageBoxButton.OKCancel);
                 if (ok != MessageBoxResult.OK) return;
             }
             foreach (var f in found)
@@ -188,7 +187,7 @@ namespace KillerPDF
                 MarkDirty(true);
                 SetStatus(string.Format(Loc("Str_Status_Merged"), found.Count));
                 CaptureSessionState(_active!);
-                SetTool(_currentTool);
+                SetTool(_currentTool, restoringPane: true);
                 RebuildTabStrip();
                 HideBusyOverlay(busy);
             }
@@ -196,8 +195,8 @@ namespace KillerPDF
             {
                 HideBusyOverlay(busy);
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -218,14 +217,14 @@ namespace KillerPDF
                 _originalFile = null;
                 MarkDirty(true);
                 CaptureSessionState(_active!);
-                SetTool(_currentTool);
+                SetTool(_currentTool, restoringPane: true);
                 RebuildTabStrip();
             }
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ImportFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -252,7 +251,7 @@ namespace KillerPDF
 
         private static string? ExtractZipToTemp(string zipPath)
         {
-            string dir = Path.Combine(Path.GetTempPath(), "KillerPDF-zip-" + Guid.NewGuid().ToString("N")[..8]);
+            string dir = Path.Combine(Path.GetTempPath(), "PewDF-zip-" + Guid.NewGuid().ToString("N")[..8]);
             try { Directory.CreateDirectory(dir); ZipFile.ExtractToDirectory(zipPath, dir); return dir; }
             catch { try { Directory.Delete(dir, true); } catch { } return null; }
         }
@@ -266,13 +265,13 @@ namespace KillerPDF
 
         private void CompressToZip_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
 
             // The zip wraps the PDF on disk, so make sure what's on screen is saved first.
             if (_isDirty || string.IsNullOrEmpty(_originalFile) || !File.Exists(_originalFile))
             {
-                var ask = KillerDialog.Show(this, Loc("Str_Dlg_SaveBeforeZip"),
-                    "KillerPDF", MessageBoxButton.OKCancel);
+                var ask = PewDialog.Show(this, Loc("Str_Dlg_SaveBeforeZip"),
+                    "PewDF", MessageBoxButton.OKCancel);
                 if (ask != MessageBoxResult.OK) return;
                 SaveInPlace();
                 if (_isDirty || string.IsNullOrEmpty(_originalFile) || !File.Exists(_originalFile))
@@ -280,7 +279,8 @@ namespace KillerPDF
             }
 
             string sourcePdf = _originalFile!;
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
+            // SAVE_DIALOG_PLATFORM_INVARIANT: use the same native Windows file picker family as import/open; preserve ZIP naming and destination handling.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
             {
                 Filter   = $"{Loc("Str_Filter_Zip")}|*.zip",
                 Title    = Loc("Str_Menu_CompressZip"),
@@ -290,21 +290,34 @@ namespace KillerPDF
             if (!string.IsNullOrEmpty(srcDir) && Directory.Exists(srcDir)) dlg.InitialDirectory = srcDir;
             if (dlg.ShowDialog(this) != true) return;
 
+            // ZIP_OUTPUT_INTEGRITY_INVARIANT: never destroy a previously saved archive before
+            // the replacement is complete. Build beside the destination (same volume) and
+            // replace it only after ZipArchive has been successfully finalized.
+            string destination = dlg.FileName;
+            string stagingPath = Path.Combine(
+                Path.GetDirectoryName(Path.GetFullPath(destination))!,
+                "." + Path.GetFileName(destination) + "." + Guid.NewGuid().ToString("N") + ".tmp");
             try
             {
-                if (File.Exists(dlg.FileName)) File.Delete(dlg.FileName);
-                using (var zip = ZipFile.Open(dlg.FileName, ZipArchiveMode.Create))
+                using (var zip = ZipFile.Open(stagingPath, ZipArchiveMode.Create))
                     zip.CreateEntryFromFile(sourcePdf, Path.GetFileName(sourcePdf), CompressionLevel.Optimal);
 
+                // SSOT: destination is committed only here; failure leaves the prior ZIP intact.
+                PdfEngineIntegration.ReplaceFileAtomically(stagingPath, destination);
                 long before = new FileInfo(sourcePdf).Length;
-                long after  = new FileInfo(dlg.FileName).Length;
+                long after  = new FileInfo(destination).Length;
                 SetStatus(string.Format(Loc("Str_Status_Zipped"),
-                    Path.GetFileName(dlg.FileName), FormatSize(after), FormatSize(before)));
+                    Path.GetFileName(destination), FormatSize(after), FormatSize(before)));
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ZipFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ZipFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                // A failed ZIP must not leave partially written files in the output directory.
+                try { if (File.Exists(stagingPath)) File.Delete(stagingPath); } catch { }
             }
         }
 

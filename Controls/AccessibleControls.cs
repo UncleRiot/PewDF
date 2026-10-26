@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System;
 using System.Globalization;
 using System.ComponentModel;
@@ -58,8 +58,18 @@ namespace KillerFamily.Accessibility
 
         internal static void Prepare(Control control)
         {
-            // The focus adorner is shown by WPF for keyboard navigation, without changing layout.
-            if (control is not Window && control.Focusable && control.FocusVisualStyle == null)
+            // SEMANTIC ANCHOR: BUTTON_FOCUS_VISUAL (SSOT).
+            // Ribbon and other buttons must not acquire the dotted accessibility focus adorner.
+            // Keep keyboard focus and activation intact; only suppress the visual overlay.
+            if (control is ButtonBase)
+                control.SetCurrentValue(Control.FocusVisualStyleProperty, null);
+            // SEMANTIC ANCHOR: EXPLICIT_FOCUS_VISUAL_OPT_OUT_INVARIANT (SSOT).
+            // Honor controls that explicitly disable a focus adorner (for example PDF
+            // scroll surfaces). Do not re-enable a dotted frame during SizeChanged/Loaded.
+            // Keyboard focus and accessibility naming remain intact.
+            else if (control is not Window && control.Focusable &&
+                     control.FocusVisualStyle == null &&
+                     control.ReadLocalValue(Control.FocusVisualStyleProperty) == DependencyProperty.UnsetValue)
                 control.SetCurrentValue(Control.FocusVisualStyleProperty, FocusStyle);
 
             UpdateName(control);

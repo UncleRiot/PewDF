@@ -9,7 +9,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// A small, themed RGB color picker: saturation/value square + hue strip, RGB and HTML-hex inputs,
@@ -50,7 +50,7 @@ namespace KillerPDF
         private static string L(string key) => Application.Current.TryFindResource(key) as string ?? key;
         public ColorPickerDialog(Window? owner, Color initial)
         {
-            Title = "KillerPDF - " + L("Str_Color_Name");
+            Title = "PewDF - " + L("Str_Color_Name");
             System.Windows.Automation.AutomationProperties.SetAutomationId(this, "ColorPickerDialog");
             Width = 300;
             SizeToContent = SizeToContent.Height;
@@ -68,7 +68,7 @@ namespace KillerPDF
             var panel = new StackPanel { Margin = new Thickness(18, 14, 18, 16) };
             // 98SE: the hand-rolled card (black outline + 1px AddBevels ring) never read as a
             // classic window. Use the shared DialogChrome.Frame instead - the same classic caption
-            // bar and five-ring raised frame KillerDialog gets - and let the caption carry the
+            // bar and five-ring raised frame PewDialog gets - and let the caption carry the
             // title, so the in-panel accent heading is skipped.
             if (Services.ThemeManager.Current == Services.Theme.SE98)
             {
@@ -364,7 +364,7 @@ namespace KillerPDF
             box.Padding = new Thickness(4, 0, 4, 0);
             return box;
         }
-        // A crosshair/target glyph drawn in vectors, to match the KillerPDF look.
+        // A crosshair/target glyph drawn in vectors, to match the PewDF look.
         private static Grid CrosshairIcon()
         {
             var g = new Grid { Width = 14, Height = 14 };

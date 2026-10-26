@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     /// <summary>
     /// Keeps the single-exe build self-sufficient for OCR. The native Tesseract DLLs (x64) and the bundled
@@ -13,8 +13,10 @@ namespace KillerPDF.Services
     /// </summary>
     internal static partial class OcrNativeBootstrap
     {
-        private const string NativePrefix = "KillerPDF.OcrNative.";
-        private const string TessDataPrefix = "KillerPDF.OcrTessData.";
+        // SEMANTIC ANCHOR: EMBEDDED_NATIVE_RESOURCE_IDENTITY
+        // INVARIANT/SSOT: The prefix must match the embedded LogicalName entries in PewDF.csproj exactly.
+        private const string NativePrefix = "PewDF.OcrNative.";
+        private const string TessDataPrefix = "PewDF.OcrTessData.";
         private const string LeptonicaFileName = "leptonica-1.82.0.dll";
         private const string TesseractFileName = "tesseract50.dll";
         private const uint LoadLibrarySearchDllLoadDir = 0x00000100;

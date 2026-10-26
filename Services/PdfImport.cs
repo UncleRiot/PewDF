@@ -3,7 +3,7 @@ using Docnet.Core;
 using Docnet.Core.Models;
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     // ============================================================
     // File import/repair helpers - pure functions over paths and
@@ -127,7 +127,7 @@ namespace KillerPDF.Services
 
         /// <summary>
         /// Strategy 1 worker (background-safe, no UI/_doc access): imports the complete source
-        /// graph through The KillerPDF.Engine into a clean temp PDF and returns its path.
+        /// graph through The PewDF.Engine into a clean temp PDF and returns its path.
         /// </summary>
         internal static string? RepairViaImportToFile(string path)
         {

@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 /// <summary>
 /// Maps points and rectangles between a rendered page canvas and unrotated, crop-relative page

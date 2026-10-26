@@ -1,4 +1,5 @@
-# PewDF (comming soon...)
+
+# PewDF
 
 > [!IMPORTANT]
 > **Original Project:** [KillerPDF](https://github.com/SteveTheKiller/KillerPDF)  
@@ -8,22 +9,11 @@
 
 ---
 
-<img width="1723" height="1122" alt="grafik" src="https://github.com/user-attachments/assets/f3a44194-0a81-48b5-8165-9654027a020f" />
-
-
-
 ## About PewDF
 
 **PewDF** is a new, independently developed PDF application for Windows, based on the open-source codebase of [KillerPDF](https://github.com/SteveTheKiller/KillerPDF).
 
-The original source code serves as a foundation for further development. PewDF will follow its own development direction, with a focus on the following goals:
-
-> [!NOTE]
-> **Development Goals**
->
-> - **Comprehensive UI Overhaul:** A near-complete redesign and refactoring of the graphical user interface, creating a modern, consistent, and visually refined appearance.
-> - **Intuitive User Experience:** Significantly improved usability through streamlined workflows, intuitive navigation, and a clean, uncluttered interface that keeps essential tools easily accessible.
-> - **Functional Optimization:** General improvements to existing functionality, focusing on performance, reliability, responsiveness, and efficiency.
+The original source code serves as a foundation for further development. PewDF will follow its own development direction, including potential changes to the user interface, application architecture, and functionality.
 
 PewDF is an independent fork and is **not an official release of KillerPDF**.
 

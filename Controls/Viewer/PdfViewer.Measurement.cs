@@ -3,10 +3,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using PewDF.Services;
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF.Controls;
+namespace PewDF.Controls;
 
 public partial class PdfViewer
 {

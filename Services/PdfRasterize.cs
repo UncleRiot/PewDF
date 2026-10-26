@@ -4,7 +4,7 @@ using Docnet.Core;
 using Docnet.Core.Models;
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     // ============================================================
     // Document rasterization cores - pure functions over a rendered
@@ -77,8 +77,9 @@ namespace KillerPDF.Services
 
             if (ct.IsCancellationRequested) return;   // canceled during render: assemble/save nothing
 
-            File.WriteAllBytes(outputPath,
-                PdfEngineIntegration.CreateRasterDocument(rasterPages));
+            // OUTPUT_COMMIT_INVARIANT: only publish a complete flattened PDF.
+            PdfEngineIntegration.WriteFinishedBytesAtomically(
+                PdfEngineIntegration.CreateRasterDocument(rasterPages), outputPath);
         }
 
         /// <summary>
@@ -114,7 +115,10 @@ namespace KillerPDF.Services
                 if (rot != 0) (raw, w, h) = BitmapHelpers.RotateBitmap(raw, w, h, rot);
                 var bytes = jpeg ? BitmapHelpers.EncodeJpeg(raw, w, h, dpi) : BitmapHelpers.RenderToPng(raw, w, h, dpi);
                 var name  = $"{baseName}-page-{(idx + 1).ToString().PadLeft(digits, '0')}.{(jpeg ? "jpg" : "png")}";
-                File.WriteAllBytes(Path.Combine(outDir, name), bytes);
+                // OUTPUT_COMMIT_INVARIANT: a failed encoder/write must not truncate a
+                // previously exported image or leave a partial final file behind.
+                PdfEngineIntegration.WriteFinishedBytesAtomically(
+                    bytes, Path.Combine(outDir, name));
                 written++;
                 int n = ++done;
                 progress(n, pages.Count);

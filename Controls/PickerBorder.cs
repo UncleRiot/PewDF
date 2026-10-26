@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Clip content to the inner stroke edge without clipping the border's own paint.
     public sealed class PickerBorder : Border

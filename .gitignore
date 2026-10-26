@@ -1,4 +1,4 @@
-# Build output
+﻿# Build output
 bin/
 obj/
 *.user
@@ -32,8 +32,7 @@ obj/
 *.tmp
 
 # Heavy source art - stored locally only, not shipped and not part of the project.
-# Anchored with a leading slash so it only ignores KillerPDF/brand, NOT pdf-landing/brand
-# (the small web logos the landing site links to).
+# Root-anchored to exclude only this repository's /brand/ directory.
 /brand/
 
 # Validation run artifacts (the veraPDF/qpdf release checks write these into the repo root;

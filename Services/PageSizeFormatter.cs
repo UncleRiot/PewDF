@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 internal static class PageSizeFormatter
 {

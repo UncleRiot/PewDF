@@ -4,10 +4,10 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
-    /// Writes structured crash logs to %LOCALAPPDATA%\KillerPDF\Logs\ and maintains
+    /// Writes structured crash logs to %LOCALAPPDATA%\PewDF\Logs\ and maintains
     /// a rolling buffer of recent status-bar messages for post-mortem context.
     /// </summary>
     internal static class CrashReporter
@@ -21,7 +21,7 @@ namespace KillerPDF
 
         internal static string LogDir { get; } = App.IsStartupSmoke ? Path.Combine(App.SmokeDataRoot, "Logs") : Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "KillerPDF", "Logs");
+            "PewDF", "Logs");
 
         /// <summary>Path of the log file written by the most recent Capture() call.</summary>
         internal static string? LastLogPath { get; private set; }
@@ -53,7 +53,7 @@ namespace KillerPDF
             try { Directory.CreateDirectory(LogDir); } catch { /* best-effort */ }
 
             var sb  = new StringBuilder();
-            sb.AppendLine($"KillerPDF v{AppVersion.Display} crash report");
+            sb.AppendLine($"PewDF v{AppVersion.Display} crash report");
             sb.AppendLine($"Time    : {DateTime.Now:yyyy-MM-dd HH:mm:ss zzz}");
             sb.AppendLine($"OS      : {Environment.OSVersion}");
             sb.AppendLine($"CLR     : {Environment.Version}");

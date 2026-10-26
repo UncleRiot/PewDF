@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow : Window
     {
@@ -139,7 +139,6 @@ namespace KillerPDF
             [.. System.Windows.Media.Fonts.SystemFontFamilies
                 .Select(f => f.Source).Where(s => !string.IsNullOrWhiteSpace(s))
                 .Distinct().OrderBy(s => s, StringComparer.OrdinalIgnoreCase)];
-        private bool _suppressSizeSync;   // guards the slider<->size-box two-way binding from feedback loops
         private TextAnnotation? _reeditOriginal { get => ActiveViewer.ReeditOriginalRef; set => ActiveViewer.ReeditOriginalRef = value; }
         // The opaque cover dropped when starting an existing-text edit, awaiting its paired text commit.
         // Held so the text commit can group both into one undo, and so cancel/empty removes the cover.
@@ -189,9 +188,6 @@ namespace KillerPDF
         private Rectangle? _cropPreviewRectBorder { get => ActiveViewer.CropPreviewRectBorderRef; set => ActiveViewer.CropPreviewRectBorderRef = value; }
         private List<System.Windows.Shapes.Path> _cropBrackets => ActiveViewer.CropBracketsRef;
         private Border? _cropConfirmBar { get => ActiveViewer.CropConfirmBarRef; set => ActiveViewer.CropConfirmBarRef = value; }
-        private readonly Button _toolCropBtn = null!;
-        private readonly Button _toolRotateBtn = null!;
-        private readonly Button _toolMeasureBtn = null!;
         private List<Rectangle> _cropHandles => ActiveViewer.CropHandlesRef;
         private string? _activeCropHandleTag { get => ActiveViewer.ActiveCropHandleTagRef; set => ActiveViewer.ActiveCropHandleTagRef = value; }
         private Point _cropHandleDragStart { get => ActiveViewer.CropHandleDragStartRef; set => ActiveViewer.CropHandleDragStartRef = value; }
@@ -224,7 +220,7 @@ namespace KillerPDF
         private string? _selectedText { get => ActiveViewer.SelectedTextRef; set => ActiveViewer.SelectedTextRef = value; }
 
         // Search
-        private Border? _searchBar;
+        // INLINE_SEARCH_UI_SSOT: No floating search-bar field; viewer-host compatibility returns null.
         private TextBox? _searchBox;
         private TextBlock? _searchStatus;
         private readonly List<Rect> _searchHighlights = [];
@@ -274,19 +270,9 @@ namespace KillerPDF
             get => _view.CurrentPage;
             set { _view.CurrentPage = value; if (PageList.SelectedIndex != value) PageList.SelectedIndex = value; }
         }
-        private readonly Button _toolSelectBtn = null!;
-        private readonly Button _toolFormFieldBtn = null!;
-        private readonly Button _toolTextBtn = null!;
-        private readonly Button _toolHighlightBtn = null!;
-        private readonly Button _toolUnderlineBtn = null!;
-        private readonly Button _toolDrawBtn = null!;
-        private readonly Button _toolShapeBtn = null!;
-        private readonly Button _toolSignatureBtn = null!;
-        private readonly Button _toolImageBtn = null!;
         private readonly Button _saveAsBtnRef = null!;
         private readonly Button _closeFileBtnRef = null!;
         private readonly ComboBox _zoomBox = null!;
-        private readonly Grid _portableBadge = null!;
         private readonly TextBox _pageJumpBox = null!;
         private readonly TextBlock _pageTotalLabel = null!;
         /// <summary>The sidebar list and the total above it, so the two cannot be set apart.</summary>
@@ -308,11 +294,7 @@ namespace KillerPDF
         {
             _startupTearOutSession = startupTearOutSession;
             InitializeComponent();
-            var titleFrames = BitmapDecoder.Create(
-                new Uri("pack://application:,,,/Resources/kp-icon.ico"),
-                BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames;
-            TitleIcon.Source = titleFrames[0];
-            VersionLabel.Text = $"v{AppVersion.Display}";
+            TitleIcon.Source = Controls.WindowIdentity.Icon;
             // Accept dropped files/folders/archives anywhere on the window (not just the empty drop zone),
             // so dropping onto an open document works too. The empty-state DropZone marks its own drop
             // handled, so a drop there isn't processed twice.
@@ -332,23 +314,16 @@ namespace KillerPDF
             // Replaces the single `Viewer.Owner = this` - ViewerB exists from startup, collapsed,
             // so its bridge would NullReference the moment anything touched it otherwise.
             InitSplitPanes();
+            // SEMANTIC ANCHOR: CROP_PANE_OWNER_CONTRACT
+            // Both split viewers publish the same crop visual lifecycle; a single
+            // shared shell pane presents only the active viewer's controls.
+            Viewer.CropPaneChanged = bar => OnCropPaneChanged(Viewer, bar);
+            ViewerB.CropPaneChanged = bar => OnCropPaneChanged(ViewerB, bar);
             WirePageListEdgeFades();   // sidebar page-list edge fades (SidebarLayout.cs)
             HookExternalLangReload();  // #211: --lang-file live reload rebuilds code-built captions
             _pageContentGrid  = ActiveViewer.PageGrid;
             _pageContentPanel = ActiveViewer.PageHost;
             _continuousPanel  = ActiveViewer.ContinuousHost;
-            _toolSelectBtn = (Button)FindName("ToolSelectBtn")!;
-            _toolFormFieldBtn = (Button)FindName("ToolFormFieldBtn")!;
-            _toolTextBtn = (Button)FindName("ToolTextBtn")!;
-            _toolHighlightBtn = (Button)FindName("ToolHighlightBtn")!;
-            _toolUnderlineBtn = (Button)FindName("ToolUnderlineBtn")!;
-            _toolDrawBtn = (Button)FindName("ToolDrawBtn")!;
-            _toolShapeBtn = (Button)FindName("ToolShapeBtn")!;
-            _toolSignatureBtn = (Button)FindName("ToolSignatureBtn")!;
-            _toolImageBtn = (Button)FindName("ToolImageBtn")!;
-            _toolCropBtn = (Button)FindName("ToolCropBtn")!;
-            _toolRotateBtn = (Button)FindName("ToolRotateBtn")!;
-            _toolMeasureBtn = (Button)FindName("ToolMeasureBtn")!;
             _sidebarToggleBtn = (Button)FindName("SidebarToggleBtn")!;
             _sidebarBorder = (Border)FindName("SidebarBorder")!;
             _sidebarCol = (ColumnDefinition)FindName("SidebarCol")!;
@@ -365,8 +340,6 @@ namespace KillerPDF
                 if (_zoomBox.Template?.FindName("PART_EditableTextBox", _zoomBox) is TextBox etb)
                     etb.SelectionBrush = System.Windows.Media.Brushes.Transparent;
             };
-            _portableBadge = (Grid)FindName("PortableBadge")!;
-            _portableBadge.SizeChanged += (_, _) => ScheduleFadeRefresh();
             _pageJumpBox = (TextBox)FindName("PageJumpBox")!;
             _pageTotalLabel = (TextBlock)FindName("PageTotalLabel")!;
             _sidebarPages = new Controls.SidebarPageBinding(PageList, _pageTotalLabel);
@@ -397,13 +370,11 @@ namespace KillerPDF
             SidebarSplitter.LostMouseCapture += (_, _) => OnSidebarResized();
             if (Enum.TryParse<ViewMode>(App.GetSetting("ViewMode"), out var savedVm))
                 _viewMode = savedVm;
-            InitToolbarStyle();   // two-axis toolbar appearance (+ migration from the old five-way key)
             InitAppScale();   // AppScale.cs: restore the app-wide size (scroll the logo to change it)
             // #135: document dark mode. Per PANE now; the saved setting seeds the primary pane
             // (a split's second pane starts normal - inverting it is a per-pane choice).
-            Viewer.DocInvert = App.GetSetting("DocInvert") == "1";
-            BitmapHelpers.DocInvertImages = App.GetSetting("DocInvertImages") == "1";   // moon right-click opt-in
-            DocInvertBtn.Tag = Viewer.DocInvert ? "on" : null;              // rail moon lit while active
+            Viewer.DocInvert = false; // SEMANTIC ANCHOR: INVERT_MODE_REMOVED; original PDF colors only.
+            BitmapHelpers.DocInvertImages = false;
             // #146: the privacy toggle lives in the About window; init once - only its own
             // handler changes it afterwards (change-guarded, so this init is a no-op there).
             NoRecentCheck.IsChecked = App.GetSetting(App.NoRecentFilesSetting) == "1";
@@ -413,19 +384,20 @@ namespace KillerPDF
                 _sidebarRight = true;
             RestoreToolSettings();   // Draw + Text tool styles carry across sessions
             Loaded += (_, _) => AdjustZoomBoxWidth();   // fit the zoom box to the longest localized term
-            IndexToolbarButtons();
             OutlineTree.SelectedItemChanged += OutlineTree_SelectedItemChanged;
             LoadSignatures();
             BuildContextMenu();
             SetTool(EditTool.Select);
             ApplyGrainTexture();
-            ApplyToolNumberTooltips();   // append the 1-9 toolbar positions to the tool tooltips
             BuildShortcutsOverlay();     // generate the shortcuts card from the single-source table (ShortcutsOverlay.cs)
             SourceInitialized += MainWindow_SourceInitialized;
             Closed += (_, _) =>
             {
-                _continuousRenderCts?.Cancel();
-                _doc?.Close();
+                // SEMANTIC ANCHOR: WINDOW_VIEWER_RESOURCE_OWNERSHIP
+                // INVARIANT: Closing the window releases both panes, not only the focused one.
+                // SSOT: Each viewer owns and releases its document sessions and render work.
+                Viewer.ReleaseSessionsOnWindowClosedExt();
+                ViewerB.ReleaseSessionsOnWindowClosedExt();
                 CloseEngineDocumentSession();
                 if (Application.Current.Windows.Count <= 1) App.CleanupSessionTemps();
             };
@@ -436,7 +408,6 @@ namespace KillerPDF
             bool startupSidebarSynced = false;
             ContentRendered += (_, _) =>
             {
-                Services.StartupTrace.Mark("MainWindow first ContentRendered");
                 Services.ThemeManager.RefreshIcons();
                 // Startup can restore pane B, process a relaunch/open-file handoff, and change
                 // ActiveViewer several times before the first frame. Each transition is valid on
@@ -467,7 +438,6 @@ namespace KillerPDF
                             new Duration(TimeSpan.FromMilliseconds(140)))
                         { FillBehavior = FillBehavior.Stop };
                         RootClipGrid.BeginAnimation(OpacityProperty, reveal);
-                        Services.StartupTrace.Mark("MainWindow ready");
                     }));
                 }
             };
@@ -477,13 +447,9 @@ namespace KillerPDF
             {
                 RestoreWindowSettings();
                 ApplySidebarSide();   // place the sidebar on the saved side (default left)
-                BuildToolbarMenu();   // right-click appearance picker on the toolbar
-                // Unconditional: the XAML default is small icons / no text, but the family default
-                // is Large/Under, so a first run needs the apply pass too.
-                ApplyToolbarAppearance();
 
-                // The release startup check initializes the real empty window without restoring
-                // documents, accepting handoffs, or starting update UI/network work.
+                // Startup smoke verification initializes an empty window without restoring
+                // documents or accepting external handoffs.
                 if (App.IsStartupSmoke)
                 {
                     SyncSidebarToDocState(hasDoc: false, startup: true);
@@ -493,10 +459,8 @@ namespace KillerPDF
                 FlushPendingExternalOpen();   // a forward that landed before the panes were wired
 
                 var args = Environment.GetCommandLineArgs();
-                // #267 follow-up: route every killerpdf: launch to OpenFromExternal, valid or not.
-                // Gating on a usable target here swallowed a refused handoff before anything could
-                // report it, and restored the last session instead, so a cold launch looked like a
-                // handoff that had simply done nothing.
+                // SEMANTIC ANCHOR: EXTERNAL_OPEN_SSOT: Startup accepts local files only;
+                // session restoration remains independent of browser protocol registration.
                 if (_startupTearOutSession is { } tornOut)
                 {
                     SetRestoredSessions([tornOut], tornOut);
@@ -504,8 +468,7 @@ namespace KillerPDF
                     RebuildTabStrip();
                     RenderActiveSession();
                 }
-                else if (args.Length > 1 && (System.IO.File.Exists(args[1]) ||
-                    Services.ProtocolRegistrar.IsHandoffLaunch(args[1])))
+                else if (args.Length > 1 && System.IO.File.Exists(args[1]))
                 {
                     OpenFromExternal(args[1]);
                 }
@@ -513,10 +476,12 @@ namespace KillerPDF
                 {
                     // Reopen every tab from the last session (falls back to the single LastFile for
                     // settings written before multi-tab restore existed).
-                    var saved = App.GetSetting("OpenTabs");
+                    // SESSION_RESTORE_EXPLICIT_OPT_IN: never restore legacy saved tabs without a new explicit opt-in.
+                    // SSOT: RestoreOpenTabsOptIn gates both panes and the save path.
+                    var saved = App.GetSetting("RestoreOpenTabsOptIn") == "1" ? App.GetSetting("OpenTabs") : null;
                     string[] paths = !string.IsNullOrEmpty(saved)
                         ? saved!.Split('|')
-                        : (App.GetSetting("LastFile") is { Length: > 0 } lf ? [lf] : []);
+                        : (App.GetSetting("RestoreOpenTabsOptIn") == "1" && App.GetSetting("LastFile") is { Length: > 0 } lf ? [lf] : []);
                     // Lazy restore: create a placeholder tab for each saved file but load only the
                     // focused one. The rest materialize (load + render) the first time they're clicked,
                     // so startup cost no longer scales with how many tabs were open last session.
@@ -548,17 +513,14 @@ namespace KillerPDF
                         MaterializeDeferred(activeTarget);   // load + render only the focused tab
                         RebuildTabStrip();
                     }
-                    RestorePaneB();
+                    if (App.GetSetting("RestoreOpenTabsOptIn") == "1") RestorePaneB();
                 }
 
-                if (App.IsPortable())
-                    _portableBadge.Visibility = Visibility.Visible;
+                // Portable-only banner removed: PewDF presents itself as a portable application.
 
                 // Start with the sidebar collapsed when no PDF is open (nothing to show); a document
                 // opened above will have expanded it via FinishOpenFile.
                 SyncSidebarToDocState(hasDoc: _doc != null, startup: true);
-                Dispatcher.BeginInvoke(new Action(() => About.CheckOnStartup()),
-                    System.Windows.Threading.DispatcherPriority.Background);
             };
         }
 
@@ -598,7 +560,8 @@ namespace KillerPDF
                 App.SetSetting("ZoomLevel", _zoomLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 // #105: honor the "remember open files" privacy choice. Unset or "1" = remember
                 // (default, preserves prior behavior); "0" = forget the session so nothing persists.
-                bool rememberFiles = App.GetSetting("RememberOpenFiles") != "0";
+                // SESSION_RESTORE_EXPLICIT_OPT_IN: saved legacy defaults cannot silently reopen documents.
+                bool rememberFiles = App.GetSetting("RestoreOpenTabsOptIn") == "1";
                 if (rememberFiles)
                 {
                     if (_currentFile is not null)
@@ -679,6 +642,7 @@ namespace KillerPDF
                 App.SetSetting("DrawWidth",     _drawWidth.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 App.SetSetting("DrawOpacity",   _drawOpacity.ToString());
                 App.SetSetting("TextFontSize",  _textFontSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                App.SetSetting("TextLetterSpacing", _textLetterSpacing.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 App.SetSetting("TextFontName",  _textFontName);
                 App.SetSetting("TextBold",      _textBold ? "1" : "0");
                 App.SetSetting("TextItalic",    _textItalic ? "1" : "0");
@@ -687,6 +651,12 @@ namespace KillerPDF
                 App.SetSetting("TextColor",     ToolColorHex(_textColor));
                 App.SetSetting("TextOpacity",   _textOpacity.ToString());
                 App.SetSetting("TextFillColor", ToolColorHexA(_textFillColor));
+                // SEMANTIC ANCHOR: TOOL_STYLE_PERSISTENCE_SSOT
+                // Persist user-selected marker color (including alpha) and nib size through App settings.
+                // No document annotation data or per-stroke state is written here.
+                var markerViewer = ActiveViewer;
+                App.SetSetting("TextMarkerColor", ToolColorHexA(markerViewer.TextMarkerColor));
+                App.SetSetting("TextMarkerNibSize", markerViewer.TextMarkerNibSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
             catch { /* best-effort */ }
         }
@@ -703,6 +673,9 @@ namespace KillerPDF
                 if (double.TryParse(App.GetSetting("TextFontSize"), System.Globalization.NumberStyles.Float,
                         System.Globalization.CultureInfo.InvariantCulture, out double tfs) && tfs > 0) _textFontSize = tfs;
                 if (App.GetSetting("TextFontName") is { Length: > 0 } tfn) _textFontName = tfn;
+                if (double.TryParse(App.GetSetting("TextLetterSpacing"), System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out double tls) && double.IsFinite(tls))
+                    _textLetterSpacing = Math.Clamp(tls, -2, 20);
                 _textBold      = App.GetSetting("TextBold") == "1";
                 _textItalic    = App.GetSetting("TextItalic") == "1";
                 _textStrike    = App.GetSetting("TextStrike") == "1";
@@ -714,6 +687,21 @@ namespace KillerPDF
                 // Keep each color's alpha in sync with its opacity byte (the bars store them coupled).
                 _drawColor = Color.FromArgb(_drawOpacity, _drawColor.R, _drawColor.G, _drawColor.B);
                 _textColor = Color.FromArgb(_textOpacity, _textColor.R, _textColor.G, _textColor.B);
+
+                // Restore both viewers: their tool settings are user preferences, not PDF state.
+                Color markerColor = Color.FromArgb(115, 255, 235, 25);
+                if (ParseToolColorA(App.GetSetting("TextMarkerColor")) is Color savedMarkerColor)
+                    markerColor = savedMarkerColor;
+                double markerSize = 20;
+                if (double.TryParse(App.GetSetting("TextMarkerNibSize"), System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out double savedMarkerSize) &&
+                    double.IsFinite(savedMarkerSize))
+                    markerSize = Math.Clamp(savedMarkerSize, 1, 30);
+                foreach (var viewer in new[] { Viewer, ViewerB })
+                {
+                    viewer.TextMarkerColor = markerColor;
+                    viewer.TextMarkerNibSize = markerSize;
+                }
             }
             catch { /* best-effort */ }
         }

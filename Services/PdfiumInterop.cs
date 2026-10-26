@@ -2,7 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Docnet.Core;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     // PDFium uses cdecl callbacks, mutable byte buffers, and native structs across one audited
     // runtime-marshalling boundary. LibraryImport does not cover every signature in this bridge,
@@ -463,7 +463,7 @@ namespace KillerPDF.Services
                 var doc = FPDF_LoadDocument(sourcePath, null);
                 if (doc == IntPtr.Zero)
                 {
-                    try { File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "killerpdf_pdfium_debug.txt"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] FPDF_LoadDocument returned null for: {sourcePath}\n\n"); } catch { }
+                    try { if (DebugLogging.Enabled) File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pewdf_pdfium_debug.txt"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] FPDF_LoadDocument returned null for: {sourcePath}\n\n"); } catch { }
                     return false;
                 }
                 try
@@ -511,8 +511,8 @@ namespace KillerPDF.Services
             {
                 try
                 {
-                    File.AppendAllText(
-                        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "killerpdf_pdfium_debug.txt"),
+                    if (DebugLogging.Enabled) File.AppendAllText(
+                        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "pewdf_pdfium_debug.txt"),
                         $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] TryPdfiumSaveWithZeroRotations failed\n" +
                         $"  source: {sourcePath}\n" +
                         $"  type:   {ex.GetType().FullName}\n" +

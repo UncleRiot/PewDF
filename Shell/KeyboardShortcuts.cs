@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -126,7 +126,7 @@ namespace KillerPDF
             {
                 // F3 / Shift+F3 - next / previous search match, the Find Next convention (Acrobat and
                 // Sumatra do the same). With the search bar closed, F3 opens it like Ctrl+F.
-                if (_searchBar is null || _searchBar.Visibility != Visibility.Visible)
+                if (!ToolbarSearchInput.IsKeyboardFocusWithin)
                     ToggleSearchBar();
                 else if (Search.HasResults)
                 {
@@ -173,16 +173,11 @@ namespace KillerPDF
                 CloseAboutOverlay();
                 e.Handled = true;
             }
-            else if (e.Key == Key.Escape && _searchBar is not null && _searchBar.Visibility == Visibility.Visible)
-            {
-                CloseSearchBar();
-                e.Handled = true;
-            }
             else if (e.Key == Key.Escape && _busyCts is not null)
             {
                 // A cancellable long operation (OCR, repair) is running behind the busy overlay - offer to
                 // cancel it instead of letting Escape fall through to the app-exit handler below.
-                if (KillerDialog.Show(this, string.Format(Loc("Str_Dlg_CancelBusy"), _busyOpLabel), "KillerPDF",
+                if (PewDialog.Show(this, string.Format(Loc("Str_Dlg_CancelBusy"), _busyOpLabel), "PewDF",
                         MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                     _busyCts?.Cancel();
                 e.Handled = true;
@@ -364,25 +359,6 @@ namespace KillerPDF
                 ToggleBookMode();
                 e.Handled = true;
             }
-            else if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.None && _doc is not null
-                     && ShortcutOverlay.Visibility != Visibility.Visible
-                     && AboutOverlay.Visibility != Visibility.Visible)
-            {
-                // Bare N = invert document colors (night mode), #135. Moved off Ctrl+I in 1.6.6 so
-                // the conventional italic chord is free while editing text; single-key house style.
-                // Same guards as the bare-key tool switches below (doc open, no overlay, not typing).
-                ToggleDocInvert(!ActiveViewer.DocInvert);   // per pane: flips the focused pane only
-                e.Handled = true;
-            }
-            else if (e.Key == Key.N && Keyboard.Modifiers == ModifierKeys.Shift && _doc is not null
-                     && ShortcutOverlay.Visibility != Visibility.Visible
-                     && AboutOverlay.Visibility != Visibility.Visible)
-            {
-                // Shift+N pairs with bare N: toggles whether night mode inverts pictures too
-                // (the moon's right-click option). Same guards as N.
-                ToggleInvertImages(!BitmapHelpers.DocInvertImages);
-                e.Handled = true;
-            }
             // App-wide accessibility size (AppScale.cs), distinct from the Ctrl+wheel page zoom:
             // Ctrl+Shift +/- steps the whole-app size, Ctrl+Shift+0 resets it. Works with no
             // mouse; the wheel-over-logo gesture drives the same scale.
@@ -399,22 +375,6 @@ namespace KillerPDF
             else if ((e.Key == Key.D0 || e.Key == Key.NumPad0) && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
             {
                 ApplyAppScale(1.0, persist: true);
-                e.Handled = true;
-            }
-            // Toolbar appearance, mirroring the bar's right-click menu top to bottom: Ctrl+Shift+1/2
-            // pick the icon size, Ctrl+Shift+3..6 pick where the text goes. Number row only - the
-            // numpad digits stay clear of the tool shortcuts' numpad mappings.
-            else if (e.Key is >= Key.D1 and <= Key.D6 && Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift))
-            {
-                switch (e.Key)
-                {
-                    case Key.D1: SetToolbarIconSize(ToolbarIconSize.Small);   break;
-                    case Key.D2: SetToolbarIconSize(ToolbarIconSize.Large);   break;
-                    case Key.D3: SetToolbarLabelMode(ToolbarLabelMode.None);  break;
-                    case Key.D4: SetToolbarLabelMode(ToolbarLabelMode.Beside);break;
-                    case Key.D5: SetToolbarLabelMode(ToolbarLabelMode.Under); break;
-                    case Key.D6: SetToolbarLabelMode(ToolbarLabelMode.Only);  break;
-                }
                 e.Handled = true;
             }
             else if (e.Key == Key.F9 && Keyboard.Modifiers == ModifierKeys.Shift)
@@ -552,15 +512,8 @@ namespace KillerPDF
             else if (e.Key == Key.Escape && _doc is not null && _currentTool != EditTool.Select)
             {
                 // 1.6.6 (#127 Phase 3): Esc with nothing left to cancel drops back to the Select
-                // tool, Acrobat-style. With Select already active it keeps falling through to the
-                // app-exit handler below, unchanged.
+                // tool, Acrobat-style. With Select already active no application close occurs.
                 SetTool(EditTool.Select);
-                e.Handled = true;
-            }
-            else if (e.Key == Key.Escape)
-            {
-                // No overlay active - ESC exits the app
-                Close();
                 e.Handled = true;
             }
             else if (e.Key == Key.Space && !_spaceHeld)
@@ -721,37 +674,12 @@ namespace KillerPDF
             }
         }
 
-        // Appends each tool's key to its tooltip, e.g. "Highlight (2)". Digits mirror the toolbar
-        // position (1-9, 0); Select shows its letter (V) since the 1.6.6 remap made it V-only.
-        // Re-resolves the localized base text so a language switch keeps the right wording (from SelectLocale).
-        private void ApplyToolNumberTooltips()
-        {
-            // n null or empty = no key to advertise, so the tooltip is just the localized text
-            // rather than a stray empty bracket pair.
-            void Set(System.Windows.Controls.Button btn, string key, string? n)
-            {
-                if (btn == null || TryFindResource(key) is not string s) return;
-                btn.ToolTip = string.IsNullOrEmpty(n) ? s : $"{s} ({n})";
-            }
-            // Select and Form Field already carry their letter shortcuts in the localized base
-            // text. Only add the numeric aliases that are not already present there.
-            Set(ToolSelectBtn, "Str_TT_SelectTool", null);
-            Set(ToolTextBtn, "Str_TT_TextTool", "1");
-            Set(ToolHighlightBtn, "Str_TT_HighlightTool", "2");
-            Set(ToolUnderlineBtn, "Str_TT_LineTool", "3");   // repurposed to the Line tool
-            Set(ToolShapeBtn, "Str_TT_ShapeTool", "4");
-            Set(ToolDrawBtn, "Str_TT_DrawTool", "5");
-            Set(ToolImageBtn, "Str_TT_ImageTool", "6");
-            Set(ToolSignatureBtn, "Str_TT_SignatureTool", "7");
-            Set(ToolCropBtn, "Str_TT_CropTool", "8");
-            Set(_toolRotateBtn, "Str_TT_RotateTool", "9");
-            Set(ToolStampBtn, "Str_TT_StampTool", "0");
-        }
-
-        // Opens the online help / how-to page in the user's default browser.
+        // SEMANTIC ANCHOR: PewDF online help opens the official PewDF repository.
+        // When the PewDF GitHub wiki is published, add the wiki as a separate help destination;
+        // do not redirect users to the original PewDF website.
         private void OnlineHelp_Click(object sender, RoutedEventArgs e)
         {
-            try { Process.Start(new ProcessStartInfo("https://killerpdf.net/help.html#shortcuts") { UseShellExecute = true }); }
+            try { Process.Start(new ProcessStartInfo("https://github.com/UncleRiot/KPDF") { UseShellExecute = true }); }
             catch { }
         }
     }

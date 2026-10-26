@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     /// <summary>Keeps newest-first undo histories within both a depth and memory budget.</summary>
     internal static class UndoHistoryBudget

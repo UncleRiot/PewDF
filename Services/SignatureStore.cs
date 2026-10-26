@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     internal sealed class SignatureStore
     {

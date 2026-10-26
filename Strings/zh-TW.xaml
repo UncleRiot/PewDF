@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Traditional Chinese (zh-TW) strings
+         PewDF  -  Traditional Chinese (zh-TW) strings
          Stub file - translations to be provided by leox243 (PR #61).
          All keys fall back to English until filled in.
          ================================================================ -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">收合側邊欄 (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">展開側邊欄 (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">鍵盤快速鍵 (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">關於 KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">關於 PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">版本</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">憑證指紋</sys:String>
     <sys:String x:Key="Str_About_ExeSha">EXE SHA256</sys:String>
     <sys:String x:Key="Str_About_Computing">計算中...</sys:String>
-    <sys:String x:Key="Str_Tagline">適用於 Windows 的快速、免費 PDF 工具組，支援註解、合併、OCR、簽名與表單。來自 {0} 的 GPLv3 工具。</sys:String>
+    <sys:String x:Key="Str_Tagline">適用於 Windows 的快速、免費 PDF 工具組，支援註解、合併、OCR、簽名與表單。 PewDF 是 KillerPDF 的分支版本。</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">頁面</sys:String>
@@ -67,6 +67,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">佈景主題</sys:String>
     <sys:String x:Key="Str_Language">語言</sys:String>
+    <sys:String x:Key="Str_General">一般</sys:String>
     <sys:String x:Key="Str_Toolbar">工具列</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">工具列</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">無文字</sys:String>
@@ -122,7 +123,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">就緒</sys:String>
     <sys:String x:Key="Str_Portable">可攜版</sys:String>
-    <sys:String x:Key="Str_InstallBtn">安裝 KillerPDF</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">已開啟 {0} - {1} 頁</sys:String>
@@ -159,37 +159,20 @@
 現在儲存會覆寫該檔案，那些變更將會遺失。若要保留，請先儲存另一個窗格。</sys:String>
     <sys:String x:Key="Str_St_SplitOn">分割檢視已開啟 - 按 F10 關閉</sys:String>
     <sys:String x:Key="Str_St_SplitOff">分割檢視已關閉</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">安裝 KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">要將 KillerPDF 安裝到這台電腦嗎？
 
-KillerPDF 將被複製到您的程式資料夾，並新增開始功能表項目。此 EXE 副本會保留在原處，您可以隨時透過新增或移除程式來解除安裝。</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">安裝</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">更新</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">更新現有的 KillerPDF 安裝？
-
-這會將已安裝的複本替換為更快的多檔案版本。之後您可以保留或刪除此可攜檔案。</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">更新現有的 KillerPDF 全使用者安裝？
-
-這會將 Program Files 中的複本替換為更快的多檔案版本。舊的單一使用者複本將被移除，使 KillerPDF 只出現一次。之後您可以保留或刪除此可攜檔案。</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">KillerPDF 已為此電腦上的所有使用者安裝。請更新該安裝，或先解除安裝，再選擇單一使用者安裝。
-
-KillerPDF 不會建立兩個已安裝的複本。</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">新增桌面捷徑</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">為這台電腦上的所有使用者安裝（需要系統管理員）</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">安裝未完成 - KillerPDF 仍以可攜方式執行。</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">要將 KillerPDF 設為預設 PDF 檢視器嗎？
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">要將 PewDF 設為預設 PDF 檢視器嗎？
 
 將開啟 Windows 設定 - 預設應用程式。</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">您有未儲存的變更。要在不儲存的情況下關閉此檔案嗎？</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">您有未儲存的變更。要在不儲存的情況下關閉 KillerPDF 嗎？</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">儲存變更？</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">儲存變更？</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">此文件有 {0} 個頁面的尺寸超出 Adobe Reader 支援的範圍（每邊 3 到 14400 點），Adobe 會將這些頁面顯示為空白。
 
 要將它們縮放至支援的尺寸嗎？頁面的外觀和比例保持不變。</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">無法開啟 PDF：
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">您有 {0} 個開啟的文件。結束應用程式時是否讓 KillerPDF 全部關閉？</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">您有 1 個開啟的文件。結束應用程式時是否讓 KillerPDF 將其關閉？</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">您有 {0} 個開啟的文件。結束應用程式時是否讓 PewDF 全部關閉？</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">您有 1 個開啟的文件。結束應用程式時是否讓 PewDF 將其關閉？</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">記住我的選擇</sys:String>
 
 
@@ -204,7 +187,6 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Theme_Ectoplasm">Ectoplasm</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Decay</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Mourning</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">底片顆粒</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Sepulchre</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Delirium</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Malaise</sys:String>
@@ -287,7 +269,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Stamp_Position">位置</sys:String>
     <sys:String x:Key="Str_Stamp_FontSize">字型大小 (pt)</sys:String>
     <sys:String x:Key="Str_Stamp_Hint2">範例：&quot;第 {n} 頁，共 {N} 頁&quot;</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">蓋章頁面</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">浮水印與頁碼</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">頁碼</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">浮水印</sys:String>
     <sys:String x:Key="Str_Stamp_Color">顏色</sys:String>
@@ -302,8 +284,8 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">在對開頁上鏡射（外側邊緣）</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">已蓋章 {0} 頁</sys:String>
     <sys:String x:Key="Str_Pos_Custom">自訂（在預覽上拖曳）</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">蓋章頁面 (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">蓋章頁面</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">浮水印與頁碼 (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">浮水印與頁碼</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">取消</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">套用</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">底部置中</sys:String>
@@ -314,7 +296,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Pos_TopLeft">左上</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - 列印</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - 列印</sys:String>
     <sys:String x:Key="Str_Print_Printer">印表機</sys:String>
     <sys:String x:Key="Str_Print_Orientation">方向</sys:String>
     <sys:String x:Key="Str_Print_Portrait">直向</sys:String>
@@ -365,7 +347,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Drop_Separate">分別開啟</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">找不到可開啟的 PDF 或圖片。</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">這將開啟 {0} 個獨立分頁。要繼續嗎？</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">此資料夾或壓縮檔包含 {0} 個檔案。KillerPDF 只會開啟前 {1} 個。要繼續嗎？</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">此資料夾或壓縮檔包含 {0} 個檔案。PewDF 只會開啟前 {1} 個。要繼續嗎？</sys:String>
     <sys:String x:Key="Str_Status_Merged">已合併 {0} 個檔案 - 尚未儲存</sys:String>
     <sys:String x:Key="Str_Drop_Merging">正在合併檔案...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">已取消合併</sys:String>
@@ -524,14 +506,14 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_KS_FullScreen">全螢幕</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">按 F11 或 Esc 離開全螢幕</sys:String>
     <!-- Quit prompt -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">結束 KillerPDF？</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">結束 PewDF？</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">關閉我開啟的分頁</sys:String>
     <sys:String x:Key="Str_Btn_Quit">結束</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">取消</sys:String>
 
 
     <!-- Status-bar + dialog strings (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">已清除所有 KillerPDF 資料</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">已清除所有 PewDF 資料</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">已取消 OCR 區域</sys:String>
     <sys:String x:Key="Str_St_Erased">已擦除</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">已取消群組</sys:String>
@@ -577,8 +559,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_St_ClipNoText">剪貼簿中沒有可貼上的文字</sys:String>
     <sys:String x:Key="Str_St_PastedText">已貼上文字-拖曳以重新定位，按 Delete 移除</sys:String>
     <sys:String x:Key="Str_St_ClipEmpty">剪貼簿中沒有可貼上的內容</sys:String>
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">請先儲存變更再進行更新。</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">KillerPDF 已解除安裝。</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">請選取要擷取的頁面。</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">請選取要刪除的頁面。</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">沒有可用的印表機。</sys:String>
@@ -712,6 +693,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Btn_Open">開啟</sys:String>
     <sys:String x:Key="Str_Btn_Replace">取代</sys:String>
     <sys:String x:Key="Str_Btn_Save">儲存</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">不要儲存</sys:String>
     <sys:String x:Key="Str_Col_Modified">修改時間</sys:String>
     <sys:String x:Key="Str_Col_Name">名稱</sys:String>
     <sys:String x:Key="Str_Col_Size">大小</sys:String>
@@ -789,7 +771,6 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Dlg_SaveFlattened">儲存平面化 PDF</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">擷取的頁面另存為</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">插入圖片</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">建立桌面捷徑</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">草稿</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">請先選擇憑證檔案 (.pfx / .p12)。</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">Windows 憑證存放區中沒有可用的簽名憑證。</sys:String>
@@ -904,7 +885,7 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">可搜尋 PDF 已儲存：&#10;{0}&#10;&#10;已處理 {1} 頁，辨識 {2} 個字詞。</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">「{0}」已成功修復。&#10;&#10;書籤、表單和其他互動功能可能已遺失。請使用另存新檔將修復後的檔案寫入新位置。</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">「{0}」已透過 PDFium 點陣化修復。&#10;&#10;修復副本中的文字無法選取。請使用另存新檔將其寫入新位置。</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">「{0}」的結構已損壞，無法加入。&#10;&#10;要讓 KillerPDF 嘗試修復嗎？將建立修復副本，原始檔案不會被變更。&#10;&#10;注意：修復後的檔案可能缺少書籤、表單和其他互動功能。</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">「{0}」的結構已損壞，無法加入。&#10;&#10;要讓 PewDF 嘗試修復嗎？將建立修復副本，原始檔案不會被變更。&#10;&#10;注意：修復後的檔案可能缺少書籤、表單和其他互動功能。</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">現在將下載語言模型（{0}）以便執行 OCR。&#10;&#10;您可以隨時在 OCR 選單中新增更多語言或切換到更高品質的模型。</sys:String>
     <sys:String x:Key="Str_Bar_More">更多設定</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">使線條保持在最近的軸上（水平或垂直）</sys:String>
@@ -918,14 +899,14 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_TT_SaveOptions">儲存選項</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">OCR 選項</sys:String>
     <sys:String x:Key="Str_RecentHeading">最近</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - 鍵盤快速鍵</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">有可用更新: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">要下載並安裝 KillerPDF {0} 嗎?&#10;&#10;應用程式將關閉並自動重新開啟。</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">正在下載...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - 鍵盤快速鍵</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">清除所有資料</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">這會刪除所有已儲存的設定、已下載的 OCR 語言包和暫存檔案。&#10;&#10;您的 PDF 檔案不受影響。要繼續嗎?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">設定、語言包和暫存檔案已清除。&#10;&#10;請重新啟動 KillerPDF，以完成清除本次工作階段中仍在使用的檔案。</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - 未預期的錯誤</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">設定、語言包和暫存檔案已清除。&#10;&#10;請重新啟動 PewDF，以完成清除本次工作階段中仍在使用的檔案。</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - 未預期的錯誤</sys:String>
     <sys:String x:Key="Str_Crash_Log">記錄: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">複製報告</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">開啟記錄</sys:String>
@@ -984,17 +965,6 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Compare_DetailsTitle">PDF比較詳情</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">KillerPDF無法開啟瀏覽器PDF。</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">那個瀏覽器命令不是KillerPDF所知道的。</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">交接不包含PDF地址。</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">無法讀取交接單中的PDF地址。</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">KillerPDF僅透過https開啟瀏覽器切換。</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">無法使用瀏覽器交接。</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">PDF檔大於256 MB的瀏覽器切換限制。</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">下載的檔案不是PDF。</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">KillerPDF無法下載PDF。</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">PDF下載逾時。</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">KillerPDF無法儲存或讀取下載的PDF。</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">拖曳以建立可填寫文字欄位</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">已取消建立可填寫文字欄位</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">無法建立可填寫文字欄位</sys:String>
@@ -1017,7 +987,6 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_Form_Initial">姓名縮寫</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">上一個變更區域</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">下一個變更區域</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">可攜模式 - 取得安裝版</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">無法呈現預覽:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">正在準備列印...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">前往第 {0} 頁</sys:String>
@@ -1028,10 +997,28 @@ KillerPDF 不會建立兩個已安裝的複本。</sys:String>
     <sys:String x:Key="Str_KS_ToggleTip">啟用或停用應用程式的所有快速鍵。Ctrl+Shift+K 一律有效。</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">鍵盤快速鍵已啟用</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">鍵盤快速鍵已停用。按 Ctrl+Shift+K 即可啟用。</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">啟動時檢查更新</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">KillerPDF {0} 已推出。要立即下載並安裝嗎？&#10;&#10;應用程式將關閉並自動重新開啟。</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">啟動時一律檢查更新</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">「{0}」受密碼保護。</sys:String>
     <sys:String x:Key="Str_About_Aka">別名</sys:String>
     <sys:String x:Key="Str_Btn_Run">執行</sys:String>
+    <sys:String x:Key="Str_Settings">設定</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">關於</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">標記</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">螢光筆</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">KillerPDF 基礎版本</sys:String>
+    <sys:String x:Key="Str_About_Support">支持 PewDF</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Image stamps</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Import and place reusable image stamps</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">分割</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">設為預設 PDF 應用程式</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">啟用偵錯記錄</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">重設設定</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">開啟設定資料夾</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">重設所有設定？</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">設定已重設。請重新啟動 PewDF 以套用變更。</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">不要再詢問</sys:String>
+    <sys:String x:Key="Str_AnswerYes">是</sys:String>
+    <sys:String x:Key="Str_AnswerNo">否</sys:String>
 </ResourceDictionary>

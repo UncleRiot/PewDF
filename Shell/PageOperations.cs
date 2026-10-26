@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -55,19 +55,20 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_RotateFailed"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, string.Format(Loc("Str_RotateFailed"), ex.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Split_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             var currentFile = _currentFile;
             var selected = PageList.SelectedItems;
-            if (selected.Count == 0) { KillerDialog.Show(this, Loc("Str_Dlg_SelectExtract")); return; }
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
+            if (selected.Count == 0) { PewDialog.Show(this, Loc("Str_Dlg_SelectExtract")); return; }
+            // SAVE_DIALOG_PLATFORM_INVARIANT: use the native Windows picker as the existing Open flow does; keep the extraction target and filter intact.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SaveExtractedAs"),
-                            CheckFileExists = false, CheckPathExists = true, RequireFilterExtension = true };
+                            CheckFileExists = false, CheckPathExists = true, AddExtension = true };
             if (dlg.ShowDialog(this) != true) return;
             try
             {
@@ -80,16 +81,16 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SplitFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_SplitFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             var selected = PageList.SelectedItems;
-            if (selected.Count == 0) { KillerDialog.Show(this, Loc("Str_Dlg_SelectDelete")); return; }
-            var result = KillerDialog.Show(this, selected.Count == 1 ? Loc("Str_Dlg_DeletePage1") : string.Format(Loc("Str_Dlg_DeletePagesN"), selected.Count), "KillerPDF",
+            if (selected.Count == 0) { PewDialog.Show(this, Loc("Str_Dlg_SelectDelete")); return; }
+            var result = PewDialog.Show(this, selected.Count == 1 ? Loc("Str_Dlg_DeletePage1") : string.Format(Loc("Str_Dlg_DeletePagesN"), selected.Count), "PewDF",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result != MessageBoxResult.Yes) return;
             try
@@ -124,13 +125,13 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_DeleteFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_DeleteFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void InsertBlankPage_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             int insertAfter = PageList.SelectedIndex >= 0
                 ? PageList.SelectedIndex : _doc.PageCount - 1;
             int insertIndex = insertAfter + 1;
@@ -172,7 +173,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_InsertFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_InsertFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -180,7 +181,7 @@ namespace KillerPDF
         // (sidebar empty area / outside the page), where there's no specific page to insert relative to.
         private void AddBlankPageAtEnd()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             int referencePage = Math.Clamp(PageList.SelectedIndex >= 0
                 ? PageList.SelectedIndex : _currentPage, 0, _doc.PageCount - 1);
             var (pageWidth, pageHeight) = EnsureEngineDocumentSession()
@@ -203,7 +204,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_AddPageFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_AddPageFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -317,7 +318,7 @@ namespace KillerPDF
             // Hold the token locally rather than reading it back off _thumbCts. That property
             // forwards to the ACTIVE TAB (PdfViewer.ThumbCts), and both sides are guarded on
             // _active, so with no tab open the write is dropped and the read comes back null.
-            // A killerpdf: launch reaches here in exactly that state: it goes to
+            // A pewdf: launch reaches here in exactly that state: it goes to
             // OpenFromExternal, the one startup path that never calls EnsureInitialSession.
             var freshCts = new System.Threading.CancellationTokenSource();
             _thumbCts = freshCts;

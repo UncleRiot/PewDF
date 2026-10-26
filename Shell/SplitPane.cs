@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Controls;
+using PewDF.Controls;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// Two document panes side by side in one window.
@@ -531,8 +531,7 @@ namespace KillerPDF
 
             ApplyFocusHalo();
 
-            // The moon lights for the FOCUSED pane's invert state (invert is per pane).
-            DocInvertBtn.Tag = pane.DocInvert ? "on" : null;
+            // SEMANTIC ANCHOR: INVERT_MODE_REMOVED - no sidebar indicator for per-pane inversion.
 
             // Title-bar filename follows the focused pane (it stayed on the previous pane's
             // document, 2026-08-15). _originalFile holds this pane's file after the session

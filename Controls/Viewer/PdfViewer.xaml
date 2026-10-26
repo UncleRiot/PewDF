@@ -1,7 +1,7 @@
-<UserControl x:Class="KillerPDF.Controls.PdfViewer"
+﻿<UserControl x:Class="PewDF.Controls.PdfViewer"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:KillerPDF.Controls">
+             xmlns:local="clr-namespace:PewDF.Controls">
     <!-- One document view: this pane's tab strip and its card.
 
          The card's MARGIN lives on this control, not on the borders below - ApplySidebarSide sets
@@ -419,46 +419,11 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Recent files sidebar (populated in code-behind; hidden when empty).
-                             Width and visibility are driven by SyncRecentBoxWidth: at 340 fixed it
-                             swamped the drop target in a half-width pane, so it now scales with the
-                             pane and drops out entirely below a threshold. -->
-                        <Border x:Name="RecentFilesBox" Grid.Column="1" Width="340" Visibility="Collapsed"
-                                Background="{DynamicResource BgRecentPanel}"
-                                BorderBrush="{DynamicResource PaneBorderBrush}" BorderThickness="1,0,0,0">
-                            <Grid>
-                                <Border Background="{DynamicResource GrainBrushShared}" IsHitTestVisible="False"
-                                        Opacity="{DynamicResource GrainOpacity}"/>
-                                <DockPanel Margin="18,22,12,16">
-                                    <DockPanel DockPanel.Dock="Top" Margin="2,0,0,10">
-                                        <!-- Clear all (#146): one click empties the whole list, matching the
-                                             dropdown's Clear list item. Foreground lives in the style so the
-                                             hover trigger can override it (a local value would win over it). -->
-                                        <TextBlock DockPanel.Dock="Right" Text="{DynamicResource Str_Menu_ClearList}"
-                                                   FontFamily="{DynamicResource UiFont}"
-                                                   FontSize="11" Cursor="Hand" Margin="8,0,6,0"
-                                                   MouseLeftButtonDown="RecentClearAll_Click">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
-                                                    <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
-                                                            <Setter Property="TextDecorations" Value="Underline"/>
-                                                        </Trigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                        <TextBlock Text="{DynamicResource Str_RecentHeading}" FontFamily="{DynamicResource UiFont}"
-                                                   FontSize="11" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource PrimaryBrush}"/>
-                                    </DockPanel>
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsControl x:Name="RecentFilesList"/>
-                                    </ScrollViewer>
-                                </DockPanel>
-                            </Grid>
+                        <!-- RECENT_FILES_RIBBON_ONLY: Recent documents are accessed exclusively via
+                             Datei > Zuletzt geöffnet. Retain invisible named compatibility controls
+                             for existing event handlers; never show or individually position a sidebar. -->
+                        <Border x:Name="RecentFilesBox" Grid.Column="1" Width="0" Visibility="Collapsed">
+                            <ItemsControl x:Name="RecentFilesList" Visibility="Collapsed"/>
                         </Border>
                     </Grid>
                 </Border>

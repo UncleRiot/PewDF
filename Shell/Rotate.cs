@@ -6,9 +6,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Docnet.Core;
 using Docnet.Core.Models;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -51,7 +51,7 @@ namespace KillerPDF
             // First-use warning that a transform rasterizes the page; persists the opt-out.
             if (App.GetSetting("RotateWarnAck") != "1")
             {
-                var (res, dontWarn) = KillerDialog.ShowWithCheckbox(this,
+                var (res, dontWarn) = PewDialog.ShowWithCheckbox(this,
                     Loc("Str_Tf_Warn"),
                     Loc("Str_Tf_DontWarn"), Loc("Str_Tf_Suffix"), MessageBoxButton.OKCancel);
                 if (res != MessageBoxResult.OK) return;
@@ -180,7 +180,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, string.Format(Loc("Str_Tf_Failed"), ex.Message), "KillerPDF",
+                PewDialog.Show(this, string.Format(Loc("Str_Tf_Failed"), ex.Message), "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

@@ -1,6 +1,6 @@
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace PewDF
 {
     internal enum StampKind { PageNumber, Watermark }
 

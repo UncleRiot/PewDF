@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,15 +13,15 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using KillerPdf.Engine.Documents;
 using KillerPdf.Engine.Writing;
-// CliParsePageRange moved out with the CLI runner but is used here too (Export Images'
-// range box); its encoder sibling is now Services/BitmapHelpers.EncodeJpeg.
-using static KillerPDF.Features.CliRunner;
+// SEMANTIC ANCHOR: EXPORT_PAGE_RANGE_SSOT.
+// GUI image export uses the shared 1-based to 0-based page-range parser.
+// INVARIANT: Parsing a selection never mutates the PDF or writes output files.
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -103,7 +103,7 @@ namespace KillerPDF
                 }
                 catch (Exception ex2)
                 {
-                    KillerDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex2.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    PewDialog.Show(this, string.Format(Loc("Str_Dlg_FailedOpen"), ex2.Message), Loc("Str_Dlg_AppTitle"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex) when (PdfImport.IsXRefException(ex))
@@ -117,16 +117,16 @@ namespace KillerPDF
                     _currentFile = srcPath;
                     FinishOpenFile(path, srcPath);
                     SetStatus(string.Format(Loc("Str_OpenedReadOnlyXRef"), System.IO.Path.GetFileName(path), _doc.PageCount));
-                    KillerDialog.Show(this,
+                    PewDialog.Show(this,
                         $"\"{System.IO.Path.GetFileName(path)}\" has a non-standard structure and was opened read-only.\n\nEditing, saving, and some other features may not work correctly.",
-                        "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "PewDF", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
                 catch
                 {
                     // ReadOnly also failed - offer to repair.
-                    var result = KillerDialog.Show(this,
+                    var result = PewDialog.Show(this,
                         string.Format(Loc("Str_Dlg_RepairAsk"), System.IO.Path.GetFileName(path)),
-                        "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (result == MessageBoxResult.Yes)
                         TryRepairAndOpen(srcPath);
                 }
@@ -145,9 +145,9 @@ namespace KillerPDF
                 // Any other open failure (truncated file, malformed objects, an out-of-range parse, etc.):
                 // we can't classify the damage, but the PDFium-based repair often recovers it anyway, so
                 // offer the repair rather than just failing outright.
-                var result = KillerDialog.Show(this,
-                    "This PDF couldn't be opened because its structure may be damaged.\n\nWould you like KillerPDF to attempt a repair? A repaired copy will be created, and the original file will not be changed.\n\nNote: repaired files may be missing bookmarks, forms, and other interactive features.",
-                    "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var result = PewDialog.Show(this,
+                    "This PDF couldn't be opened because its structure may be damaged.\n\nWould you like PewDF to attempt a repair? A repaired copy will be created, and the original file will not be changed.\n\nNote: repaired files may be missing bookmarks, forms, and other interactive features.",
+                    "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (result == MessageBoxResult.Yes)
                     TryRepairAndOpen(srcPath);   // sets _asyncOpenPending and finalizes the tab itself
             }
@@ -213,8 +213,8 @@ namespace KillerPDF
             SyncSidebarToDocState(hasDoc: true, startup: false);   // a document is up: open the rail, show page controls
         }
 
-        // Themed "Password Required" prompt (KillerDialog): family dialog chrome + themed PasswordBox.
-        private string? PromptForPassword(string filename) => KillerDialog.PromptPassword(this, filename);
+        // Themed "Password Required" prompt (PewDialog): family dialog chrome + themed PasswordBox.
+        private string? PromptForPassword(string filename) => PewDialog.PromptPassword(this, filename);
 
         // ALL direct PDFium P/Invoke lives in Services/PdfiumInterop.cs (KillerUI refactor) -
         // one class, one lock (Docnet's), so the thread-safety discipline stays auditable.
@@ -237,7 +237,7 @@ namespace KillerPDF
                 bool raster = false;
 
                 // Strategy 0 (#103): lossless PDFium re-save. PDFium's tolerant parser recovers
-                // broken xref tables (including the dangling /Outlines entry older KillerPDF
+                // broken xref tables (including the dangling /Outlines entry older PewDF
                 // builds wrote) and rewrites a clean file preserving EVERYTHING - forms,
                 // bookmarks, text. The import-copy below drops the document-level AcroForm,
                 // which is what used to turn a repaired fillable form into a flat one.
@@ -268,8 +268,8 @@ namespace KillerPDF
                 {
                     HideBusyOverlay(busy);
                     _asyncOpenPending = false;
-                    KillerDialog.Show(this, Loc("Str_Repair_Unrecoverable"),
-                        "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                    PewDialog.Show(this, Loc("Str_Repair_Unrecoverable"),
+                        "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
@@ -282,17 +282,17 @@ namespace KillerPDF
                                         System.IO.Path.GetFileName(path), _doc.PageCount));
                 HideBusyOverlay(busy);
                 FinalizeAsyncOpen();
-                KillerDialog.Show(this,
+                PewDialog.Show(this,
                     raster
                         ? string.Format(Loc("Str_Dlg_RepairedRaster"), System.IO.Path.GetFileName(path))
                         : string.Format(Loc("Str_Dlg_Repaired"), System.IO.Path.GetFileName(path)),
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.None);
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.None);
             }
             catch (Exception ex)
             {
                 HideBusyOverlay(busy);
                 _asyncOpenPending = false;
-                KillerDialog.Show(this, Loc("Str_Err_RepairFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(this, Loc("Str_Err_RepairFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -345,8 +345,8 @@ namespace KillerPDF
             {
                 HideBusyOverlay(busy);
                 _asyncOpenPending = false;
-                KillerDialog.Show(this, Loc("Str_Err_OpenProtected") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_OpenProtected") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                 EndCancellableOp();
             }
         }
@@ -358,7 +358,7 @@ namespace KillerPDF
         {
             _asyncOpenPending = false;
             if (_active != null) CaptureSessionState(_active);
-            SetTool(_currentTool);
+            SetTool(_currentTool, restoringPane: true);
             RebuildTabStrip();
         }
 
@@ -374,10 +374,21 @@ namespace KillerPDF
             if (_doc is null) return;
             if (_isDirty)
             {
-                var res = KillerDialog.Show(this,
-                    Loc("Str_Dlg_UnsavedClose"),
-                    "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                if (res != MessageBoxResult.Yes) return;
+                // SEMANTIC ANCHOR: UNSAVED_DOCUMENT_CLOSE_CONTRACT
+                // The localized save question is shared with the application exit dialog.
+                // Yes saves before closing, No discards, X/Escape cancels. Never close after
+                // a cancelled or unsuccessful save; preserve the existing SaveInPlace workflow.
+                var res = PewDialog.Show(this,
+                    Loc("Str_Dlg_UnsavedExit"),
+                    PewDF.Controls.WindowIdentity.AppTitle, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    defaultResult: MessageBoxResult.Cancel);
+                if (res == MessageBoxResult.Cancel) return;
+                if (res == MessageBoxResult.Yes)
+                {
+                    SaveInPlace();
+                    if (_isDirty) return;
+                }
+                else if (res != MessageBoxResult.No) return;
             }
             _doc.Close();
             _doc = null;
@@ -407,7 +418,6 @@ namespace KillerPDF
             DropZone.Visibility = Visibility.Visible;
             PopulateRecentFilesList();   // refresh the empty-state recent list
             PagePreviewPanel.Visibility = Visibility.Collapsed;
-            CloseSearchBar();
             HideDrawSettings();
             HideTextSettings();
             HideSignaturePopup();
@@ -448,22 +458,38 @@ namespace KillerPDF
                 FinishOpenFile("Untitled.pdf", tempPath);
                 SetStatus(Loc("Str_KS_NewBlank"));
                 CaptureSessionState(_active!);
-                SetTool(_currentTool);   // sync the tool UI to this (new) tab's tool
+                SetTool(_currentTool, restoringPane: true);   // sync the tool UI to this (new) tab's tool
                 RebuildTabStrip();
             }
             catch (Exception ex)
             {
                 AbortTabLoad(target, prev, createdNew);
-                KillerDialog.Show(this, Loc("Str_Err_NewDocFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_NewDocFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Open_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
-                          { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_OpenPdf") };
-            if (dlg.ShowDialog(this) == true) OpenInNewTab(dlg.FileName);
+            var dlg = new Microsoft.Win32.OpenFileDialog()
+                          { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_OpenPdf"), Multiselect = true };
+            if (dlg.ShowDialog(this) != true) return;
+
+            if (dlg.FileNames.Length == 1)
+            {
+                OpenInNewTab(dlg.FileNames[0]);
+                return;
+            }
+
+            int choice = PewDialog.ShowChoices(this,
+                string.Format(Loc("Str_Drop_Prompt"), dlg.FileNames.Length),
+                [Loc("Str_Drop_Merge"), Loc("Str_Drop_Separate"), Loc("Str_Stamp_Cancel")],
+                accentIndex: 0);
+
+            if (choice == 0)
+                OpenMerged([.. dlg.FileNames], []);
+            else if (choice == 1)
+                OpenSeparately([.. dlg.FileNames]);
         }
 
         // Dropdown next to the Open button: the recent-files list.
@@ -488,7 +514,7 @@ namespace KillerPDF
                     var item = MakeMenuItem(System.IO.Path.GetFileName(path), (_, _) =>
                     {
                         if (System.IO.File.Exists(path)) OpenInNewTab(path);
-                        else KillerDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "KillerPDF",
+                        else PewDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "PewDF",
                             MessageBoxButton.OK, MessageBoxImage.Warning);
                     });
                     item.ToolTip = path;
@@ -724,7 +750,7 @@ namespace KillerPDF
                     // through ActiveViewer. Clicking pane B's recents opened the file in pane A.
                     FocusPane(pane);
                     if (System.IO.File.Exists(path)) OpenInNewTab(path);
-                    else KillerDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "KillerPDF",
+                    else PewDialog.Show(this, Loc("Str_Err_FileNotFound") + "\n" + path, "PewDF",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
                 };
                 list.Items.Add(row);
@@ -768,7 +794,7 @@ namespace KillerPDF
         // Opens the Document Info dialog; edits are applied to the live doc and persist on the next save.
         private void OpenDocumentInfo()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
             string? path = _originalFile ?? _currentFile;
             KillerPdf.Engine.Documents.PdfDocumentInformation info =
@@ -799,8 +825,8 @@ namespace KillerPDF
 
         private async Task MergeAtIndex(int? insertionIndex)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            var dlg = new Microsoft.Win32.OpenFileDialog()
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SelectMerge"), Multiselect = true };
             if (dlg.ShowDialog(this) != true) return;
             try
@@ -843,7 +869,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_MergeFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -854,8 +880,8 @@ namespace KillerPDF
         // Adobe Reader only displays pages whose sides are 3-14400 points; anything outside
         // that range shows "The dimensions of this page are out-of-range" and renders blank.
         // Such pages usually come from images with broken DPI metadata turned into a PDF (by
-        // KillerPDF 1.6.1 and earlier, or by other tools). PDFium renders any size, so the
-        // file looks normal in KillerPDF and only fails in Adobe.
+        // PewDF 1.6.1 and earlier, or by other tools). PDFium renders any size, so the
+        // file looks normal in PewDF and only fails in Adobe.
         // Min/MaxAdobePageDim live in Services/PdfImport.cs (shared with the image importer).
 
         // Called at the top of every user-facing save. If any page is outside Adobe's supported
@@ -868,8 +894,8 @@ namespace KillerPDF
             IReadOnlyList<int> pages = PdfPageDimensionNormalizer.FindPagesOutsideRange(
                 session.Document, PdfImport.MinAdobePageDim, PdfImport.MaxAdobePageDim);
             if (pages.Count == 0) return;
-            var res = KillerDialog.Show(this, string.Format(Loc("Str_Dlg_PageOutOfRange"), pages.Count),
-                "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            var res = PewDialog.Show(this, string.Format(Loc("Str_Dlg_PageOutOfRange"), pages.Count),
+                "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
             SaveTempAndReload(keepAnnotations: true, preserveZoom: true,
                 finalizeSavedFile: path => PdfEngineIntegration.NormalizePageDimensions(
@@ -891,7 +917,7 @@ namespace KillerPDF
                 signed = false;   // an unreadable destination is reported by the save itself
             }
             if (!signed) return true;
-            return KillerDialog.Show(this,
+            return PewDialog.Show(this,
                 string.Format(Loc("Str_Dlg_SaveRemovesSignature"), System.IO.Path.GetFileName(destinationPath)),
                 Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                 defaultResult: MessageBoxResult.Cancel) == MessageBoxResult.OK;
@@ -899,7 +925,7 @@ namespace KillerPDF
 
         private void SaveInPlace()
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             // Save back to the user's real file. After a page edit (crop/rotate) _currentFile is a
             // temp working copy, so the real path is kept in _originalFile. If there is no real path
             // (e.g. a repaired temp-backed open), fall back to Save As.
@@ -974,13 +1000,13 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             // No real path yet (repaired temp-backed open) -> go straight to Save As.
             if (string.IsNullOrEmpty(_originalFile)) { SaveAs_Click(sender, e); return; }
             var name = System.IO.Path.GetFileName(_originalFile);
@@ -990,13 +1016,13 @@ namespace KillerPDF
             // suggest that - so say so before it happens rather than after.
             if (OtherPaneHasDirtyCopyOf(_originalFile))
             {
-                var warn = KillerDialog.Show(this,
+                var warn = PewDialog.Show(this,
                     string.Format(Loc("Str_Dlg_SaveOtherPaneDirty"), name),
                     Loc("Str_Dlg_AppTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Warning,
                     defaultResult: MessageBoxResult.Cancel);
                 if (warn != MessageBoxResult.OK) return;
             }
-            var choice = KillerDialog.Show(this, string.Format(Loc("Str_Dlg_OverwriteMsg"), name), Loc("Str_Lbl_Save"),
+            var choice = PewDialog.Show(this, string.Format(Loc("Str_Dlg_OverwriteMsg"), name), Loc("Str_Lbl_Save"),
                                            MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
             if (choice == MessageBoxResult.Yes)      SaveInPlace();
             else if (choice == MessageBoxResult.No)  SaveAs_Click(sender, e);
@@ -1005,11 +1031,12 @@ namespace KillerPDF
 
         private void SaveAs_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
+            // SAVE_DIALOG_PLATFORM_INVARIANT: native Windows picker is the single platform UI for save destinations; keep each operation's filter, seed path, and post-selection processing.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SavePdfAs"),
-                            CheckFileExists = false, CheckPathExists = true, RequireFilterExtension = true };
+                            CheckFileExists = false, CheckPathExists = true, AddExtension = true };
             // Seed the dialog from the last real save location. Guard every path call: on .NET Framework
             // Path.GetDirectoryName("") throws ArgumentException ("path is not of a legal form"), so a merged
             // or imported doc (where _originalFile is null) would crash Save before the dialog opened (#112).
@@ -1102,7 +1129,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_SaveFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1115,10 +1142,10 @@ namespace KillerPDF
 
         private async void SaveFlattened_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            var dlg = new Microsoft.Win32.SaveFileDialog()
                           { Filter = Loc("Str_Filter_Pdf") + "|*.pdf", Title = Loc("Str_Dlg_SaveFlattened"),
-                            CheckFileExists = false, CheckPathExists = true, RequireFilterExtension = true };
+                            CheckFileExists = false, CheckPathExists = true, AddExtension = true };
             if (dlg.ShowDialog(this) != true) return;
             Border? overlay = null;
             bool operationStarted = false;
@@ -1180,7 +1207,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                try { KillerDialog.Show(this, Loc("Str_Err_FlattenFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error); }
+                try { PewDialog.Show(this, Loc("Str_Err_FlattenFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error); }
                 catch { /* dialog failed; overlay still removed in finally */ }
             }
             finally
@@ -1202,7 +1229,7 @@ namespace KillerPDF
         /// (the Pages panel's "Export page as image", #207) while staying fully editable.</summary>
         private async Task ExportImagesFlow(string presetRange)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
             PdfEngineDocumentSession engineSession = EnsureEngineDocumentSession();
             int pageCount = engineSession.PageCount;
@@ -1218,18 +1245,18 @@ namespace KillerPDF
             List<int>? selected = null;
             if (opts.Range.Length > 0)
             {
-                selected = CliParsePageRange(opts.Range, pageCount, out string rangeErr);
+                selected = PageRangeParser.ParsePageRange(opts.Range, pageCount, out string rangeErr);
                 if (selected is null)
                 {
-                    KillerDialog.Show(this, rangeErr.Length > 0 ? rangeErr : Loc("Str_InvalidRange"),
-                                      "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    PewDialog.Show(this, rangeErr.Length > 0 ? rangeErr : Loc("Str_InvalidRange"),
+                                      "PewDF", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
             }
             selected ??= [.. Enumerable.Range(0, pageCount)];
 
             string ext = opts.Jpeg ? "jpg" : "png";
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Save)
+            var dlg = new Microsoft.Win32.SaveFileDialog()
             {
                 Filter = opts.Jpeg ? "JPEG image|*.jpg" : "PNG image|*.png",
                 Title  = Loc("Str_ExportImg_Suffix"),
@@ -1299,7 +1326,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ExportFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -1360,7 +1387,7 @@ namespace KillerPDF
 
         private void Print_Click(object sender, RoutedEventArgs e)
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             CommitActiveTextBox();
 
             // The print prep (annotation burn + doc reopen) runs synchronously on the UI thread and
@@ -1425,8 +1452,8 @@ namespace KillerPDF
                 {
                     DeletePrintTemp(formPath);
                     DeletePrintTemp(burnPath);
-                    KillerDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.Message,
-                        "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                    PewDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.Message,
+                        "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
                 finally { DeletePrintTemp(tempClean); }
@@ -1457,7 +1484,7 @@ namespace KillerPDF
 
             // Open the preview window immediately. Pages rasterize on a background thread and
             // stream in via SetRenderedPage, so the window appears at once and the app stays
-            // responsive on large files. WPF's OS PrintDialog can't show a preview, so KillerPDF
+            // responsive on large files. WPF's OS PrintDialog can't show a preview, so PewDF
             // renders it and drives printing itself.
             string  renderPath = printPath;
             string? cleanup    = tempFlattened;
@@ -1508,7 +1535,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                try { KillerDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error); }
+                try { PewDialog.Show(this, Loc("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error); }
                 catch { }
             }
 

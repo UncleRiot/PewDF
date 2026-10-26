@@ -1,6 +1,6 @@
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     /// <summary>
     /// The document-search state machine: runs SearchService over the working file, keeps the

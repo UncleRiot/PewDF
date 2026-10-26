@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -11,9 +11,9 @@ using KillerPdf.Engine.Fonts;
 using EngineImage = KillerPdf.Engine.Authoring.PdfImage;
 using WpfPoint = System.Windows.Point;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
-/// <summary>Burns KillerPDF markup into typed engine page content.</summary>
+/// <summary>Burns PewDF markup into typed engine page content.</summary>
 internal static class PdfEngineBurn
 {
     internal static void Burn(
@@ -217,7 +217,20 @@ internal static class PdfEngineBurn
             content.SetFillRgb(ink.FillR / 255d, ink.FillG / 255d, ink.FillB / 255d)
                 .SetOpacity(ink.FillA / 255d).MoveTo(ink.Points[0].X * sx, ink.Points[0].Y * sy);
             foreach (WpfPoint point in ink.Points.Skip(1)) content.LineTo(point.X * sx, point.Y * sy);
-            content.ClosePath().FillEvenOdd();
+            // SEMANTIC ANCHOR: TEXT_MARKER_EXPORT_MULTIPLY_INVARIANT
+            // Use the same text-preserving PDF blend mode as regular highlighting;
+            // apply only to filled marker annotations, never opaque shapes.
+            if (ink.StrokeWidth <= 0.01 && ink.ColorA == 0)
+                content.SetBlendMode(PdfBlendMode.Multiply);
+            // SEMANTIC ANCHOR: TEXT_MARKER_FILL_RULE_INVARIANT
+            // Marker polygons may self-intersect when the user reverses direction.
+            // Their nonzero winding fill must not punch transparent holes through
+            // earlier portions of the same stroke. Preserve existing even-odd
+            // semantics for all other filled ink annotations.
+            if (ink.StrokeWidth <= 0.01 && ink.ColorA == 0)
+                content.ClosePath().Fill();
+            else
+                content.ClosePath().FillEvenOdd();
         }
         content.SetStrokeRgb(ink.ColorR / 255d, ink.ColorG / 255d, ink.ColorB / 255d)
             .SetOpacity(1, ink.ColorA / 255d).SetLineWidth(Math.Max(.01, ink.StrokeWidth * sx))

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// The tab and session members under the names the window already calls them by, routed to the

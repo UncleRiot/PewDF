@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -30,13 +30,20 @@ namespace KillerPDF
         {
             EditTool.Text => Cursors.IBeam,
             EditTool.FormField => Cursors.Cross,
-            EditTool.Highlight => Cursors.Cross,
+            // SEMANTIC ANCHOR: TEXT_HIGHLIGHT_CURSOR_INVARIANT
+            // Text-bound highlighting uses the text-selection cursor; CursorForTool
+            // remains the single source for both primary and continuous page overlays.
+            EditTool.Highlight => Cursors.IBeam,
             EditTool.Strikethrough => Cursors.Cross,
             EditTool.Underline => Cursors.Cross,
             EditTool.Draw => Cursors.Pen,
+            // SEMANTIC ANCHOR: TEXT_MARKER_CURSOR_INVARIANT
+            // The cursor hotspot sits on the downward-facing chisel tip; the body runs down/right.
+            // This central mapping is used by primary and continuous-view canvases alike.
+            EditTool.TextMarker => DynamicTextMarkerCursor ?? Cursors.Cross,
             EditTool.Line => Cursors.Cross,
             EditTool.Shape => Cursors.Cross,
-            EditTool.Signature => Cursors.Pen,
+            EditTool.Signature => Cursors.Arrow,
             EditTool.Image => Cursors.Hand,
             EditTool.Crop => Cursors.Cross,
             EditTool.Rotate => Cursors.Cross,
@@ -44,15 +51,145 @@ namespace KillerPDF
             _ => Cursors.Arrow
         };
 
+        // SEMANTIC ANCHOR: TEXT_MARKER_CURSOR_FALLBACK_INVARIANT
+        // The dynamically generated cursor is the only marker cursor resource.
+        // Before it is available or if creation fails, use the built-in cross cursor;
+        // do not reference removed packaged CUR files.
+
+        // SEMANTIC ANCHOR: TEXT_MARKER_CURSOR_SETTINGS_SSOT
+        // Cursor color, nib width and angle are derived from the active viewer, never cached separately.
+        private static Cursor? DynamicTextMarkerCursor;
+        private void RefreshTextMarkerCursor()
+        {
+            if (_currentTool != EditTool.TextMarker) return;
+            var viewer = ActiveViewer;
+            try
+            {
+                DynamicTextMarkerCursor = CreateTextMarkerCursor(viewer.TextMarkerColor, viewer.TextMarkerNibSize, viewer.TextMarkerNibAngle);
+                var cursor = CursorForTool(EditTool.TextMarker);
+                _annotationCanvas.Cursor = cursor;
+                foreach (var canvas in _continuousCanvases.Values) canvas.Cursor = cursor;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Text marker cursor unavailable: {ex.Message}");
+                DynamicTextMarkerCursor = Cursors.Cross;
+            }
+        }
+
+        private static Cursor CreateTextMarkerCursor(Color color, double nibSize, double nibAngle)
+        {
+            // SEMANTIC ANCHOR: TEXT_MARKER_APPROVED_IMAGE_SSOT
+            // The approved original silhouette is the packaged image, not recreated geometry.
+            // Color is derived from active tool settings; aspect ratio must never change.
+            // Tip hotspot is the image's upper-left nib contact, never the barrel centre.
+            // nibAngle intentionally does not rotate the approved cursor artwork.
+            _ = nibAngle;
+            const int canvasSize = 128;
+            const int hotspotX = 12;
+            const int hotspotY = 20;
+            double scale = Math.Clamp(nibSize / 20.0, 0.40, 1.25) * 0.66;
+
+            var resource = Application.GetResourceStream(
+                new Uri("pack://application:,,,/Resources/textmarker-approved.png"))
+                ?? throw new InvalidOperationException("Approved textmarker image resource is missing.");
+            BitmapSource original;
+            using (resource.Stream)
+            {
+                var decoder = BitmapDecoder.Create(resource.Stream, BitmapCreateOptions.PreservePixelFormat,
+                    BitmapCacheOption.OnLoad);
+                original = new FormatConvertedBitmap(decoder.Frames[0], PixelFormats.Bgra32, null, 0);
+            }
+            int stride = original.PixelWidth * 4;
+            var pixels = new byte[stride * original.PixelHeight];
+            original.CopyPixels(pixels, stride, 0);
+            // Recolor only pink pigment (barrel and nib); leave original neck and outlines intact.
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                byte b = pixels[i], g = pixels[i + 1], r = pixels[i + 2];
+                if (r > 110 && r > g * 1.25 && b > g * 1.12 && r >= b)
+                {
+                    double shade = Math.Clamp((r + g + b) / (252.0 + 112.0 + 169.0), 0.48, 1.17);
+                    pixels[i] = (byte)Math.Clamp((int)Math.Round(color.B * shade), 0, 255);
+                    pixels[i + 1] = (byte)Math.Clamp((int)Math.Round(color.G * shade), 0, 255);
+                    pixels[i + 2] = (byte)Math.Clamp((int)Math.Round(color.R * shade), 0, 255);
+                }
+            }
+            var tinted = BitmapSource.Create(original.PixelWidth, original.PixelHeight,
+                96, 96, PixelFormats.Bgra32, null, pixels, stride);
+            tinted.Freeze();
+            var visual = new DrawingVisual();
+            using (DrawingContext dc = visual.RenderOpen())
+            {
+                // Template nib contact: pixel (2,10) within the preserved crop.
+                dc.DrawImage(tinted, new Rect(hotspotX - 2 * scale,
+                    hotspotY - 10 * scale, tinted.PixelWidth * scale, tinted.PixelHeight * scale));
+            }
+            var bitmap = new RenderTargetBitmap(canvasSize, canvasSize, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(visual);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            using var png = new MemoryStream();
+            encoder.Save(png);
+            using var stream = new MemoryStream();
+            using (var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true))
+            {
+                writer.Write((ushort)0); writer.Write((ushort)2); writer.Write((ushort)1);
+                writer.Write((byte)canvasSize); writer.Write((byte)canvasSize);
+                writer.Write((byte)0); writer.Write((byte)0);
+                writer.Write((ushort)hotspotX); writer.Write((ushort)hotspotY);
+                writer.Write((uint)png.Length); writer.Write((uint)22);
+                writer.Write(png.ToArray());
+            }
+            stream.Position = 0;
+            return new Cursor(stream);
+        }
+
+        // SEMANTIC ANCHOR: CROP_PANE_SINGLE_OWNER_INVARIANT
+        // Crop creates the controls in PdfViewer, but only this shared pane owns their
+        // layout, visibility and resize policy. Never collapse a replacement tool's pane.
+        private void OnCropPaneChanged(Controls.PdfViewer source, Border? bar)
+        {
+            if (bar is null)
+            {
+                if (_cropPaneOwner is not null &&
+                    TextSidebarContent.Children.Contains(_cropPaneOwner))
+                    HideToolPaneContent(_cropPaneOwner);
+                _cropPaneOwner = null;
+                return;
+            }
+            if (!ReferenceEquals(source, ActiveViewer)) return;
+            _cropPaneOwner = bar;
+            TextSidebarContent.Children.Clear();
+            TextSidebarContent.Children.Add(bar);
+            ToolSidebarHeader.SetResourceReference(TextBlock.TextProperty, "Str_Crop_Apply");
+            if (!_textSidebarToggleWired)
+            {
+                TextSidebarToggle.Click += (_, _) => SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                _textSidebarToggleWired = true;
+            }
+            TextSidebarToggle.Visibility = Visibility.Visible;
+            SetTextSidebarCollapsed(false);
+            _annotBarTool = EditTool.Crop;
+        }
+
+        private Border? _cropPaneOwner;
+
         private void SetTool(EditTool tool, bool restoringPane = false)
         {
             // Re-clicking the tool that owns the visible annotate bar tucks the bar away (or brings it
             // back) instead of rebuilding it - no flicker, and a quick way to get it out of the way.
             bool reclickedAnnotTool = !restoringPane && tool == _currentTool && tool == _annotBarTool
-                && (_textSettingsBar is not null || _drawSettingsBar is not null || _cropConfirmBar is not null);
+                && (_textSettingsBar is not null || _drawSettingsBar is not null || _cropConfirmBar is not null || _textMarkerSettingsBar is not null);
             if (reclickedAnnotTool)
             {
-                ToggleAnnotBarMinimized();
+                // SEMANTIC ANCHOR: TOOL_PANE_TOGGLE_INVARIANT: Sidebar tools use the
+                // single pane toggle, never the legacy floating-bar height animation.
+                if (tool is EditTool.Text or EditTool.Draw or EditTool.Line or EditTool.Shape
+                    or EditTool.Highlight or EditTool.Strikethrough or EditTool.Underline or EditTool.Crop or EditTool.TextMarker)
+                    SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                else
+                    ToggleAnnotBarMinimized();
                 return;
             }
 
@@ -65,37 +202,14 @@ namespace KillerPDF
             _currentTool = tool;
             ActiveViewer.RefreshFormDesignMode();
 
-            var map = new (Button btn, EditTool t)[]
-            {
-                (_toolSelectBtn, EditTool.Select),
-                (_toolTextBtn, EditTool.Text),
-                (_toolFormFieldBtn, EditTool.FormField),
-                (_toolHighlightBtn, EditTool.Highlight),
-                (_toolUnderlineBtn, EditTool.Line),          // the old Underline button is now the Line tool
-                (_toolDrawBtn, EditTool.Draw),
-                (_toolShapeBtn, EditTool.Shape),
-                (_toolSignatureBtn, EditTool.Signature),
-                (_toolImageBtn, EditTool.Image),
-                (_toolCropBtn, EditTool.Crop),
-                (_toolRotateBtn, EditTool.Rotate),
-                (_toolMeasureBtn, EditTool.Measure)
-            };
-            foreach (var (btn, t) in map)
-            {
-                btn.Tag = t == tool ? "selected" : null;
-                if (t == tool)
-                {
-                    btn.SetResourceReference(Control.BackgroundProperty, "SelectionBg");
-                    btn.SetResourceReference(Control.ForegroundProperty, "SelectionFg");
-                }
-                else
-                {
-                    // Clear local values so the ToolbarButton style (incl. its hover trigger) applies.
-                    // Setting Background locally here would override the style and kill the hover.
-                    btn.ClearValue(Control.BackgroundProperty);
-                    btn.ClearValue(Control.ForegroundProperty);
-                }
-            }
+            // SEMANTIC ANCHOR: TOOL_STATE_SINGLE_OWNER_INVARIANT.
+            // _currentTool owns the selection state. The active Home ribbon renders
+            // it through UpdateRibbonPreviewSelection; no hidden toolbar is consulted.
+
+            // Keep the new ribbon's selected-state visuals synchronized with the existing
+            // tool mode. Do not introduce any parallel selection state.
+            UpdateRibbonPreviewSelection();
+            RefreshFormRibbonButtons();
 
             // Apply the tool cursor to every page surface, not just the primary page.
             // In Grid / Two-Page / Continuous modes the secondary tiles are separate
@@ -106,18 +220,40 @@ namespace KillerPDF
             foreach (var overlay in _continuousCanvases.Values)
                 overlay.Cursor = toolCursor;
 
-            // Show/hide draw settings bar
-            if ((tool is EditTool.Draw or EditTool.Line or EditTool.Shape) || tool == EditTool.Highlight
-                || tool == EditTool.Strikethrough || tool == EditTool.Underline)
+            // SEMANTIC ANCHOR: TOOL_PANE_SWITCH_INVARIANT: Release the previous owner's
+            // content before installing the new tool. A draw-to-text switch must not leave
+            // floating controls or shrink the newly installed pane.
+            bool drawTool = tool is EditTool.Draw or EditTool.Line or EditTool.Shape
+                or EditTool.Highlight or EditTool.Strikethrough or EditTool.Underline;
+            // SEMANTIC ANCHOR: TEXT_MARKER_PANE_RELEASE_INVARIANT
+            // Clear marker-owned content when another tool takes ownership; retain pane width.
+            if (tool != EditTool.TextMarker)
+                HideTextMarkerSettings(keepPane: drawTool || tool == EditTool.Text || tool == EditTool.Crop || tool == EditTool.Signature);
+            if (drawTool)
+            {
+                HideTextSettings(keepPane: true);
                 ShowDrawSettings(tool);
-            else
-                HideDrawSettings();
-
-            // Show/hide text tool settings bar
-            if (tool == EditTool.Text)
+            }
+            else if (tool == EditTool.TextMarker)
+            {
+                HideDrawSettings(keepPane: true);
+                HideTextSettings(keepPane: true);
+                ShowTextMarkerSettings();
+                RefreshTextMarkerCursor();
+            }
+            else if (tool == EditTool.Text)
+            {
+                HideDrawSettings(keepPane: true);
                 ShowTextSettings();
+            }
             else
-                HideTextSettings();
+            {
+                // SEMANTIC ANCHOR: SIGNATURE_TOOL_SWITCH_INVARIANT
+                // Preserve the column while replacing sidebar content with Signature.
+                // Its owner is released only when leaving Signature for a non-pane tool.
+                HideDrawSettings(keepPane: tool is EditTool.Signature or EditTool.Crop);
+                HideTextSettings(keepPane: tool is EditTool.Signature or EditTool.Crop);
+            }
 
             // Hide signature popup when switching away
             if (tool != EditTool.Signature)
@@ -136,32 +272,6 @@ namespace KillerPDF
             // width visibly thrashes the whole bar. The active-tool protection still runs on resize (the
             // next time the window changes width the active tool is pulled back onto the bar), which the
             // user preferred over the jank.
-            UpdateOverflowActiveHighlight();   // mark the active tool in the overflow menu (cheap, no reflow)
-        }
-
-        // Tints the active tool's row in the overflow menu with the selection colors, so when a tool lives
-        // in the chevron (collapsed off the bar) you can still see which one is active - same cue as the
-        // highlighted icon on the bar. No-op for the rows that aren't tools.
-        private void UpdateOverflowActiveHighlight()
-        {
-            var map = new (Button mi, EditTool t)[]
-            {
-                (MiText, EditTool.Text), (MiFormField, EditTool.FormField),
-                (MiUnderline, EditTool.Line), (MiHighlight, EditTool.Highlight),
-                (MiDraw, EditTool.Draw), (MiImage, EditTool.Image), (MiCrop, EditTool.Crop),
-                (MiSignature, EditTool.Signature), (MiMeasure, EditTool.Measure),
-            };
-            foreach (var (mi, t) in map)
-            {
-                if (mi is null) continue;
-                bool active = t == _currentTool;
-                if (active) mi.SetResourceReference(Control.BackgroundProperty, "SelectionBg");
-                else mi.ClearValue(Control.BackgroundProperty);
-                if (mi.Content is Panel sp)
-                    foreach (var ch in sp.Children)
-                        if (ch is TextBlock tb)
-                            tb.SetResourceReference(TextBlock.ForegroundProperty, active ? "SelectionFg" : "TextBrush");
-            }
         }
 
         private void SidebarToggle_Click(object sender, RoutedEventArgs e)

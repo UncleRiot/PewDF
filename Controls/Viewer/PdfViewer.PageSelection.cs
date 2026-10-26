@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Moved from Shell/PageSelection.cs; the namespace and class line are the only changes. Window
     // members spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -141,10 +141,9 @@ namespace KillerPDF.Controls
                 ApplyZoom();
                 // Update page jump box
                 Host?.PageJumpText = (_currentPage + 1).ToString();
-                // Re-highlight search results on this page if a search is active
-                if (_searchBar is not null && _searchBar.Visibility == Visibility.Visible
-                    && Search.HasResults)
-                    HighlightSearchResultsOnCurrentPage();
+                // INLINE_SEARCH_UI_INVARIANT: The removed floating search bar cannot control
+                // page-navigation highlights. Inline search highlighting remains managed
+                // by the existing search and page-rendering pipeline.
             }
         }
 

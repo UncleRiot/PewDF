@@ -3,30 +3,24 @@ using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Features;
+using PewDF.Features;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// The About overlay's window half: the IAboutHost implementation that maps the controller's
     /// values onto the named XAML elements, the inline construction the card needs, and the click
-    /// handlers. All the logic - signature, hashing, update check, self-update - lives in
+    /// handlers. The signature and hash logic lives in
     /// <see cref="AboutController"/>.
     ///
-    /// NOTE: this stays "namespace KillerPDF" rather than KillerPDF.Shell, because it is a partial
+    /// NOTE: this stays "namespace PewDF" rather than PewDF.Shell, because it is a partial
     /// of MainWindow and every partial of a class must share one namespace. It moves to
-    /// KillerPDF.Shell when MainWindow itself does.
+    /// PewDF.Shell when MainWindow itself does.
     /// </summary>
     public partial class MainWindow : IAboutHost
     {
         private AboutController? _aboutController;
         private AboutController About => _aboutController ??= new AboutController(this);
-
-        private void VersionLabel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            e.Handled = true;
-            ShowAboutOverlay();
-        }
 
         private void ShowAboutOverlay() => About.Show();
 
@@ -51,20 +45,6 @@ namespace KillerPDF
         string IAboutHost.Thumbprint  { set => AboutThumbprintBlock.Text = value; }
         string IAboutHost.Sha256      { set => AboutSha256Block.Text     = value; }
         string IAboutHost.ReleaseDate { set => AboutReleaseDateBlock.Text = value; }
-        string IAboutHost.UpdateText  { set => AboutUpdateText.Text      = value; }
-
-        bool IAboutHost.UpdateVisible
-        {
-            set => AboutUpdateButton.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        bool IAboutHost.UpdateEnabled { set => AboutUpdateButton.IsEnabled = value; }
-
-        bool IAboutHost.IsDirty => Viewer.IsDirtyRef || ViewerB.IsDirtyRef
-            || AllSessions().Any(session => session.IsDirty);
-
-        string? IAboutHost.FileToReopen => _originalFile ?? _currentFile;
-
         /// <summary>Version line, as a hyperlink through to that release tag.</summary>
         void IAboutHost.SetVersion(string version)
         {
@@ -95,94 +75,73 @@ namespace KillerPDF
             FadeOverlayIn(AboutOverlay);
         }
 
-        // ---- Card content that never varies with the signature or the update state ------------
+        // ---- Card content independent of signature state -------------------------------------
 
         private void BuildAboutStaticContent()
         {
-            StartupUpdateCheck.IsChecked = Services.ReleaseUpdateCheck.IsEnabled(
-                App.GetSetting(Services.ReleaseUpdateCheck.Setting));
             // Reuse the main window's film-grain texture on the About card.
             if (GrainBrush?.ImageSource != null) AboutGrainBrush.ImageSource = GrainBrush.ImageSource;
 
             BuildAboutWordmark();
             BuildAboutTagline();
+            AboutBaseVersionBlock.Text = System.Reflection.Assembly.GetExecutingAssembly()
+                .GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+                .OfType<System.Reflection.AssemblyMetadataAttribute>()
+                .FirstOrDefault(attribute => attribute.Key == "KillerPdfBaseVersion")?.Value ?? "";
+            LoadAboutImages();
         }
 
-        /// <summary>"Killer" in the text color, "PDF" in the brand green, the pair clickable.</summary>
+        /// <summary>Display the PewDF name without linking to the upstream project.</summary>
         private void BuildAboutWordmark()
         {
             AboutLogoBlock.Inlines.Clear();
-            var hl = new Hyperlink { TextDecorations = null };
-            hl.Inlines.Add(new Run("Killer")
-            {
-                FontFamily = UiKit.WordmarkFont,
-                FontSize   = 16.43,
-                FontWeight = FontWeights.Normal,
-                Foreground = Res("TextBrush")
-            });
-            hl.Inlines.Add(new Run("PDF")
-            {
-                FontFamily = UiKit.WordmarkFontPdf,
-                FontSize   = 31.83,
-                FontWeight = FontWeights.Normal,
-                Foreground = Res("AccentLogo")
-            });
-            hl.Click += (_, _) => AboutController.OpenUrl("https://killerpdf.net");
-            AboutLogoBlock.Inlines.Add(hl);
-
-            // The shadow copy mirrors the real runs exactly (sizes, weights, fonts), so the blur
-            // sits directly behind each letter instead of smearing above the word - a flat
-            // single-size copy had different line metrics than the two-run wordmark.
-            AboutLogoShadowBlock.Inlines.Clear();
-            var shadowBrush = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromArgb(0xB0, 0, 0, 0));
-            shadowBrush.Freeze();
-            AboutLogoShadowBlock.Inlines.Add(new Run("Killer")
-            {
-                FontFamily = UiKit.WordmarkFont,
-                FontSize   = 16.43,
-                FontWeight = FontWeights.Normal,
-                Foreground = shadowBrush
-            });
-            AboutLogoShadowBlock.Inlines.Add(new Run("PDF")
-            {
-                FontFamily = UiKit.WordmarkFontPdf,
-                FontSize   = 31.83,
-                FontWeight = FontWeights.Normal,
-                Foreground = shadowBrush
-            });
+            AboutLogoBlock.Inlines.Add(new Run("PewDF") { Foreground = Res("TextBrush") });
         }
 
-        /// <summary>
-        /// Localized tagline. {0} is the (untranslated) brand, so splitting on the placeholder keeps
-        /// "Killer Tools" a styled, clickable link while the rest translates and the brand can sit
-        /// anywhere in the sentence the language needs it. A "\n" in the localized string marks the
-        /// line break; the second line carries the license and the brand.
-        /// </summary>
+        /// <summary>Localized description and attribution of the upstream fork.</summary>
         private void BuildAboutTagline()
         {
             AboutTaglineBlock.Inlines.Clear();
-            var dim  = Res("MutedTextBrush");
-            var text = Loc("Str_Tagline");
+            AboutTaglineBlock.Inlines.Add(new Run(Loc("Str_Tagline")) { Foreground = Res("MutedTextBrush") });
+        }
 
-            int brand  = text.IndexOf("{0}", System.StringComparison.Ordinal);
-            string pre = brand >= 0 ? text[..brand]        : text;
-            string suf = brand >= 0 ? text[(brand + 3)..]  : "";
+        private void AboutRibbon_Click(object sender, RoutedEventArgs e) => ShowAboutOverlay();
 
-            void AddText(string s)
+        private void AboutKoFi_Click(object sender, RoutedEventArgs e)
+            => AboutController.OpenUrl("https://ko-fi.com/uncleriot");
+
+        private void LoadAboutImages()
+        {
+            // Optional project resources: retain the built-in icon and readable Ko-fi label
+            // until the corresponding files are supplied in Resources.
+            LoadOptionalImage("molotov.jpg", AboutMolotovImage, null);
+            LoadOptionalImage("ko-fi.png", AboutKoFiImage, AboutKoFiFallback);
+        }
+
+        private void LoadOptionalImage(string filename, System.Windows.Controls.Image target,
+            System.Windows.Controls.TextBlock? fallback)
+        {
+            System.Windows.Resources.StreamResourceInfo? resource;
+            try
             {
-                var lines = s.Split('\n');
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    if (i > 0) AboutTaglineBlock.Inlines.Add(new LineBreak());
-                    AboutTaglineBlock.Inlines.Add(new Run(lines[i]) { Foreground = dim });
-                }
+                resource = Application.GetResourceStream(new System.Uri(
+                    $"pack://application:,,,/Resources/{filename}", System.UriKind.Absolute));
             }
-
-            AddText(pre);
-            AboutTaglineBlock.Inlines.Add(
-                AccentLink("Killer Tools", () => AboutController.OpenUrl("https://killertools.net")));
-            AddText(suf);
+            catch (System.IO.IOException) { return; }
+            if (resource is null) return;
+            using (resource.Stream)
+            {
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = resource.Stream;
+                bitmap.EndInit();
+                bitmap.Freeze();
+                target.Source = bitmap;
+            }
+            target.Visibility = Visibility.Visible;
+            if (target == AboutMolotovImage) AboutDefaultIcon.Visibility = Visibility.Collapsed;
+            if (fallback is not null) fallback.Visibility = Visibility.Collapsed;
         }
 
         // ---- Small helpers -------------------------------------------------------------------
@@ -214,12 +173,6 @@ namespace KillerPDF
         private void AboutOverlayClose_Click(object sender, RoutedEventArgs e)
             => CloseAboutOverlay();
 
-        private void AboutUpdateButton_Click(object sender, RoutedEventArgs e) => About.Update();
-
-        private void StartupUpdateCheck_Click(object sender, RoutedEventArgs e)
-            => App.SetSetting(Services.ReleaseUpdateCheck.Setting,
-                StartupUpdateCheck.IsChecked == true ? "1" : "0");
-
         /// <summary>
         /// "Clear all Data" footer link: wipes settings, downloaded OCR language packs, and temp
         /// files after an explicit confirmation. Destructive, so it always warns first; the user's
@@ -227,14 +180,14 @@ namespace KillerPDF
         /// </summary>
         private void AboutClearData_Click(object sender, RoutedEventArgs e)
         {
-            var res = KillerDialog.Show(this,
+            var res = PewDialog.Show(this,
                 Loc("Str_ClearDataConfirm"),
                 Loc("Str_ClearAllData"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (res != MessageBoxResult.Yes) return;
 
             App.ClearAllData();
             SetStatus(Loc("Str_St_DataCleared"));
-            KillerDialog.Show(this,
+            PewDialog.Show(this,
                 Loc("Str_ClearDataDone"),
                 Loc("Str_ClearAllData"), MessageBoxButton.OK, MessageBoxImage.Information);
         }

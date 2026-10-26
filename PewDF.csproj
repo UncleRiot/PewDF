@@ -1,0 +1,108 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>   
+    <OutputType>WinExe</OutputType>
+    <!-- SEMANTIC ANCHOR: PEWDF_ASSEMBLY_IDENTITY_SSOT. App binary only; engine project keeps its identity. -->
+    <AssemblyName>PewDF</AssemblyName>
+    <Product>PewDF</Product>
+    <Title>PewDF</Title>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <!-- Required by the LibraryImport source generator. Application code continues to expose
+         typed managed wrappers rather than handwritten pointer operations. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\pewdf-icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0.0</Version>
+
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <!-- Shown in the About card beside the version so a user can tell how old their build.
+         Keep this as Unreleased during development. A final release must use the date on its
+         CHANGELOG section; release.ps1 enforces that before packaging. -->
+    <ReleaseDate>2026-10-23</ReleaseDate>
+    <KillerPdfBaseVersion>1.8.91</KillerPdfBaseVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>KillerPdfBaseVersion</_Parameter1>
+      <_Parameter2>$(KillerPdfBaseVersion)</_Parameter2>
+    </AssemblyAttribute>
+    <Resource Include="Resources\molotov.jpg" Condition="Exists('Resources\molotov.jpg')" />
+    <Resource Include="Resources\ko-fi.png" Condition="Exists('Resources\ko-fi.png')" />
+  </ItemGroup>
+
+  <!-- Bake ReleaseDate into the assembly so About can show it. A file timestamp would not
+       survive being copied, and the PE linker stamp is a build date, not a release date. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ReleaseDate</_Parameter1>
+      <_Parameter2>$(ReleaseDate)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- Compile the engine exclusively through its project reference. -->
+  <ItemGroup>
+    <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta17" />
+    <Compile Remove="engine\**" />
+    <EmbeddedResource Remove="engine\**" />
+    <None Remove="engine\**" />
+    <Content Remove="engine\**" />
+    <Page Remove="engine\**" />
+    <Resource Remove="engine\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Costura.Fody" Version="6.2.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Fody" Version="6.9.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="engine\KillerPdf.Engine\KillerPdf.Engine.csproj" />
+    <PackageReference Include="PdfPig" Version="0.1.15" />
+    <PackageReference Include="Docnet.Core" Version="2.6.0" />
+    <!-- We embed the x64 natives as resources and self-extract them at runtime (OcrNativeBootstrap), so the
+         package's loose x86/x64 native copies in the output are dead weight. ExcludeAssets stops that copy
+         while keeping the managed assembly (compile/runtime) and the GeneratePathProperty path for the embed. -->
+    <PackageReference Include="Tesseract" Version="5.2.0" GeneratePathProperty="true" ExcludeAssets="build;buildTransitive;native;contentFiles" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\pewdf-icon.ico" />
+    <Resource Include="Resources\app-icon-master.png" />
+    <!-- SEMANTIC ANCHOR: TEXT_MARKER_APPROVED_IMAGE_SSOT: approved cursor artwork; recolor/scale at runtime only. -->
+    <Resource Include="Resources\textmarker-approved.png" />
+    <Resource Include="Resources\pewdf-icon.png" />
+    <Resource Include="Fonts\KillerSans-Regular.ttf" />
+    <Resource Include="Fonts\KillerSansUI-Regular.ttf" />
+    <Resource Include="Fonts\Punktype.ttf" />
+    <Resource Include="Fonts\Lacquer-Regular.ttf" />
+	<Resource Include="Resources\open_hand.cur" />
+	<Resource Include="Resources\closed_hand.cur" />
+    <EmbeddedResource Include="Resources\pdf-file.ico" />
+  </ItemGroup>
+
+  <!-- OCR: embed only the native Tesseract libs (x64) so the app still ships as a single exe. Language data
+       is NOT bundled - it is downloaded on demand on first OCR (see EnsureOcrModelsReadyAsync), which keeps
+       the exe small. OcrNativeBootstrap extracts the natives to a per-version cache under %LOCALAPPDATA% on
+       first use, the same self-extract pattern Costura uses for the managed assemblies. PkgTesseract comes
+       from GeneratePathProperty. -->
+  <ItemGroup>
+    <EmbeddedResource Include="$(PkgTesseract)\x64\tesseract50.dll" Condition="'$(PkgTesseract)' != ''">
+      <LogicalName>PewDF.OcrNative.tesseract50.dll</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(PkgTesseract)\x64\leptonica-1.82.0.dll" Condition="'$(PkgTesseract)' != ''">
+      <LogicalName>PewDF.OcrNative.leptonica-1.82.0.dll</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

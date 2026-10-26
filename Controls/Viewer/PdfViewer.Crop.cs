@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Moved from Shell/Crop.cs; the namespace and class line are the only changes. Window members
     // spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -50,14 +50,6 @@ namespace KillerPDF.Controls
         /// Inverse of <see cref="CanvasToPdfRect"/> - map PDF CropBox coords back to a canvas-space
         /// <see cref="Rect"/>.
         /// </summary>
-        private static Rect PdfToCanvasRect(
-            double x1, double y1, double x2, double y2,
-            double pdfW, double pdfH, double canvasW, double canvasH, int rot)
-        {
-            Rect r = PageCanvasGeometry.PageToCanvas(x1, y1, x2, y2, pdfW, pdfH, canvasW, canvasH, rot);
-            return new Rect(Math.Max(0, r.X), Math.Max(0, r.Y),
-                            Math.Max(10, r.Width), Math.Max(10, r.Height));
-        }
 
         // The displayed page's point dimensions (width across the canvas, height down it). For a 90/270
         // rotation the rendered bitmap is turned, so the point dims are swapped relative to the raw page.
@@ -256,10 +248,21 @@ namespace KillerPDF.Controls
             // wrapped by the shared BuildBarHost and placed with PlaceAnnotationBar so it attaches to the top
             // and slides left/right like Draw/Text/Highlight - no bespoke host, grain, drag, or positioning.
             _annotBarDragInners.Clear();
-            var outer = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 2, 8, 2), Background = Brushes.Transparent };
-            var grip = MakeBarGrip();
-            outer.Children.Add(grip);
-            static Button CropBtn(Button b) { b.Padding = new Thickness(10, 4, 10, 4); b.Margin = new Thickness(0, 0, 5, 0); return b; }
+            // SEMANTIC ANCHOR: CROP_PANE_LAYOUT_INVARIANT
+            // Crop follows the shared tool-pane styling and spacing, not absolute positions.
+            // Specialized geometry is defined by ToolPaneCrop* resources in App.xaml;
+            // repeating label/control gaps use ToolPaneLabelControlGap.
+            // Invariant: visually distinct, consistent section gaps separate Position, Size,
+            // Pages, unit, All and Crop. X/Y and W/H share aligned grid columns; Pages and its
+            // input share one row. All fields retain their existing handlers and theme resources.
+            // The shared sidebar remains the SSOT for width, scrolling and background.
+            var outer = new StackPanel { Orientation = Orientation.Vertical, Background = Brushes.Transparent };
+            double cropFieldWidth = (double)FindResource("ToolPaneCropFieldWidth");
+            double cropPairGap = (double)FindResource("ToolPaneCropPairGap");
+            // Shared section gap (SSOT): leave within-row spacing unchanged.
+            double cropSectionGap = (double)FindResource("ToolPaneSectionGap");
+            static FrameworkElement CropSpacer(double height) => new Border { Height = height, Background = Brushes.Transparent };
+            static Button CropBtn(Button b) { b.Padding = new Thickness(10, 4, 10, 4); b.Margin = new Thickness(0); return b; }
 
             TextBlock LocalizedText(string key, FontWeight? weight = null)
             {
@@ -275,91 +278,117 @@ namespace KillerPDF.Controls
                 return text;
             }
 
-            // label + themed field. Enter applies the crop; LostFocus just updates the rect from the values.
-            TextBox AddField(string lbl, double width)
+            TextBlock PlainText(string textValue)
             {
-                var label = new TextBlock
+                var text = new TextBlock
                 {
-                    Text = lbl, FontFamily = UiKit.UiFont, FontSize = 11,
-                    VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 3, 0)
+                    Text = textValue,
+                    FontFamily = UiKit.UiFont,
+                    FontSize = 11,
+                    VerticalAlignment = VerticalAlignment.Center
                 };
-                label.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
-                outer.Children.Add(label);
+                text.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+                return text;
+            }
+
+            TextBox CreateField(double width)
+            {
                 var tb = new TextBox
                 {
-                    Width = width, Height = 22, FontFamily = UiKit.UiFont, FontSize = 11,
-                    BorderThickness = new Thickness(1), Padding = new Thickness(3, 1, 3, 1),
-                    VerticalAlignment = VerticalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 8, 0), Style = (Style)FindResource("FormFieldTextBox")
+                    Width = width,
+                    Height = (double)FindResource("ToolPaneCropFieldHeight"),
+                    FontFamily = UiKit.UiFont,
+                    FontSize = 11,
+                    BorderThickness = new Thickness(1),
+                    Padding = new Thickness(3, 1, 3, 1),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    Style = (Style)FindResource("FormFieldTextBox")
                 };
                 tb.SetResourceReference(TextBox.BackgroundProperty,  "TextFieldBrush");
                 tb.SetResourceReference(TextBox.ForegroundProperty,  "TextBrush");
                 tb.SetResourceReference(TextBox.BorderBrushProperty, "CardBorderBrush");
                 tb.KeyDown   += (_, e) => { if (e.Key == Key.Enter) { CommitCropBoxInput(); ApplyCrop([currentPage]); e.Handled = true; } };
                 tb.LostFocus += (_, _) => CommitCropBoxInput();
-                outer.Children.Add(tb);
                 return tb;
             }
 
-            // Group labels (GIMP-style "Position" / "Size") so the single-letter fields read clearly.
-            void GroupLabel(string key, double leftPad)
+            Grid CreatePairRow(string leftLabel, out TextBox leftBox, string rightLabel, out TextBox rightBox)
             {
-                var label = LocalizedText(key, FontWeights.SemiBold);
-                label.Margin = new Thickness(leftPad, 0, 6, 0);
-                outer.Children.Add(label);
+                var row = new Grid { Margin = new Thickness(0, (double)FindResource("ToolPaneCropRowTopGap"), 0, 0) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cropFieldWidth) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cropPairGap) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cropFieldWidth) });
+
+                var leftLbl = PlainText(leftLabel);
+                leftLbl.Margin = new Thickness(0, 0, 6, 0);
+                Grid.SetColumn(leftLbl, 0);
+                row.Children.Add(leftLbl);
+
+                leftBox = CreateField(cropFieldWidth);
+                Grid.SetColumn(leftBox, 1);
+                row.Children.Add(leftBox);
+
+                var rightLbl = PlainText(rightLabel);
+                rightLbl.Margin = new Thickness(0, 0, (double)FindResource("ToolPaneLabelControlGap"), 0);
+                Grid.SetColumn(rightLbl, 3);
+                row.Children.Add(rightLbl);
+
+                rightBox = CreateField(cropFieldWidth);
+                Grid.SetColumn(rightBox, 4);
+                row.Children.Add(rightBox);
+
+                return row;
             }
 
-            GroupLabel("Str_Crop_Position", 0);
-            _cropXBox = AddField("X", 50);
-            _cropYBox = AddField("Y", 50);
-            GroupLabel("Str_Crop_Size", 6);   // padding after the Y box, before the size group
-            _cropWBox = AddField("W", 50);
-            _cropHBox = AddField("H", 50);
+            outer.Children.Add(LocalizedText("Str_Crop_Position", FontWeights.SemiBold));
+            outer.Children.Add(CreatePairRow("X", out _cropXBox, "Y", out _cropYBox));
 
-            // Unit picker (pt / in / %); re-formats the fields on change.
+            outer.Children.Add(CropSpacer(cropSectionGap));
+            outer.Children.Add(LocalizedText("Str_Crop_Size", FontWeights.SemiBold));
+            outer.Children.Add(CreatePairRow("W", out _cropWBox, "H", out _cropHBox));
+
             var unitCombo = new ComboBox
             {
-                Width = 54, Height = 22, Margin = new Thickness(0, 0, 8, 0),
+                Width = (double)FindResource("ToolPaneCropUnitWidth"),
+                Height = (double)FindResource("ToolPaneCropFieldHeight"),
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Style = (Style)FindResource("DarkComboBox")
             };
             foreach (var u in new[] { "pt", "in", "%" }) unitCombo.Items.Add(u);
             unitCombo.SelectedItem = _cropUnit;
             unitCombo.SelectionChanged += (_, _) => { _cropUnit = unitCombo.SelectedItem as string ?? "pt"; SyncCropBoxInputs(); };
+
+            outer.Children.Add(CropSpacer(cropSectionGap));
+            var pagesRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            var pagesLabel = LocalizedText("Str_Crop_Pages");
+            pagesLabel.Margin = new Thickness(0, 0, (double)FindResource("ToolPaneLabelControlGap"), 0);
+            pagesRow.Children.Add(pagesLabel);
+            _cropRangeBox = CreateField((double)FindResource("ToolPaneCropPagesWidth"));
+            _cropRangeBox.SetResourceReference(FrameworkElement.ToolTipProperty, "Str_Crop_RangeTip");
+            pagesRow.Children.Add(_cropRangeBox);
+            outer.Children.Add(pagesRow);
+
+            outer.Children.Add(CropSpacer(cropSectionGap));
+            unitCombo.Margin = new Thickness(0);
+            unitCombo.HorizontalAlignment = HorizontalAlignment.Left;
             outer.Children.Add(unitCombo);
 
-            // Divider before the action buttons.
-            var divider = new Border { Width = 1, Margin = new Thickness(2, 0, 8, 0), VerticalAlignment = VerticalAlignment.Stretch };
-            divider.SetResourceReference(Border.BackgroundProperty, "CardBorderBrush");
-            outer.Children.Add(divider);
-
-            // Pages range + "All" checkbox, then a single Crop button on the far right. Crop logic:
-            // All checked -> every page; else a typed range like "1-3,5"; else just the current page.
-            var pagesLabel = LocalizedText("Str_Crop_Pages");
-            pagesLabel.Margin = new Thickness(0, 0, 3, 0);
-            outer.Children.Add(pagesLabel);
-            _cropRangeBox = new TextBox
-            {
-                Width = 64, Height = 22, FontFamily = UiKit.UiFont, FontSize = 11,
-                BorderThickness = new Thickness(1), Padding = new Thickness(3, 1, 3, 1),
-                VerticalAlignment = VerticalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 8, 0),
-                Style = (Style)FindResource("FormFieldTextBox")
-            };
-            _cropRangeBox.SetResourceReference(FrameworkElement.ToolTipProperty, "Str_Crop_RangeTip");
-            _cropRangeBox.SetResourceReference(TextBox.BackgroundProperty,  "TextFieldBrush");
-            _cropRangeBox.SetResourceReference(TextBox.ForegroundProperty,  "TextBrush");
-            _cropRangeBox.SetResourceReference(TextBox.BorderBrushProperty, "CardBorderBrush");
-            outer.Children.Add(_cropRangeBox);
-
-            // "All" checkbox - the same compact look as the annotate-bar toggles (no WPF CheckBox chrome).
             bool cropAll = false;
             var allTick = new TextBlock { Text = "✓", Foreground = Brushes.White, FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Collapsed };
-            var allBox = new Border { Width = 15, Height = 15, CornerRadius = new CornerRadius(3), BorderThickness = new Thickness(1), BorderBrush = _swatchDimBorder, Background = Brushes.Transparent, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 5, 0), Child = allTick };
-            var allRow = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Cursor = Cursors.Hand, Margin = new Thickness(0, 0, 10, 0) };
+            var allBox = new Border { Width = 15, Height = 15, CornerRadius = new CornerRadius(3), BorderThickness = new Thickness(1), BorderBrush = _swatchDimBorder, Background = Brushes.Transparent, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness((double)FindResource("ToolPaneLabelControlGap"), 0, 0, 0), Child = allTick };
+            var allLabel = LocalizedText("Str_Crop_All");
+            var allRow = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left, Cursor = Cursors.Hand, Margin = new Thickness(0, 0, 0, 0) };
             allRow.SetResourceReference(FrameworkElement.ToolTipProperty, "Str_Crop_AllTip");
+            allRow.Children.Add(allLabel);
             allRow.Children.Add(allBox);
-            allRow.Children.Add(LocalizedText("Str_Crop_All"));
             allRow.MouseLeftButtonDown += (_, _) =>
             {
                 cropAll = !cropAll;
@@ -367,9 +396,9 @@ namespace KillerPDF.Controls
                 if (cropAll) allBox.SetResourceReference(Border.BackgroundProperty, "SelectionAccent");
                 else { allBox.Background = Brushes.Transparent; allBox.BorderBrush = _swatchDimBorder; }
             };
+            outer.Children.Add(CropSpacer(cropSectionGap));
             outer.Children.Add(allRow);
 
-            // Single Crop button on the right.
             var cropBtn = CropBtn(UiKit.Make(Loc("Str_Crop_Apply"), true));
             cropBtn.SetResourceReference(ContentControl.ContentProperty, "Str_Crop_Apply");
             cropBtn.SetResourceReference(FrameworkElement.ToolTipProperty, "Str_TT_CropThisPage");
@@ -386,31 +415,24 @@ namespace KillerPDF.Controls
                 else pages = [currentPage];
                 ApplyCrop(pages);
             };
+            cropBtn.Width = (double)FindResource("ToolPaneCropApplyWidth");
+            cropBtn.HorizontalAlignment = HorizontalAlignment.Left;
+            outer.Children.Add(CropSpacer(cropSectionGap));
             outer.Children.Add(cropBtn);
 
-            // Wrap the controls in the shared bar host + frame and place it like the other annotate bars
-            // (top, right-anchored, slidable via the grip; the X position persists across tools).
+            // SEMANTIC ANCHOR: CROP_PANE_HOST_SSOT
+            // MainWindow transfers this visual to its single shared right pane. Do not
+            // create a second window/scrollbar or a local theme background here.
             var bar = new Border
             {
-                BorderThickness     = new Thickness(1, 0, 1, 1),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment   = VerticalAlignment.Top,
-                CornerRadius        = new CornerRadius(0, 0, 4, 4),
-                Padding             = new Thickness(4),
-                Effect              = AnnotBarShadow(),
-                Child               = BuildBarHost(outer)
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0),
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Child = outer
             };
-            bar.SetResourceReference(Border.BackgroundProperty,  "AnnotationBarBrush");
-            bar.SetResourceReference(Border.BorderBrushProperty, "AnnotationBarBorderBrush");
             _cropConfirmBar = bar;
-
-            var previewArea = PagePreviewPanel.Parent as Grid;
-            if (previewArea is not null)
-            {
-                Panel.SetZIndex(bar, 100);
-                previewArea.Children.Add(bar);
-                PlaceAnnotationBar(bar, grip, fadeIn: false);
-            }
+            CropPaneChanged?.Invoke(bar);
             _annotBarTool = EditTool.Crop;   // so re-clicking the Crop tool minimizes this bar like the others
             _annotBarMinimized = false;
             AddCropHandles();
@@ -425,7 +447,9 @@ namespace KillerPDF.Controls
                 (_annotationCanvas.Parent as Panel)?.Children.Remove(_cropConfirmBar);
                 _annotationCanvas.Children.Remove(_cropConfirmBar);   // no-op if not there
                 (PagePreviewPanel.Parent as Panel)?.Children.Remove(_cropConfirmBar);
+                (_cropConfirmBar.Parent as Panel)?.Children.Remove(_cropConfirmBar);
                 _cropConfirmBar = null;
+                CropPaneChanged?.Invoke(null);
             }
             if (_cropPreviewRectBorder is not null)
             {
@@ -603,29 +627,6 @@ namespace KillerPDF.Controls
             catch (Exception ex)
             {
                 SetStatus(string.Format(Loc("Str_CropFailed"), ex.Message));
-            }
-        }
-
-        private void RemoveCropBox(int[] pageIndices)
-        {
-            if (_doc is null || _currentFile is null) return;
-            PdfEngineDocumentSession engineSession = EnsureEngineDocumentSession();
-            try
-            {
-                var crops = pageIndices
-                    .Where(pi => pi >= 0 && pi < engineSession.PageCount)
-                    .Distinct()
-                    .ToDictionary(pi => pi,
-                        _ => (PdfEngineIntegration.PageRectangle?)null);
-                HideCropConfirmBar();
-                SetTool(EditTool.Select);
-                SaveTempAndReload(keepAnnotations: true,
-                    finalizeSavedFile: path => PdfEngineIntegration.ApplyCropBoxes(path, crops));
-                SetStatus(string.Format(Loc("Str_RemovedCrop"), pageIndices.Length));
-            }
-            catch (Exception ex)
-            {
-                SetStatus(string.Format(Loc("Str_RemoveCropFailed"), ex.Message));
             }
         }
     }

@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 /// <summary>Prepares current form values on a disposable print copy.</summary>
 internal static class PdfPrintSource

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
@@ -6,35 +6,36 @@ using System.Runtime.InteropServices;
 using System.Text;
 using KillerPdf.Engine.Documents;
 using KillerPdf.Engine.Signing;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     // ============================================================
     // Headless CLI batch mode
     // ============================================================
     //
-    // KillerPDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]
+    // PewDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]
     //
     // Resaves one PDF (or every *.pdf under a folder tree, mirroring the
     // relative structure into the output folder) through the same pipeline a
-    // Resaves through The KillerPDF.Engine's deterministic full-document writer. No window,
+    // Resaves through The PewDF.Engine's deterministic full-document writer. No window,
     // no dialogs, no repair fallbacks, no encryption stripping. Files that
     // cannot go through the plain engine pipeline are reported as SKIP with a
     // reason instead of silently faking a result.
     //
     // Built for the veraPDF validation harness (validation/): baseline the
     // corpus, --batch-resave it, validate the output tree, then diff with
-    // validation/Compare-VeraPDF.ps1. The claim being tested is "a KillerPDF
+    // validation/Compare-VeraPDF.ps1. The claim being tested is "a PewDF
     // save does not degrade standards conformance".
     //
     // Exit codes: 0 = every file OK or SKIP, 1 = at least one FAIL
-    // (file opened but the save failed), 2 = bad usage or bad paths.
+    // (file opened but the save failed), 2 = bad usage or bad paths, including
+    // failure to write an explicitly requested --log file.
     //
     // Invoked from App.OnStartup BEFORE the single-instance mutex, so a batch
     // run works even while a GUI instance is open and never forwards to it.
     //
-    // KillerPDF builds as a GUI-subsystem exe, so it has no console of its
+    // PewDF builds as a GUI-subsystem exe, so it has no console of its
     // own; AttachConsole(-1) latches onto the parent terminal when launched
     // from one. Output interleaves with the prompt (standard GUI-app quirk) -
     // the authoritative record is the --log CSV and the exit code.
@@ -71,13 +72,25 @@ namespace KillerPDF.Features
                 var a = args[i];
                 if (string.Equals(a, "--log", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (i + 1 < args.Length) logPath = args[++i];
+                    // INVARIANT: Value-taking CLI options consume a path, never another option.
+                    // Keep this validation aligned with the batch-render CLI parser.
+                    if (i + 1 < args.Length && !string.IsNullOrWhiteSpace(args[i + 1])
+                        && !args[i + 1].StartsWith("--", StringComparison.Ordinal))
+                        logPath = args[++i];
                     else badUsage = true;
                 }
                 else if (string.Equals(a, "--quiet", StringComparison.OrdinalIgnoreCase))
                 {
                     quiet = true;
                 }
+                // SEMANTIC ANCHOR: BATCH_CLI_ARGUMENT_CONTRACT
+                // INVARIANT: Both batch entry points reject unknown long options and
+                // require explicit values for value-taking options before any file I/O.
+                // SSOT: This parser owns its mode's grammar; keep shared switches and
+                // exit-code meanings consistent with the other batch entry point.
+                // INVARIANT: Unknown long options are invalid, never positional file paths.
+                // Keep the batch-resave and batch-render parsers consistent.
+                else if (a.StartsWith("--", StringComparison.Ordinal)) badUsage = true;
                 else if (input is null)  input  = a;
                 else if (output is null) output = a;
                 else badUsage = true;   // extra positional arg
@@ -85,7 +98,7 @@ namespace KillerPDF.Features
 
             if (badUsage || string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(output))
             {
-                con.WriteLine("Usage: KillerPDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]");
+                con.WriteLine("Usage: PewDF.exe --batch-resave <input.pdf|inputDir> <output.pdf|outputDir> [--log <file.csv>] [--quiet]");
                 exitCode = 2;
                 return true;
             }
@@ -116,8 +129,11 @@ namespace KillerPDF.Features
             }
             else if (Directory.Exists(input))
             {
-                string inRoot  = Path.GetFullPath(input).TrimEnd('\\', '/');
-                string outRoot = Path.GetFullPath(output).TrimEnd('\\', '/');
+                // SEMANTIC ANCHOR: CLI_DIRECTORY_ROOT_CANONICALIZATION
+                // INVARIANT: Normalizing a directory path must preserve its volume/root identity.
+                // SSOT: Use Path.TrimEndingDirectorySeparator rather than trimming separators manually.
+                string inRoot  = Path.TrimEndingDirectorySeparator(Path.GetFullPath(input));
+                string outRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(output));
                 // Snapshot before any output is written, so an output folder nested
                 // under the input tree cannot feed the enumeration.
                 foreach (var f in Directory.GetFiles(inRoot, "*.pdf", SearchOption.AllDirectories))
@@ -130,6 +146,35 @@ namespace KillerPDF.Features
             {
                 con.WriteLine($"Input not found: {input}");
                 return 2;
+            }
+
+            // SEMANTIC ANCHOR: CLI_OUTPUT_PATH_INTEGRITY
+            // INVARIANT: Batch output and machine-readable logs must never replace an input
+            // or share a destination path. Validate the full work set before any writes.
+            // SSOT: Compare canonical absolute paths with Windows filesystem semantics.
+            var sourcePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var destinationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in work)
+            {
+                sourcePaths.Add(Path.GetFullPath(item.Src));
+                destinationPaths.Add(Path.GetFullPath(item.Dst));
+            }
+            foreach (string destination in destinationPaths)
+            {
+                if (sourcePaths.Contains(destination))
+                {
+                    con.WriteLine($"Output conflicts with input PDF: {destination}");
+                    return 2;
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(logPath))
+            {
+                string fullLogPath = Path.GetFullPath(logPath);
+                if (sourcePaths.Contains(fullLogPath) || destinationPaths.Contains(fullLogPath))
+                {
+                    con.WriteLine($"Log conflicts with a batch input or output: {fullLogPath}");
+                    return 2;
+                }
             }
 
             var log = new List<string> { "File,Status,Detail" };
@@ -171,6 +216,9 @@ namespace KillerPDF.Features
                 catch (Exception ex)
                 {
                     con.WriteLine("Could not write log: " + FlattenBatchDetail(ex.Message));
+                    // INVARIANT: Explicitly requested machine-readable output must not fail silently.
+                    // Preserve per-file failure precedence when both processing and logging fail.
+                    return fail > 0 ? 1 : 2;
                 }
             }
 

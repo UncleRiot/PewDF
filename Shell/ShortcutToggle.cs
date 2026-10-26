@@ -1,7 +1,7 @@
 using System.Windows;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF;
+namespace PewDF;
 
 public partial class MainWindow
 {

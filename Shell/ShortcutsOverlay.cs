@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace PewDF
 {
     // ============================================================
     // Keyboard-shortcuts overlay: the LIST view.
@@ -127,20 +127,20 @@ namespace KillerPDF
                 var header = new TextBlock
                 {
                     FontFamily = UiKit.UiFont,
-                    FontSize   = 11,
                     FontWeight = FontWeights.SemiBold,
                     Margin     = new Thickness(0, s == 0 ? 0 : 12, 0, 4),
                 };
                 header.SetResourceReference(TextBlock.TextProperty, section.TitleKey);
+                header.SetResourceReference(TextBlock.FontSizeProperty, "KpdfShortcutHeadingFontSize");
                 // Use the same per-theme category brush as the keyboard map.
-                header.SetResourceReference(TextBlock.ForegroundProperty, "KsCat" + section.Cat);
+                header.SetResourceReference(TextBlock.ForegroundProperty, "PrimaryBrush");
                 host.Children.Add(header);
 
                 for (int r = 0; r < section.Rows.Length; r++)
                 {
                     var row  = section.Rows[r];
                     bool last = r == section.Rows.Length - 1;
-                    var rowGrid = new Grid { Margin = new Thickness(0, 0, 0, last ? 0 : 4) };
+                    var rowGrid = new Grid { Margin = new Thickness(0, 0, 0, last ? 0 : 5) };
                     rowGrid.ColumnDefinitions.Add(new ColumnDefinition
                     {
                         Width = GridLength.Auto,
@@ -153,12 +153,12 @@ namespace KillerPDF
                     // key column also leaves a deliberate gap before longer translated labels.
                     var keys = new TextBlock
                     {
-                        FontFamily = new FontFamily("Consolas"),
-                        FontSize   = 11,
+                        FontFamily = UiKit.UiFont,
                         Margin     = new Thickness(0, 0, 12, 0),
                         VerticalAlignment = VerticalAlignment.Center,
                     };
                     FillKeyInlines(keys, row.Keys);
+                    keys.SetResourceReference(TextBlock.FontSizeProperty, "KpdfShortcutKeysFontSize");
                     keys.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
                     Grid.SetColumn(keys, 0);
                     rowGrid.Children.Add(keys);
@@ -172,7 +172,8 @@ namespace KillerPDF
                     };
                     label.SetResourceReference(TextBlock.TextProperty, row.LabelKey);
                     label.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-                    label.SetResourceReference(TextBlock.FontSizeProperty, "Str_KS_FontSize");
+                    label.SetResourceReference(TextBlock.FontFamilyProperty, "UiFont");
+                    label.SetResourceReference(TextBlock.FontSizeProperty, "KpdfShortcutBodyFontSize");
                     Grid.SetColumn(label, 1);
                     rowGrid.Children.Add(label);
 

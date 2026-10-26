@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// Rail flyouts stay inside the content pane beside the rail and follow their opening button.

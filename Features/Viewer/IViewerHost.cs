@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
-using KillerPDF.Controls;
+using PewDF.Controls;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     /// <summary>
     /// What a document viewer needs from the window around it.
@@ -11,7 +11,7 @@ namespace KillerPDF.Features
     /// EXTENDS IShellServices, per the family rule in that file - the shell implements Window /
     /// Loc / SetStatus once, not once per feature. Those three cover the viewer's two heaviest
     /// call groups on their own (Loc 70 uses, SetStatus 68) plus the modal-dialog owner that
-    /// TextEditing and Links need for KillerDialog (3 uses).
+    /// TextEditing and Links need for PewDialog (3 uses).
     ///
     /// DERIVED FROM MEASUREMENT, not guessed: every member here came from grepping what the nine
     /// files bound for the viewer control (Viewport, Zoom, Annotations, Selection, TextEditing,
@@ -60,7 +60,6 @@ namespace KillerPDF.Features
         void OpenFile(string path);
         void UpdateFooterFade();
         void UpdateTabStripFade();
-        Border? SearchBar { get; }
         SearchController Search { get; }
         TextBlock FileNameLabel { get; }
         TreeView OutlineTree { get; }

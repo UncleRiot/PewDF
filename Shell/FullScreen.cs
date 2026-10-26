@@ -1,3 +1,4 @@
+// PewDF semantic anchor: keep legacy in-client caption hidden; preserve the existing fullscreen document layout and transitions.
 using System;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -7,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -64,7 +65,8 @@ namespace KillerPDF
             _fullScreen = entering;
             var v = entering ? Visibility.Collapsed : Visibility.Visible;
 
-            TitleBarBorder.Visibility     = v;
+            // PewDF native Windows caption: legacy in-client title bar remains hidden.
+            TitleBarBorder.Visibility     = Visibility.Collapsed;
             // Exit must respect the user's hide-toolbar setting (#215), not blanket-restore it.
             ToolbarRowBorder.Visibility   = entering || _toolbarHidden ? Visibility.Collapsed : Visibility.Visible;
             // BOTH panes - full screen hides every strip, not just the focused pane's.
@@ -131,7 +133,7 @@ namespace KillerPDF
 
                 var b = CurrentMonitorBoundsPixels();
                 Topmost = true;
-                // #215: Topmost exists only to cover the always-on-top taskbar while KillerPDF is
+                // #215: Topmost exists only to cover the always-on-top taskbar while PewDF is
                 // the ACTIVE window. Held unconditionally, it sat over every other program the user
                 // switched to. Yield it on deactivate, take it back on return - browser behavior.
                 Deactivated += FsYieldTopmost;

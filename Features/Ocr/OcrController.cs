@@ -6,9 +6,9 @@ using System.Windows;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     /// <summary>
     /// The four OCR operations that work on the open document: page to clipboard, region to
@@ -36,7 +36,7 @@ namespace KillerPDF.Features
         // their combined text. The same OCR engine and document reader are reused for the whole batch.
         internal async void OcrPagesToClipboard(IReadOnlyList<int> pageIndices)
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Msg_OpenFirst")); return; }
+            if (!_host.HasDocument) { PewDialog.Show(_host.Window, _host.Loc("Str_Msg_OpenFirst")); return; }
             int[] pages = [.. pageIndices.Distinct().Where(page => page >= 0 && page < _host.PageCount).OrderBy(page => page)];
             if (pages.Length == 0) return;
             if (!await _host.EnsureOcrModelsReadyAsync()) return;
@@ -99,7 +99,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -156,7 +156,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_OcrFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -184,17 +184,20 @@ namespace KillerPDF.Features
 
         internal async void MakeSearchablePdf()
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
+            if (!_host.HasDocument) { PewDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
             if (!await _host.EnsureOcrModelsReadyAsync()) return;
             _host.CommitActiveTextBox();
 
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            // SEMANTIC ANCHOR: OCR_EXPORT_SAVE_DIALOG_SSOT
+            // INVARIANT: Export destinations are selected with the native Windows save dialog;
+            // the OCR operation must not start if the user cancels the selection.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
             {
                 Filter = _host.Loc("Str_Filter_Pdf") + "|*.pdf",
                 Title = _host.Loc("Str_Ocr_SaveSearchable"),
                 FileName = SuggestSearchableName(),
-                CheckFileExists = false,
-                CheckPathExists = true
+                AddExtension = true,
+                OverwritePrompt = true
             };
             if (dlg.ShowDialog(_host.Window) != true) return;
             string outPath = dlg.FileName;
@@ -205,7 +208,7 @@ namespace KillerPDF.Features
             try { _host.SaveDocumentTo(src); }
             catch (Exception ex)
             {
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -223,14 +226,14 @@ namespace KillerPDF.Features
                 _host.HideBusy();
                 if (ct.IsCancellationRequested) { _host.SetStatus(_host.Loc("Str_St_SearchablePdfCanceled")); return; }
                 _host.SetStatus(string.Format(_host.Loc("Str_St_SearchableSaved"), pages, words));
-                KillerDialog.Show(_host.Window,
+                PewDialog.Show(_host.Window,
                     string.Format(_host.Loc("Str_Dlg_SearchableSaved"), outPath, pages, words),
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Information);
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_SearchableFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_SearchableFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -302,17 +305,20 @@ namespace KillerPDF.Features
 
         internal async void ExtractAllText()
         {
-            if (!_host.HasDocument) { KillerDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
+            if (!_host.HasDocument) { PewDialog.Show(_host.Window, _host.Loc("Str_Ocr_NoDoc")); return; }
             if (!await _host.EnsureOcrModelsReadyAsync()) return;
             _host.CommitActiveTextBox();
 
-            var dlg = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Save)
+            // SEMANTIC ANCHOR: OCR_TEXT_SAVE_DIALOG_SSOT
+            // INVARIANT: The selected extension determines the output format, and cancellation
+            // must leave the document and filesystem unchanged.
+            var dlg = new Microsoft.Win32.SaveFileDialog()
             {
                 Filter = _host.Loc("Str_Filter_Text") + "|*.txt|Markdown|*.md",
                 Title = _host.Loc("Str_Ocr_ExtractAllText"),
                 FileName = Path.GetFileNameWithoutExtension(_host.OriginalFile ?? _host.CurrentFile ?? "document") + ".txt",
-                CheckFileExists = false,
-                CheckPathExists = true
+                AddExtension = true,
+                OverwritePrompt = true
             };
             if (dlg.ShowDialog(_host.Window) != true) return;
             string outPath = dlg.FileName;
@@ -323,7 +329,7 @@ namespace KillerPDF.Features
             try { _host.SaveDocumentTo(src); pageCount = _host.PageCount; }
             catch (Exception ex)
             {
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_PrepareDoc") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
@@ -345,7 +351,7 @@ namespace KillerPDF.Features
             catch (Exception ex)
             {
                 _host.HideBusy();
-                KillerDialog.Show(_host.Window, _host.Loc("Str_Err_ExtractFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(_host.Window, _host.Loc("Str_Err_ExtractFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

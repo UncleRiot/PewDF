@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -6,11 +6,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using PewDF.Controls;
 
-namespace KillerPDF
+namespace PewDF
 {
-    // Chrome for modal dialog windows: Configure (borderless window setup), Frame (the rounded card +
-    // title bar + grain), and BuildTitleBar (the KillerPDF wordmark + red close button).
+    // PewDF semantic anchor: all modal captions use WindowIdentity for title, icon and dark-gray chrome.
+    // Dialog layout and close behavior are preserved.
     internal static class DialogChrome
     {
         // Keep generated dialog captions on the same close mark as the main window.
@@ -24,19 +25,18 @@ namespace KillerPDF
         private static T Value<T>(Window? owner, string key, T fallback)
             => (owner?.TryFindResource(key) ?? Application.Current?.TryFindResource(key)) is T value ? value : fallback;
 
+        // DIALOG_CAPTION_ICON_SIZE_SSOT: use the shared dialog resource, not the main-window icon size.
         internal static Image TitleIcon(Window? owner = null)
         {
-            var frames = BitmapDecoder.Create(new Uri("pack://application:,,,/Resources/kp-icon.ico"),
-                BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames;
-            var icon = new KillerPDF.Controls.AppIcon
+            var icon = new PewDF.Controls.AppIcon
             {
-                Width = Value(owner, "TitleIconSize", 27.0),
-                Height = Value(owner, "TitleIconSize", 27.0),
+                Width = Value(owner, "DialogCaptionIconSize", 20.0),
+                Height = Value(owner, "DialogCaptionIconSize", 20.0),
                 Margin = Value(owner, "TitleIconMargin", new Thickness(0, 0, 7, 0)),
                 VerticalAlignment = VerticalAlignment.Center,
-                Source = frames[0]
+                Source = WindowIdentity.Icon
             };
-            RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.NearestNeighbor);
+            RenderOptions.SetBitmapScalingMode(icon, BitmapScalingMode.HighQuality);
             return icon;
         }
 
@@ -53,103 +53,37 @@ namespace KillerPDF
         // Builds the title bar.
         //   win       - the window being chromed (used for DragMove on the whole bar)
         //   owner      - supplies the themed brushes + the ChromeCloseButton style (pass the window's owner)
-        //   fullTitle  - the complete title, e.g. "KillerPDF - Transform"; the "KillerPDF" part becomes the
+        //   fullTitle  - the complete title, e.g. "PewDF - Transform"; the "PewDF" part becomes the
         //                wordmark and the remainder (" - Transform") is rendered in the courier title font
         //   onClose    - invoked when the red close button is clicked (e.g. set a result then Close())
         public static Border BuildTitleBar(Window win, Window? owner, string? fullTitle, Action onClose)
         {
-            // Transparent (not null) background so the WHOLE bar is hit-testable and acts as a drag handle.
-            bool caption = Value(owner, "UseDialogCaption", false);
+            win.Title = WindowIdentity.NormalizeTitle(fullTitle);
             var bar = new Border
             {
-                Background = caption ? Brush(owner, "TitleBarBrush", Brushes.Navy) : Brushes.Transparent,
+                Background = WindowIdentity.CaptionBackground,
                 SnapsToDevicePixels = true,
                 UseLayoutRounding = true
             };
             bar.MouseLeftButtonDown += (_, e) => { if (e.ButtonState == MouseButtonState.Pressed) win.DragMove(); };
-
-            var grid = new Grid
-            {
-                // KillerNotes uses the shared title-bar inset for its dialog caption too.  In
-                // particular, the 2px top inset keeps the 16px caption button centered in the
-                // 20px classic band instead of riding against its upper edge.
-                Margin = caption
-                    ? Value(owner, "TitleBarPadding", new Thickness(4, 2, 0, 0))
-                    : new Thickness(0)
-            };
+            var grid = new Grid { Margin = new Thickness(8, 0, 0, 0) };
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var wordmark = UiKit.WordmarkFont;
-            var wordmarkPdf = UiKit.WordmarkFontPdf;
-
-            // Build the wordmark row. A DropShadowEffect applied directly to text rasterizes it and
-            // disables ClearType, which reads as blurry. So we LAYER it instead: a blurred black duplicate
-            // sits behind a crisp, effect-free copy - soft shadow, sharp text. `shadow` paints the duplicate.
-            StackPanel BuildWordmark(bool shadow)
-            {
-                var sp = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-                Brush primary   = shadow ? Brushes.Black : Brush(owner, "TextBrush", Brushes.White);
-                Brush logo      = shadow ? Brushes.Black : Brush(owner, "AccentLogo", Brushes.LimeGreen);
-                Brush secondary = shadow ? Brushes.Black : Brush(owner, "MutedTextBrush", Brushes.Gray);
-                int kp = fullTitle?.IndexOf("KillerPDF", StringComparison.Ordinal) ?? -1;
-                if (kp >= 0)
-                {
-                    // Killer + PDF in one TextBlock so the two sizes share a baseline (cohesive wordmark).
-                    var logoTb = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
-                    logoTb.Inlines.Add(new System.Windows.Documents.Run("Killer") { FontFamily = wordmark, FontWeight = FontWeights.Normal, FontSize = Value(owner, "TitleWordmarkSize", 15.0), Foreground = primary });
-                    logoTb.Inlines.Add(new System.Windows.Documents.Run("PDF") { FontFamily = wordmarkPdf, FontWeight = FontWeights.Normal, FontSize = Value(owner, "TitleWordmarkBoldSize", 22.52), Foreground = logo });
-                    // The qualifier ("- Transform") rides in the same TextBlock so it shares the
-                    // wordmark's baseline instead of centring on its own and floating high.
-                    string after = fullTitle![(kp + "KillerPDF".Length)..];
-                    if (!string.IsNullOrEmpty(after))
-                        logoTb.Inlines.Add(new System.Windows.Documents.Run("  " + after.TrimStart()) { FontFamily = UiKit.BrandSansFont, FontWeight = FontWeights.Normal, FontSize = 18, Foreground = secondary });
-                    sp.Children.Add(logoTb);
-                }
-                else
-                {
-                    // A title without the wordmark reads as the qualifier does: Killer Sans at 18.
-                    sp.Children.Add(new TextBlock { Text = fullTitle ?? "", FontFamily = UiKit.BrandSansFont, FontSize = 18, Foreground = primary, VerticalAlignment = VerticalAlignment.Center });
-                }
-                return sp;
-            }
-
-            var title = new Grid { Margin = caption ? new Thickness(0) : new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            if (caption)
-            {
-                title.Children.Add(new TextBlock
-                {
-                    Text = fullTitle ?? "KillerPDF", FontFamily = Value(owner, "ChromeFontFamily", UiKit.UiFont),
-                    FontSize = 11, FontWeight = FontWeights.Bold,
-                    Foreground = Brush(owner, "ChromeTextBrush", Brushes.White), VerticalAlignment = VerticalAlignment.Center
-                });
-            }
-            else
-            {
-                var shadowLayer = BuildWordmark(true);
-                // The theme's wordmark shadow strength, so a light caption (0) stays clean as the main title bar does.
-                shadowLayer.Opacity = Value(owner, "WordmarkShadowOpacity", 0.5);
-                shadowLayer.Effect = new BlurEffect { Radius = 2 };
-                shadowLayer.RenderTransform = new TranslateTransform(0.7, 1.2);
-                title.Children.Add(shadowLayer);
-                title.Children.Add(BuildWordmark(false));
-                // Same lift as the main title bar: Lacquer's deep descent makes the centred line sit low.
-                if (fullTitle?.Contains("KillerPDF", StringComparison.Ordinal) == true)
-                    title.RenderTransform = new TranslateTransform(0, -5);
-            }
-            // The app icon leads the caption, at the main title bar's size and spacing.
             var titleRow = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = title.Margin
+                VerticalAlignment = VerticalAlignment.Center
             };
-            // Negative margins keep the wordmark's deep Lacquer descent out of the layout so the bar
-            // never clips its drips (2px imbalance as in the main title bar); the bar sits above the
-            // dialog body so the drips can hang over it.
-            title.Margin = caption ? new Thickness(0) : new Thickness(0, -18, 0, -22);
             titleRow.Children.Add(TitleIcon(owner));
-            titleRow.Children.Add(title);
+            var titleText = new TextBlock
+            {
+                FontFamily = UiKit.UiFont,
+                Foreground = WindowIdentity.CaptionForeground,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            titleText.SetResourceReference(TextBlock.FontSizeProperty, "DialogCaptionFontSize");
+            titleText.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(Window.Title)) { Source = win });
+            titleRow.Children.Add(titleText);
             Grid.SetColumn(titleRow, 0);
             grid.Children.Add(titleRow);
 
@@ -170,7 +104,7 @@ namespace KillerPDF
             };
             // Dialogs use the family close (a bare X that turns red on hover, as on the About card);
             // only the classic caption themes keep the raised caption-style close.
-            if (!caption && owner?.TryFindResource("OverlayCloseButton") is Style overlayClose)
+            if (owner?.TryFindResource("OverlayCloseButton") is Style overlayClose)
             {
                 close.Style = overlayClose;
                 close.SetResourceReference(ContentControl.ContentProperty, "AboutCloseGlyph");
@@ -211,7 +145,7 @@ namespace KillerPDF
         public static void Configure(Window win, Window? owner, bool resizable = false, bool fade = true)
         {
             win.Owner = owner;
-            TaskbarIdentity.Track(win);
+            // PORTABLE_DIALOG_IDENTITY_INVARIANT: dialogs use the existing PewDF window identity.
             win.WindowStyle = WindowStyle.None;
             win.AllowsTransparency = true;
             win.Background = Brushes.Transparent;

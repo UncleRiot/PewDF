@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 
-namespace KillerPDF
+namespace PewDF
 {
     // WPF has no built-in animation for GridLength, so grid columns (the sidebar) can only snap.
     // This drives a pixel-unit GridLength between From and To so a column glides instead.
@@ -145,7 +145,9 @@ namespace KillerPDF
         // StyleCheckBox/ThemedCheckTemplate copies so every checkbox in the app is identical.
         public static CheckBox CheckBox(string label) => new()
         {
-            Content                  = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap },
+            // CHECKBOX_LABEL_THEME_SSOT: nested content must resolve the same theme brush as its parent.
+            // Invariant: all factory-created checkbox labels remain readable in every supported theme.
+            Content                  = new TextBlock { Text = label, TextWrapping = TextWrapping.Wrap, Foreground = Brush("TextBrush") },
             Foreground               = Brush("TextBrush"),
             FontFamily               = UiFont,
             FontSize                 = 12,
@@ -471,7 +473,7 @@ namespace KillerPDF
         // family button gradient on hover, the same as OutlineButton. false is secondary.
         public static Button Make(object content, bool accent)
         {
-            if (KillerPDF.Services.ThemeManager.Current == KillerPDF.Services.Theme.SE98)
+            if (PewDF.Services.ThemeManager.Current == PewDF.Services.Theme.SE98)
             {
                 var button = Make(content, Brush("ChipFaceBrush"), Brush("ChipFaceBrush"),
                                   Brush("TextBrush"), Brush("TextBrush"), Brushes.Transparent);

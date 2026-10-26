@@ -13,13 +13,28 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
+        private bool _imageStampPicker;
+        // SEMANTIC ANCHOR: SIGNATURE_PANE_OWNERSHIP_INVARIANT
+        // The normal signature picker belongs to the shared tool sidebar. Image stamps
+        // retain their existing separate picker; never clear another tool's pane.
+        private Border? _signaturePane;
+
+        private void ToolImageStamp_Click(object sender, RoutedEventArgs e)
+        {
+            _imageStampPicker = true;
+            _pendingSignField = null;
+            _pendingSignature = null;
+            SetTool(EditTool.Signature);
+            ShowSignaturePopup();
+        }
+
         private void LoadSignatures() => _signatureStore.Load();
 
         private void PersistSignatures() => _signatureStore.Persist();
@@ -28,7 +43,7 @@ namespace KillerPDF
         // switch immediately on a language change rather than only on the next open.
         private void RefreshSignaturePopupLanguage()
         {
-            if (_signaturePopup is not null) ShowSignaturePopup();
+            if (_signaturePopup is not null || _signaturePane is not null) ShowSignaturePopup();
         }
 
         private void PlaceSignature(Point pos, int pageIdx)
@@ -154,8 +169,14 @@ namespace KillerPDF
             SetStatus(Loc("Str_St_FieldSigned"));
         }
 
-        private void HideSignaturePopup()
+        private void HideSignaturePopup(bool keepPane = false)
         {
+            if (_signaturePane is not null)
+            {
+                HideToolPaneContent(_signaturePane, keepPane);
+                _signaturePane = null;
+                if (_annotBarTool == EditTool.Signature) _annotBarTool = null;
+            }
             if (_signaturePopup is not null)
             {
                 var previewGrid = PagePreviewPanel.Parent as Grid;
@@ -289,7 +310,7 @@ namespace KillerPDF
             // on the popup's own child elements - no external source subscriptions, so no leak.
             // If SignatureStore.Signatures ever becomes ObservableCollection and this popup
             // subscribes to CollectionChanged, use CollectionChangedEventManager instead of +=.
-            HideSignaturePopup();
+            HideSignaturePopup(keepPane: true);
 
             bool classicCaption = FindResource("UseDialogCaption") is true;
             var stack = new StackPanel { Margin = classicCaption ? new Thickness(0) : new Thickness(4) };
@@ -302,7 +323,7 @@ namespace KillerPDF
             sigHeaderGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             var sigTitleText = new TextBlock
             {
-                Text = Loc("Str_Sig_Title"),
+                Text = _imageStampPicker ? Loc("Str_Lbl_ImageStamp") : Loc("Str_Sig_Title"),
                 Foreground = (Brush)FindResource(classicCaption ? "ChromeTextBrush" : "PrimaryBrush"),
                 FontFamily = classicCaption
                     ? (FontFamily)FindResource("ChromeFontFamily")
@@ -372,7 +393,7 @@ namespace KillerPDF
             };
             if (classicCaption)
                 sigHeaderGrid.SetResourceReference(FrameworkElement.MarginProperty, "TitleBarPadding");
-            stack.Children.Add(sigHeader);
+            if (_imageStampPicker) stack.Children.Add(sigHeader);
 
             // Saved signatures and initials, shown as two labeled sections so the HR-style
             // "initial here, sign there" flow can pick each independently. One tile builder is shared.
@@ -417,11 +438,11 @@ namespace KillerPDF
                 {
                     var canvas = new Canvas
                     {
-                        Width = 288, Height = 50,
+                        Width = _imageStampPicker ? 288 : TextSidebarToolsWidth - 34, Height = 50,
                         Background = Brushes.Transparent,
                         IsHitTestVisible = false
                     };
-                    RenderSignaturePreview(canvas, sigCopy, 288, 50);
+                    RenderSignaturePreview(canvas, sigCopy, canvas.Width, 50);
                     item.Child = canvas;
                 }
 
@@ -429,7 +450,7 @@ namespace KillerPDF
                 {
                     HideSignaturePopup();
                     // If a signature field is waiting, fill it and remember the choice (pick once, reuse).
-                    if (_pendingSignField is { } tgt)
+                    if (!_imageStampPicker && _pendingSignField is { } tgt)
                     {
                         if (tgt.Initials) _activeInitialsChoice = sigCopy; else _activeSignatureChoice = sigCopy;
                         var t = tgt; _pendingSignField = null;
@@ -478,6 +499,10 @@ namespace KillerPDF
             // Section = header + saved tiles (or a "none yet" hint) + Create/Import for that Kind.
             void AddSigSection(string sectionTitle, SignatureKind kind)
             {
+                // SEMANTIC ANCHOR: TOOL_PANE_SECTION_GAP_INVARIANT
+                // The shared gap applies only between signature groups in the right pane.
+                if (!_imageStampPicker && stack.Children.Count > 0)
+                    stack.Children.Add(new Border { Height = (double)FindResource("ToolPaneSectionGap") });
                 stack.Children.Add(new TextBlock
                 {
                     Text = sectionTitle,
@@ -493,7 +518,9 @@ namespace KillerPDF
                 {
                     var scroll = new ScrollViewer
                     {
-                        MaxHeight = 170,
+                        // The sidebar provides its own vertical scroller. The old popup
+                        // retains its per-section limit for backward compatibility.
+                        MaxHeight = _imageStampPicker ? 170 : double.PositiveInfinity,
                         VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                         HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
                     };
@@ -521,6 +548,7 @@ namespace KillerPDF
                 rowBtns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 rowBtns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 var createBtn = UiKit.Make(Loc("Str_Sig_Create"), accent: true);
+                if (kind == SignatureKind.ImageStamp) createBtn.Visibility = Visibility.Collapsed;
                 createBtn.HorizontalAlignment = HorizontalAlignment.Stretch;
                 createBtn.Margin = new Thickness(0, 0, 3, 0);
                 createBtn.Click += (s, e) => { HideSignaturePopup(); OpenSignatureCreator(kind); ShowSignaturePopup(); };
@@ -530,12 +558,24 @@ namespace KillerPDF
                 importBtn.Click += (s, e) => { HideSignaturePopup(); ImportImageSignature(kind); ShowSignaturePopup(); };
                 Grid.SetColumn(createBtn, 0);
                 Grid.SetColumn(importBtn, 1);
+                if (kind == SignatureKind.ImageStamp)
+                {
+                    Grid.SetColumn(importBtn, 0);
+                    Grid.SetColumnSpan(importBtn, 2);
+                    importBtn.Margin = new Thickness(0);
+                }
                 rowBtns.Children.Add(createBtn);
                 rowBtns.Children.Add(importBtn);
                 stack.Children.Add(rowBtns);
             }
 
-            AddSigSection(Loc("Str_Sig_Signatures"), SignatureKind.Signature);
+            if (_imageStampPicker)
+            {
+                AddSigSection(Loc("Str_Lbl_ImageStamp"), SignatureKind.ImageStamp);
+            }
+            else
+            {
+                AddSigSection(Loc("Str_Sig_Signatures"), SignatureKind.Signature);
 
             stack.Children.Add(new Rectangle
             {
@@ -545,6 +585,34 @@ namespace KillerPDF
             });
 
             AddSigSection(Loc("Str_Sig_Initials"), SignatureKind.Initials);
+            }
+
+            if (!_imageStampPicker)
+            {
+                // SEMANTIC ANCHOR: SIGNATURE_PANE_LAYOUT_INVARIANT
+                // Reuse the shared pane dimensions, toggle and ScrollViewer; do not
+                // create a nested scroller, floating host or alternate resize policy.
+                _signaturePane = new Border
+                {
+                    Child = stack,
+                    Padding = new Thickness(0),
+                    BorderThickness = new Thickness(0),
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+                _signaturePane.SetResourceReference(Border.BackgroundProperty, "BackgroundBrush");
+                TextSidebarContent.Children.Clear();
+                TextSidebarContent.Children.Add(_signaturePane);
+                ToolSidebarHeader.SetResourceReference(TextBlock.TextProperty, "Str_Sig_Title");
+                if (!_textSidebarToggleWired)
+                {
+                    TextSidebarToggle.Click += (_, _) => SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                    _textSidebarToggleWired = true;
+                }
+                TextSidebarToggle.Visibility = Visibility.Visible;
+                SetTextSidebarCollapsed(false);
+                _annotBarTool = EditTool.Signature;
+                return;
+            }
 
             // Match the Settings/menu popups: themed modal surface + accent border + film grain.
             var sigContent = new Grid();
@@ -789,7 +857,7 @@ namespace KillerPDF
             {
                 if (strokes.Count == 0)
                 {
-                    KillerDialog.Show(this, Loc("Str_Dlg_DrawSignatureFirst"), "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    PewDialog.Show(this, Loc("Str_Dlg_DrawSignatureFirst"), "PewDF", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -829,17 +897,16 @@ namespace KillerPDF
             btnPanel.Margin = new Thickness(12, 4, 12, 12);
             contentArea.Children.Add(btnPanel);
 
-            win.Content = DialogChrome.Frame(win, this, "KillerPDF - " + Loc("Str_Sig_Create"), () => win.Close(), contentArea);
+            win.Content = DialogChrome.Frame(win, this, "PewDF - " + Loc("Str_Sig_Create"), () => win.Close(), contentArea);
             win.ShowDialog();
         }
 
         private void ImportImageSignature(SignatureKind kind = SignatureKind.Signature)
         {
-            var dlg = new Controls.FileDialog(Controls.FileDialogMode.Open)
+            var dlg = new Microsoft.Win32.OpenFileDialog()
             {
                 Filter = Loc("Str_Filter_Images") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif|" + Loc("Str_Filter_AllFiles") + "|*.*",
-                Title = Loc("Str_Sign_ImportImage"),
-                ShowImagePreview = true
+                Title = Loc("Str_Sign_ImportImage")
             };
             if (dlg.ShowDialog(this) != true) return;
 
@@ -872,7 +939,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ImportImageFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(this, Loc("Str_Err_ImportImageFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

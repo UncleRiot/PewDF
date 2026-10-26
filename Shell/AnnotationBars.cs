@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -14,10 +14,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -58,20 +58,6 @@ namespace KillerPDF
         // Wraps a floating annotation bar's content with the app's film-grain layer so these bars
         // carry the same texture as the Settings / signature / dialog surfaces. The grain extends
         // under the host border's 4px padding (negative margin) and matches its bottom corners.
-        private static Grid GrainWrap(UIElement content)
-        {
-            var g = new Grid();
-            // SetResourceReference, not a FindResource snapshot: these hosts are built once and
-            // outlive theme switches, so a snapshot kept the grain painting on 98SE (whose
-            // GrainOpacity is 0) and its -4 margin overhang made the bevel read as misaligned.
-            var grain = new Border { Margin = new Thickness(-4), IsHitTestVisible = false };
-            grain.SetResourceReference(Border.CornerRadiusProperty, "AnnotationBarCornerRadius");
-            grain.SetResourceReference(UIElement.OpacityProperty, "GrainOpacity");
-            grain.SetResourceReference(Border.BackgroundProperty, "GrainBrushShared");
-            g.Children.Add(grain);
-            g.Children.Add(content);
-            return g;
-        }
 
         // A grab handle (vertical dots) placed at the left of an annotation bar so it can be slid
         // left/right along the top of the document. Returns the handle for EnableBarSlide.
@@ -541,6 +527,205 @@ namespace KillerPDF
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, (Action)Apply);
         }
 
+        // SEMANTIC ANCHOR: TEXT_MARKER_PANE_SINGLE_OWNER_INVARIANT
+        // The shared ToolSidebar owns visibility, sizing and background; do not add floating UI.
+        // Controls edit ActiveViewer settings; no duplicate MainWindow settings fields.
+        private Border? _textMarkerSettingsBar;
+
+        private void HideTextMarkerSettings(bool keepPane = false)
+        {
+            HideToolPaneContent(_textMarkerSettingsBar, keepPane);
+            _textMarkerSettingsBar = null;
+            if (_annotBarTool == EditTool.TextMarker) _annotBarTool = null;
+        }
+
+        private void ShowTextMarkerSettings()
+        {
+            var viewer = ActiveViewer;
+            // SEMANTIC ANCHOR: TOOL_PANE_METRICS_CONSUMER_INVARIANT
+            // Reuse the application-level visual metrics. The approved tool-pane geometry and
+            // inherited sidebar typography are unchanged; future similar controls share these tokens.
+            double Metric(string key) => (double)FindResource(key);
+            double insetX = Metric("ToolPaneContentInsetHorizontal");
+            double insetY = Metric("ToolPaneContentInsetVertical");
+            var stack = new StackPanel { Margin = new Thickness(insetX, insetY, insetX, insetY) };
+            TextBlock Heading(string caption)
+            {
+                var label = new TextBlock { Text = caption, Margin = new Thickness(0, Metric("ToolPaneHeadingTopGap"), 0, Metric("ToolPaneHeadingBottomGap")), FontFamily = UiKit.UiFont };
+                label.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+                return label;
+            }
+            void Changed()
+            {
+                // Cursor is derived from the same settings as marker geometry (SSOT).
+                RefreshTextMarkerCursor();
+                // SEMANTIC ANCHOR: TOOL_STYLE_CHANGE_PERSISTENCE_INVARIANT
+                // Save only user style settings, never document content. Reuse the App settings SSOT.
+                App.SetSetting("TextMarkerColor", $"#{viewer.TextMarkerColor.A:X2}{viewer.TextMarkerColor.R:X2}{viewer.TextMarkerColor.G:X2}{viewer.TextMarkerColor.B:X2}");
+                App.SetSetting("TextMarkerNibSize", viewer.TextMarkerNibSize.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+            stack.Children.Add(Heading(Loc("Str_Bar_Color")));
+            // SEMANTIC ANCHOR: TOOL_PANE_COLOR_SELECTION_INVARIANT
+            // The chosen swatch uses the same SelectionAccent border and thickness as every
+            // color control in the tool panes. Preserve the fill alpha when choosing a color.
+            var swatches = new WrapPanel { Orientation = Orientation.Horizontal };
+            var markerChips = new List<Border>();
+            void RefreshMarkerSelection()
+            {
+                foreach (Border chip in markerChips)
+                {
+                    var c = (Color)chip.Tag;
+                    bool active = c.R == viewer.TextMarkerColor.R &&
+                                  c.G == viewer.TextMarkerColor.G && c.B == viewer.TextMarkerColor.B;
+                    chip.BorderThickness = new Thickness(Metric(active
+                        ? "ToolPaneColorSwatchSelectedBorderThickness"
+                        : "ToolPaneColorSwatchIdleBorderThickness"));
+                    if (active) chip.SetResourceReference(Border.BorderBrushProperty, "SelectionAccent");
+                    else chip.BorderBrush = _swatchDimBorder;
+                }
+            }
+            foreach (var color in new[]
+            {
+                Colors.Yellow, Colors.LimeGreen, Colors.HotPink, Colors.Orange, Colors.DeepSkyBlue
+            })
+            {
+                var chip = new Border
+                {
+                    Width = Metric("ToolPaneColorSwatchSize"), Height = Metric("ToolPaneColorSwatchSize"),
+                    Margin = new Thickness(Metric("ToolPaneColorSwatchMargin")),
+                    CornerRadius = new CornerRadius(Metric("ToolPaneColorSwatchCornerRadius")),
+                    Background = new SolidColorBrush(color), Cursor = Cursors.Hand, Tag = color
+                };
+                chip.MouseLeftButtonDown += (_, _) =>
+                {
+                    var selected = (Color)chip.Tag;
+                    viewer.TextMarkerColor = Color.FromArgb(viewer.TextMarkerColor.A, selected.R, selected.G, selected.B);
+                    RefreshMarkerSelection();
+                    Changed();
+                };
+                markerChips.Add(chip);
+                swatches.Children.Add(chip);
+            }
+            RefreshMarkerSelection();
+            stack.Children.Add(swatches);
+            var sizeHeading = Heading(Loc("Str_Bar_Size"));
+            sizeHeading.Margin = new Thickness(0, Metric("ToolPaneSectionGap"), 0, Metric("ToolPaneHeadingBottomGap"));
+            stack.Children.Add(sizeHeading);
+            // SEMANTIC ANCHOR: TEXT_MARKER_NIB_SIZE_SSOT
+            // The viewer property is the only authoritative nib size. The numeric field and
+            // stepper never keep independent values; validate input before changing geometry.
+            const int minNibSize = 1;
+            const int maxNibSize = 30;
+            var sizeRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left };
+            // SEMANTIC ANCHOR: TOOL_PANE_NUMERIC_FIELD_INVARIANT
+            // Reuse the established theme field template and leave a visible border between
+            // numeric field and stepper, including when the field has keyboard focus.
+            var sizeBox = UiKit.Field(Metric("ToolPaneNumericFieldWidth"));
+            sizeBox.Text = $"{viewer.TextMarkerNibSize:0}";
+            sizeBox.Height = Metric("ToolPaneNumericFieldHeight");
+            sizeBox.MaxLength = 2;
+            sizeBox.TextAlignment = TextAlignment.Center;
+            sizeBox.VerticalContentAlignment = VerticalAlignment.Center;
+            sizeBox.Padding = new Thickness(3, 0, 3, 0);
+            sizeBox.SetResourceReference(TextBox.BackgroundProperty, "TextFieldBrush");
+            sizeBox.SetResourceReference(TextBox.ForegroundProperty, "TextBrush");
+            sizeBox.SetResourceReference(TextBox.BorderBrushProperty, "CardBorderBrush");
+            sizeBox.SetResourceReference(TextBox.CaretBrushProperty, "PrimaryBrush");
+            sizeBox.SetResourceReference(TextBox.SelectionBrushProperty, "RowSelectedBrush");
+            void SetNibSize(int value)
+            {
+                viewer.TextMarkerNibSize = Math.Clamp(value, minNibSize, maxNibSize);
+                sizeBox.Text = $"{viewer.TextMarkerNibSize:0}";
+                Changed();
+            }
+            void CommitNibSize()
+            {
+                if (int.TryParse(sizeBox.Text, System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.CurrentCulture, out int value))
+                    SetNibSize(value);
+                else
+                    sizeBox.Text = $"{viewer.TextMarkerNibSize:0}";
+            }
+            sizeBox.LostKeyboardFocus += (_, _) => CommitNibSize();
+            sizeBox.KeyDown += (_, e) =>
+            {
+                if (e.Key == Key.Enter) { CommitNibSize(); e.Handled = true; }
+                else if (e.Key == Key.Up || e.Key == Key.Down)
+                {
+                    CommitNibSize();
+                    SetNibSize((int)viewer.TextMarkerNibSize + (e.Key == Key.Up ? 1 : -1));
+                    e.Handled = true;
+                }
+            };
+            sizeRow.Children.Add(sizeBox);
+            var spinner = new Grid { Width = Metric("ToolPaneNumericStepperWidth"), Height = Metric("ToolPaneNumericFieldHeight"), Margin = new Thickness(Metric("ToolPaneNumericStepperGap"), 0, 0, 0) };
+            spinner.RowDefinitions.Add(new RowDefinition());
+            spinner.RowDefinitions.Add(new RowDefinition());
+            System.Windows.Controls.Primitives.RepeatButton Step(string glyph, int delta, int row)
+            {
+                var button = new System.Windows.Controls.Primitives.RepeatButton
+                {
+                    Content = glyph, FontSize = Metric("ToolPaneNumericStepperGlyphSize"), Padding = new Thickness(0),
+                    Style = (Style)FindResource("ToolPaneNumericStepButton"),
+                    Delay = 350, Interval = 100, Cursor = Cursors.Hand
+                };
+                button.Click += (_, _) =>
+                {
+                    CommitNibSize();
+                    SetNibSize((int)viewer.TextMarkerNibSize + delta);
+                };
+                Grid.SetRow(button, row);
+                return button;
+            }
+            spinner.Children.Add(Step("▲", 1, 0));
+            spinner.Children.Add(Step("▼", -1, 1));
+            sizeRow.Children.Add(spinner);
+            stack.Children.Add(sizeRow);
+            // SEMANTIC ANCHOR: TOOL_PANE_OPACITY_ROW_INVARIANT
+            // Match the approved Text pane: label, slider and percentage share one horizontal row.
+            // Reuse the application-level gap, slider width and inherited typography.
+            var opacityRow = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, Metric("ToolPaneSectionGap"), 0, 0) };
+            var opacityHeading = new TextBlock { Text = Loc("Str_Bar_Opacity"), FontFamily = UiKit.UiFont,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, Metric("ToolPaneLabelControlGap"), 0) };
+            opacityHeading.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+            opacityRow.Children.Add(opacityHeading);
+            var alphaValue = new TextBlock { Text = $"{viewer.TextMarkerColor.A * 100 / 255}%",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(Metric("ToolPaneLabelControlGap"), 0, 0, 0) };
+            alphaValue.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
+            var alphaSlider = new Slider { Minimum = 15, Maximum = 85, Value = viewer.TextMarkerColor.A * 100.0 / 255, Width = Metric("ToolPaneControlSliderWidth"), HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center, Style = (Style)FindResource("DarkSlider") };
+            alphaSlider.ValueChanged += (_, _) =>
+            {
+                var c = viewer.TextMarkerColor;
+                viewer.TextMarkerColor = Color.FromArgb((byte)Math.Round(alphaSlider.Value * 255 / 100), c.R, c.G, c.B);
+                alphaValue.Text = $"{(int)Math.Round(alphaSlider.Value)}%";
+                Changed();
+            };
+            opacityRow.Children.Add(alphaSlider);
+            opacityRow.Children.Add(alphaValue);
+            stack.Children.Add(opacityRow);
+            // SEMANTIC ANCHOR: TEXT_MARKER_SETTINGS_VISIBLE_CONTROLS_INVARIANT
+            // Only functional, user-facing marker controls belong in this pane.
+            // Preserve color, nib size and opacity ordering; do not show the unused angle selector.
+            // SEMANTIC ANCHOR: TEXT_MARKER_SIDEBAR_LAYOUT_INVARIANT
+            // Use the same sidebar host and expansion policy as other annotation tools.
+            TextSidebarContent.Children.Clear();
+            TextSidebarContent.HorizontalAlignment = HorizontalAlignment.Left;
+            _textMarkerSettingsBar = new Border { Child = stack, Background = Brushes.Transparent };
+            TextSidebarContent.Children.Add(_textMarkerSettingsBar);
+            ToolSidebarHeader.SetResourceReference(TextBlock.TextProperty, "Str_Ribbon_Textmarker");
+            if (!_textSidebarToggleWired)
+            {
+                TextSidebarToggle.Click += (_, _) => SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                _textSidebarToggleWired = true;
+            }
+            TextSidebarToggle.Visibility = Visibility.Visible;
+            SetTextSidebarCollapsed(false);
+            _annotBarTool = EditTool.TextMarker;
+        }
+
         private void ShowDrawSettings(EditTool tool)
         {
             // Fade the bar in only when it's genuinely appearing (no bar yet, or coming from the text
@@ -555,8 +740,10 @@ namespace KillerPDF
             {
                 // On a switch, fade the old bar out (crossfades with the new one); on a refresh, swap it
                 // out instantly so clicking a swatch doesn't flicker the whole bar.
-                if (appearing) FadeOutAndRemoveBar(_drawSettingsBar);
-                else (PagePreviewPanel.Parent as Grid)?.Children.Remove(_drawSettingsBar);
+                // A shared sidebar never animates old content over the document.
+                // Rebuild in place: a style refresh must not collapse or resize the pane.
+                TextSidebarContent.Children.Remove(_drawSettingsBar);
+                (PagePreviewPanel.Parent as Grid)?.Children.Remove(_drawSettingsBar);
                 _drawSettingsBar = null;
             }
 
@@ -717,6 +904,9 @@ namespace KillerPDF
             colorLbl.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
             colorGroup.Children.Add(colorLbl);
 
+            // SEMANTIC ANCHOR: DRAW_PANE_PALETTE_METRICS_INVARIANT
+            // All sidebar draw tools use the same App.xaml swatch geometry as Textmarker.
+            // INVARIANT: identical size, margin, radius and selection chrome for matching controls.
             // Color swatches
             bool isLineTool = tool == EditTool.Strikethrough || tool == EditTool.Underline;
             var activeColor = (tool is EditTool.Draw or EditTool.Line or EditTool.Shape) ? _drawColor
@@ -727,17 +917,17 @@ namespace KillerPDF
                 bool isActive = color == activeColor;
                 var swatch = new Border
                 {
-                    Width = 18,
-                    Height = 18,
+                    Width = (double)FindResource("ToolPaneColorSwatchSize"),
+                    Height = (double)FindResource("ToolPaneColorSwatchSize"),
                     Background = Freeze(new SolidColorBrush(color)),
-                    BorderThickness = new Thickness(isActive ? 2 : 1),
-                    CornerRadius = new CornerRadius(3),
-                    Margin = new Thickness(1),
+                    BorderThickness = new Thickness((double)FindResource(isActive ? "ToolPaneColorSwatchSelectedBorderThickness" : "ToolPaneColorSwatchIdleBorderThickness")),
+                    CornerRadius = new CornerRadius((double)FindResource("ToolPaneColorSwatchCornerRadius")),
+                    Margin = new Thickness((double)FindResource("ToolPaneColorSwatchMargin")),
                     Cursor = Cursors.Hand,
                     Tag = color
                 };
                 if (isActive)
-                    swatch.SetResourceReference(Border.BorderBrushProperty, "PrimaryBrush");
+                    swatch.SetResourceReference(Border.BorderBrushProperty, "SelectionAccent");
                 else
                     swatch.BorderBrush = _swatchDimBorder;
                 swatch.MouseLeftButtonDown += (s, e) =>
@@ -758,12 +948,12 @@ namespace KillerPDF
             // "More colors..." -> full RGB picker, applied to whichever draw color this bar drives.
             var moreDraw = new Border
             {
-                Width = 18,
-                Height = 18,
-                CornerRadius = new CornerRadius(3),
-                Margin = new Thickness(1),
+                Width = (double)FindResource("ToolPaneColorSwatchSize"),
+                Height = (double)FindResource("ToolPaneColorSwatchSize"),
+                CornerRadius = new CornerRadius((double)FindResource("ToolPaneColorSwatchCornerRadius")),
+                Margin = new Thickness((double)FindResource("ToolPaneColorSwatchMargin")),
                 Cursor = Cursors.Hand,
-                BorderThickness = new Thickness(1),
+                BorderThickness = new Thickness((double)FindResource("ToolPaneColorSwatchIdleBorderThickness")),
                 ToolTip = Loc("Str_Bar_MoreColors"),
                 BorderBrush = _swatchDimBorder,
                 Background = new LinearGradientBrush
@@ -787,6 +977,36 @@ namespace KillerPDF
                 ShowDrawSettings(tool);
             }, () => ShowDrawSettings(tool));
             colorGroup.Children.Add(moreDraw);
+            // SEMANTIC ANCHOR: TOOL_PANE_COLOR_LAYOUT_INVARIANT
+            // All color-enabled pane hosts follow the Text reference: the label is above
+            // wrap-enabled swatches with a shared left edge. Specialized swatch sizes remain.
+            if (tool is EditTool.Highlight or EditTool.Draw or EditTool.Line or EditTool.Shape)
+            {
+                // SEMANTIC ANCHOR: TOOL_PANE_COLOR_COLUMN_INVARIANT
+                // All pane-hosted drawing tools share the Text reference column structure;
+                // colors and selection state remain tool-specific; visual metrics do not.
+                colorGroup.Orientation = Orientation.Vertical;
+                colorGroup.HorizontalAlignment = HorizontalAlignment.Left;
+                colorGroup.VerticalAlignment = VerticalAlignment.Top;
+                // SEMANTIC ANCHOR: TOOL_PANE_TEXT_REFERENCE_LABEL_INVARIANT
+                // Text, Highlight and other sidebar panes share label/control spacing and typography.
+                // SEMANTIC ANCHOR: TOOL_PANE_LABEL_TYPOGRAPHY_SSOT
+                // Match the Text pane: inherit FontSize from the sidebar, never use a local 11-DIP override.
+                colorLbl.ClearValue(TextBlock.FontSizeProperty);
+                colorLbl.Margin = new Thickness(0, 0, 0, (double)FindResource("ToolPaneLabelControlGap"));
+                var paneSwatches = new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    MaxWidth = (double)FindResource("ToolPaneSwatchRowMaxWidth")
+                };
+                while (colorGroup.Children.Count > 1)
+                {
+                    var item = colorGroup.Children[1];
+                    colorGroup.Children.RemoveAt(1);
+                    paneSwatches.Children.Add(item);
+                }
+                colorGroup.Children.Add(paneSwatches);
+            }
             panel.Children.Add(colorGroup);
 
             // Single-row groups (Color, Size, Opacity+toggle) packed directly by the outer WrapPanel;
@@ -800,14 +1020,13 @@ namespace KillerPDF
             // Size slider (draw only)
             if ((tool is EditTool.Draw or EditTool.Line or EditTool.Shape))
             {
-                var sizeGroup = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 2, 16, 2) };
+                var sizeGroup = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0) };
                 var sizeLbl = new TextBlock
                 {
                     Text = Loc("Str_Bar_Size"),
                     FontFamily = UiKit.UiFont,
-                    FontSize = 11,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 6, 0)
+                    Margin = new Thickness(0, 0, (double)FindResource("ToolPaneLabelControlGap"), 0)
                 };
                 sizeLbl.SetResourceReference(TextBlock.ForegroundProperty, "MutedTextBrush");
                 sizeGroup.Children.Add(sizeLbl);
@@ -817,7 +1036,7 @@ namespace KillerPDF
                     Minimum = 1,
                     Maximum = 60,
                     Value = _drawWidth,
-                    Width = 90,
+                    Width = (double)FindResource("ToolPaneCompactSliderWidth"),
                     VerticalAlignment = VerticalAlignment.Center,
                     TickFrequency = 1,
                     IsSnapToTickEnabled = true,
@@ -830,9 +1049,8 @@ namespace KillerPDF
                 {
                     Text = $"{_drawWidth:F0}px",
                     FontFamily = UiKit.UiFont,
-                    FontSize = 11,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(4, 0, 0, 0),
+                    Margin = new Thickness((double)FindResource("ToolPaneOpacityValueGap"), 0, 0, 0),
                     Width = 34,
                     TextAlignment = TextAlignment.Right
                 };
@@ -870,7 +1088,6 @@ namespace KillerPDF
             {
                 Text = $"{(int)(currentOpacity / 255.0 * 100)}%",
                 FontFamily = UiKit.UiFont,
-                FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(4, 0, 6, 0),
                 Width = 40,
@@ -904,7 +1121,11 @@ namespace KillerPDF
             // stays beside Opacity as the bar collapses instead of dropping onto a row by itself.
             if (barCheck is not null)
             {
-                barCheck.Margin = new Thickness(0, 2, 2, 2);
+                // SEMANTIC ANCHOR: TOOL_PANE_CHECKBOX_SPACING_INVARIANT
+                // Toggle rows use the shared inter-section gap above them. This applies
+                // to all annotation tools, including the Shapes row with its Fill toggle.
+                // The internal spacing between a checkbox and its label is unchanged.
+                barCheck.Margin = new Thickness(0, (double)FindResource("ToolPaneSectionGap"), 2, 2);
                 dOpacityUnit.Children.Add(barCheck);
             }
             panel.Children.Add(dOpacityUnit);
@@ -929,30 +1150,89 @@ namespace KillerPDF
             _drawSettingsBar.SetResourceReference(Border.BorderThicknessProperty, "BarEdgeThickness");
             _drawSettingsBar.SetResourceReference(Border.PaddingProperty, "BarPadding");
 
-            var previewArea = PagePreviewPanel.Parent as Grid;
-            if (previewArea is not null)
+            // SEMANTIC ANCHOR: TOOL_PANE_CONTROLS_INVARIANT: Reuse existing settings
+            // and event handlers; present groups vertically in the shared right sidebar.
+            // The floating bar's drag grip and overflow are not pane controls.
+            panel.Children.Remove(colorGroup);
+            if (sizeGroupRef is not null) panel.Children.Remove(sizeGroupRef);
+            panel.Children.Remove(dOpacityUnit);
+            var settingsStack = new StackPanel { Orientation = Orientation.Vertical };
+            // SEMANTIC ANCHOR: TOOL_PANE_SECTION_GAP_INVARIANT
+            // Only inter-section spacing uses the app-wide resource; within-group layout remains compact.
+            double sectionGap = (double)FindResource("ToolPaneSectionGap");
+            colorGroup.Margin = new Thickness(0, 1, 0, 1); // shared pane color-section inset
+            settingsStack.Children.Add(colorGroup);
+            if (sizeGroupRef is not null)
             {
-                Panel.SetZIndex(_drawSettingsBar, 100);
-                previewArea.Children.Add(_drawSettingsBar);
-                // Cap the wrap panel to the document area's width (less the bar chrome) so it wraps the
-                // control groups to new rows once the window is too narrow to hold them on one line.
-                panel.SetBinding(FrameworkElement.MaxWidthProperty, new System.Windows.Data.Binding("ActualWidth")
-                { Source = previewArea, Converter = _barWidthInset });
-                WireBarWrapAdaptation(panel, drawGrip, colorGroup, previewArea);
-                var drawGroups = sizeGroupRef is null
-                    ? new StackPanel[] { colorGroup, dOpacityUnit }
-                    : [colorGroup, sizeGroupRef, dOpacityUnit];
-                int[] drawShed = sizeGroupRef is null ? [1] : [2, 1];   // opacity unit first, then size; color anchored
-                WireBarOverflow(panel, drawOverflowBtn, drawOverflowPopup, drawOverflowStack, drawGroups, drawShed, previewArea);
-                PlaceAnnotationBar(_drawSettingsBar, drawGrip, fadeIn: appearing);
+                sizeGroupRef.Margin = new Thickness(0, sectionGap, 0, 0);
+                settingsStack.Children.Add(sizeGroupRef);
             }
+            opacityGroup.Margin = new Thickness(0, 0, 0, 0);
+            dOpacityUnit.Margin = new Thickness(0, sectionGap, 0, 0);
+            dOpacityUnit.Orientation = Orientation.Vertical;
+            if (tool is EditTool.Highlight or EditTool.Draw or EditTool.Line or EditTool.Shape)
+            {
+                // SEMANTIC ANCHOR: TOOL_PANE_OPACITY_ROW_INVARIANT
+                // Keep the Text reference's single row and stable label-slider-value spacing.
+                opacityGroup.Margin = new Thickness(0, 1, 0, 1);
+                opacityLbl.ClearValue(TextBlock.FontSizeProperty);
+                opacityLbl.Margin = new Thickness(0, 0, (double)FindResource("ToolPaneLabelControlGap"), 0);
+                opacitySlider.Width = (double)FindResource("ToolPaneControlSliderWidth");
+                // SEMANTIC ANCHOR: TOOL_PANE_OPACITY_VALUE_INVARIANT
+                // Reuse the Text pane's right-aligned percentage column rather than a local width.
+                opacityLabel.Margin = new Thickness((double)FindResource("ToolPaneOpacityValueGap"), 0, 0, 0);
+                opacityLabel.Width = (double)FindResource("ToolPaneOpacityValueWidth");
+                opacityLabel.TextAlignment = TextAlignment.Right;
+            }
+            settingsStack.Children.Add(dOpacityUnit);
+            if (tool is EditTool.Highlight or EditTool.Draw or EditTool.Line or EditTool.Shape)
+            {
+                // SEMANTIC ANCHOR: TOOL_PANE_LEFT_ALIGNMENT_SSOT
+                // The Text-pane reference establishes the shared left content column.
+                // Sidebar content is already placed in the shared left column.
+                // No legacy draw-bar offset is allowed in the pane-hosted layout.
+                settingsStack.Margin = new Thickness((double)FindResource("ToolPaneContentInsetHorizontal"), 0, 0, 0);
+            }
+            _drawSettingsBar.Child = settingsStack;
+            // SEMANTIC ANCHOR: TOOL_PANE_BACKGROUND_INVARIANT
+            // Pane-hosted annotation settings must not paint a separate group surface.
+            // The shared sidebar provides the themed background (SSOT); floating-bar
+            // backgrounds must never appear behind these controls.
+            _drawSettingsBar.Background = Brushes.Transparent;
+            _drawSettingsBar.Effect = null;
+            _drawSettingsBar.Padding = new Thickness(0);
+            _drawSettingsBar.BorderThickness = new Thickness(0);
+            _drawSettingsBar.HorizontalAlignment = HorizontalAlignment.Left;
+            TextSidebarContent.Children.Clear();
+            TextSidebarContent.HorizontalAlignment = HorizontalAlignment.Left;
+            TextSidebarContent.Children.Add(_drawSettingsBar);
+            // SEMANTIC ANCHOR: TOOL_PANE_HEADER_LOCALIZATION_INVARIANT
+            // Titles use the existing localized strings, never hard-coded English or enum names.
+            ToolSidebarHeader.Text = tool switch
+            {
+                EditTool.Highlight => Loc("Str_Lbl_Highlight"),
+                EditTool.Draw => Loc("Str_Lbl_Draw"),
+                EditTool.Line => Loc("Str_Lbl_Line"),
+                EditTool.Shape => Loc("Str_Lbl_Shape"),
+                EditTool.Underline => Loc("Str_Lbl_Underline"),
+                EditTool.Strikethrough => Loc("Str_Lbl_Strike"),
+                _ => tool.ToString()
+            };
+            if (!_textSidebarToggleWired)
+            {
+                TextSidebarToggle.Click += (_, _) => SetTextSidebarCollapsed(!_textSidebarCollapsed);
+                _textSidebarToggleWired = true;
+            }
+            TextSidebarToggle.Visibility = Visibility.Visible;
+            SetTextSidebarCollapsed(appearing ? false : _textSidebarCollapsed);
             _annotBarTool = tool;
             _annotBarMinimized = false;   // a freshly built bar is full-size
         }
 
-        private void HideDrawSettings()
+        private void HideDrawSettings(bool keepPane = false)
         {
-            FadeOutAndRemoveBar(_drawSettingsBar);
+            HideToolPaneContent(_drawSettingsBar, keepPane);
+            (PagePreviewPanel.Parent as Grid)?.Children.Remove(_drawSettingsBar);
             _drawSettingsBar = null;
             if (_annotBarTool is EditTool.Draw or EditTool.Highlight
                 or EditTool.Strikethrough or EditTool.Underline or EditTool.Shape)

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -13,16 +13,199 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Annotation rendering - draws the per-page annotation overlays (text, cover, highlight, ink,
     // signature, image). Moved from Shell/Annotations.cs; the namespace and class line are the only
     // changes. Window members spelled bare here resolve through PdfViewer.Bridge.cs.
     public partial class PdfViewer
     {
+        // SEMANTIC ANCHOR: TEXT_MARKER_NIB_GEOMETRY_SSOT
+        // The sampled centerline is widened into the complete painted region.
+        // The persisted InkAnnotation polygon is the SSOT for on-screen redraw and PDF export;
+        // do not build independent geometry in either renderer.
+        // SEMANTIC ANCHOR: TEXT_MARKER_GEOMETRY_SSOT
+        // Every marker motion uses one collection of non-overlapping-in-alpha filled shapes.
+        // Inner corners are joined with nib-width discs. Only the two outer caps are slanted.
+        // Live preview and persistence consume these SAME primitive geometries.
+        private static List<Geometry> BuildTextMarkerPieces(IReadOnlyList<Point> points, double halfWidth)
+        {
+            var pieces = new List<Geometry>();
+            if (points.Count < 2) return pieces;
+            var samples = new List<Point>(points.Count);
+            foreach (Point pt in points)
+                if (samples.Count == 0 || (pt - samples[^1]).LengthSquared > 0.0001)
+                    samples.Add(pt);
+            if (samples.Count < 2) return pieces;
+            const double slantRatio = 0.35;
+            for (int i = 1; i < samples.Count; i++)
+            {
+                Point a = samples[i - 1], b = samples[i];
+                Vector direction = b - a;
+                if (direction.LengthSquared < 0.0001) continue;
+                direction.Normalize();
+                Vector normal = new(-direction.Y, direction.X);
+                double firstSlant = i == 1 ? halfWidth * slantRatio : 0;
+                double lastSlant = i == samples.Count - 1 ? halfWidth * slantRatio : 0;
+                Point aTop = a - normal * halfWidth - direction * firstSlant;
+                Point aBottom = a + normal * halfWidth + direction * firstSlant;
+                Point bTop = b - normal * halfWidth - direction * lastSlant;
+                Point bBottom = b + normal * halfWidth + direction * lastSlant;
+                var figure = new PathFigure { StartPoint = aTop, IsClosed = true, IsFilled = true };
+                figure.Segments.Add(new PolyLineSegment(new PointCollection { bTop, bBottom, aBottom }, true));
+                var polygon = new PathGeometry();
+                polygon.Figures.Add(figure);
+                pieces.Add(polygon);
+                if (i > 1)
+                    pieces.Add(new EllipseGeometry(a, halfWidth, halfWidth));
+            }
+            return pieces;
+        }
+
+        private List<List<Point>> BuildTextMarkerContours()
+        {
+            double halfWidth = Math.Max(0.5, TextMarkerNibSize / 2);
+            var outlines = new List<List<Point>>();
+            var outline = new List<Point>();
+            if (_textMarkerSamples.Count == 1)
+            {
+                Point p = _textMarkerSamples[0];
+                outline.Add(new Point(p.X, p.Y - halfWidth));
+                outline.Add(new Point(p.X + 1, p.Y - halfWidth));
+                outline.Add(new Point(p.X + 1, p.Y + halfWidth));
+                outline.Add(new Point(p.X, p.Y + halfWidth));
+            }
+            else
+            {
+                Geometry? covered = null;
+                foreach (Geometry piece in BuildTextMarkerPieces(_textMarkerSamples, halfWidth))
+                    covered = covered is null ? piece : Geometry.Combine(covered, piece, GeometryCombineMode.Union, null);
+                if (covered is not null)
+                {
+                    var flat = covered.GetFlattenedPathGeometry();
+                    foreach (PathFigure contour in flat.Figures)
+                    {
+                        var candidate = new List<Point> { contour.StartPoint };
+                        foreach (PathSegment segment in contour.Segments)
+                        {
+                            if (segment is PolyLineSegment poly) candidate.AddRange(poly.Points);
+                            else if (segment is LineSegment line) candidate.Add(line.Point);
+                        }
+                        if (candidate.Count < 3) continue;
+                        double signedArea = 0;
+                        for (int i = 0; i < candidate.Count; i++)
+                        {
+                            Point a = candidate[i], b = candidate[(i + 1) % candidate.Count];
+                            signedArea += a.X * b.Y - b.X * a.Y;
+                        }
+                        // SEMANTIC ANCHOR: TEXT_MARKER_EXTERIOR_CONTOURS_INVARIANT
+                        // The WPF union returns positive-winding exterior rings and negative-
+                        // winding interior rings (holes). Only exteriors represent painted area.
+                        // Keep ALL positive exteriors; never serialize a hole as a filled InkAnnotation.
+                        // The signed orientation is verified by the diagnostic contour log.
+                        if (signedArea > 0.01)
+                            outlines.Add(candidate);
+                    }
+                }
+            }
+            if (outline.Count >= 3) outlines.Add(outline);
+            foreach (var contour in outlines)
+                if (contour[0] != contour[^1]) contour.Add(contour[0]);
+            return outlines;
+        }
+
+        // SEMANTIC ANCHOR: TEXT_MARKER_LIVE_FINAL_INVARIANT
+        // The live fill is a single Path with a single alpha brush, using the same pieces
+        // as final persistence; no straight/free switch and no per-piece alpha compositing.
+        private void UpdateTextMarkerLivePreview(System.Windows.Shapes.Path preview)
+        {
+            var geometry = new GeometryGroup { FillRule = FillRule.Nonzero };
+            foreach (Geometry piece in BuildTextMarkerPieces(_textMarkerSamples,
+                Math.Max(0.5, TextMarkerNibSize / 2)))
+                geometry.Children.Add(piece);
+            preview.Data = geometry;
+            preview.Fill = new SolidColorBrush(TextMarkerColor);
+            preview.Stroke = null;
+        }
+
+        // SEMANTIC ANCHOR: TEXT_MARKER_DIAGNOSTICS_INVARIANT
+        // Trace once per stroke, never on MouseMove. Diagnostic I/O must never block drawing
+        // or change the annotation's geometry, serialization, opacity or undo behavior.
+        // No document text, document path or user identity is logged.
+        private static void TraceTextMarkerStroke(string detail)
+        {
+            try
+            {
+                string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "PewDF", "Logs");
+                Directory.CreateDirectory(folder);
+                File.AppendAllText(System.IO.Path.Combine(folder, "textmarker-geometry-debug.log"),
+                    $"{DateTime.Now:O} {detail}{Environment.NewLine}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Textmarker geometry diagnostics unavailable: {ex.Message}");
+            }
+        }
+
+        private static string DescribeTextMarkerContour(List<Point> contour)
+        {
+            if (contour.Count == 0) return "empty";
+            double minX = contour.Min(p => p.X), maxX = contour.Max(p => p.X);
+            double minY = contour.Min(p => p.Y), maxY = contour.Max(p => p.Y);
+            double signedArea = 0;
+            for (int i = 0; i < contour.Count; i++)
+            {
+                Point a = contour[i], b = contour[(i + 1) % contour.Count];
+                signedArea += a.X * b.Y - b.X * a.Y;
+            }
+            return $"vertices={contour.Count} signedArea={signedArea / 2:F2} bounds=({minX:F1},{minY:F1})-({maxX:F1},{maxY:F1})";
+        }
+
+        // SEMANTIC ANCHOR: TEXT_MARKER_LIVE_PREVIEW_SSOT
+        // The sampled centerline is the only input to both live painting and persisted geometry.
+        // Live preview is partitioned into bounded, continuous paths to avoid independent
+        // antialiased caps at every sample while preventing unbounded per-move path updates.
+        private const int TextMarkerPreviewChunkLimit = 48;
+        private DrawingGroup? _textMarkerLiveDrawings;
+        private PolyLineSegment? _textMarkerLiveChunk;
+        private int _textMarkerLiveChunkPoints;
+
+        private void AppendTextMarkerLiveSegment(Point from, Point to)
+        {
+            if (_textMarkerLiveDrawings is null || (to - from).LengthSquared < 0.0001) return;
+            // SEMANTIC ANCHOR: TEXT_MARKER_LIVE_CONTINUITY_INVARIANT
+            // Each sampled point belongs to one contiguous path. Only a chunk boundary may
+            // start a new drawing; its rounded trailing/leading ends overlap at the SAME point.
+            // All chunk brushes remain opaque; opacity is applied once to the parent group.
+            if (_textMarkerLiveChunk is null || _textMarkerLiveChunkPoints >= TextMarkerPreviewChunkLimit)
+            {
+                var points = new PolyLineSegment();
+                var figure = new PathFigure { StartPoint = from, IsClosed = false, IsFilled = false };
+                figure.Segments.Add(points);
+                var path = new PathGeometry();
+                path.Figures.Add(figure);
+                var pen = new Pen(new SolidColorBrush(Color.FromRgb(
+                    TextMarkerColor.R, TextMarkerColor.G, TextMarkerColor.B)), TextMarkerNibSize)
+                {
+                    StartLineCap = _textMarkerSamples.Count <= 1 ? PenLineCap.Flat : PenLineCap.Round,
+                    EndLineCap = PenLineCap.Round,
+                    LineJoin = PenLineJoin.Round
+                };
+                pen.Freeze();
+                _textMarkerLiveDrawings.Children.Add(new GeometryDrawing(null, pen, path));
+                _textMarkerLiveChunk = points;
+                _textMarkerLiveChunkPoints = 0;
+            }
+            _textMarkerLiveChunk.Points.Add(to);
+            _textMarkerLiveChunkPoints++;
+        }
+
+        // Screen-space anchor prevents scrolling or canvas layout changes from looking like a drag.
+        private Point _dragAnnotStartScreen;
         private double CanvasLetterSpacing(int pageIndex)
         {
             double spacing = _textLetterSpacing;
@@ -339,7 +522,18 @@ namespace KillerPDF.Controls
             // If the text bar was opened for a now-cleared text-box selection (not because the Text tool
             // is active), close it again.
             if (_currentTool != EditTool.Text && _annotBarTool == EditTool.Text)
-                HideTextSettings();
+            {
+                // A click on another annotation clears the previous selection before SelectAnnotation
+                // assigns the new one. Defer hiding until that click has completed; otherwise the
+                // right sidebar collapses and expands on every text-annotation selection.
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (_currentTool != EditTool.Text && _annotBarTool == EditTool.Text
+                        && _selectedAnnotation is not TextAnnotation
+                        && _activeTextBox is null && _reeditOriginal is null)
+                        HideTextSettings();
+                }), System.Windows.Threading.DispatcherPriority.Background);
+            }
             // Likewise the draw bar: if it was opened to edit a selected highlight / line / ink
             // annotation (the active tool isn't a draw-family tool), close it when the selection clears.
             if (_currentTool is not (EditTool.Draw or EditTool.Highlight or EditTool.Strikethrough or EditTool.Underline)
@@ -855,6 +1049,32 @@ namespace KillerPDF.Controls
         {
             if (_doc is null) return;
             if (sender is Canvas srcCanvas) _activeCanvas = srcCanvas;
+            if (_currentTool == EditTool.Text)
+                TraceTextPosition("MOUSE_DOWN_TEXT", _activeCanvas?.Tag is int tp ? tp : _currentPage,
+                    _activeCanvas is null ? new Point() : e.GetPosition(_activeCanvas),
+                    $"clicks={e.ClickCount} activeEditor={_activeTextBox is not null} source={e.OriginalSource?.GetType().Name}");
+            if (_activeCanvas is null) return;
+            // Keep the live editor active when a page overlay forwards a click on its bounds.
+            // Clearing focus here otherwise commits the editor before the Text tool's hit test,
+            // causing a second box to be placed at the click location (apparent position jump).
+            if (_activeTextBox is { Parent: SafeCanvas editorLayer } editor)
+            {
+                Point editorClick = e.GetPosition(editorLayer);
+                double left = Canvas.GetLeft(editor), top = Canvas.GetTop(editor);
+                double width = editor.ActualWidth > 0 ? editor.ActualWidth : editor.Width;
+                double height = editor.ActualHeight > 0 ? editor.ActualHeight : Math.Max(editor.MinHeight, 24);
+                if (editorClick.X >= left && editorClick.X <= left + width
+                    && editorClick.Y >= top && editorClick.Y <= top + height)
+                {
+                    // Preserve normal caret/selection handling for direct TextBox clicks.
+                    if (e.OriginalSource is DependencyObject textSource && IsDescendantOf(textSource, editor))
+                        return;
+                    // A page overlay may be the hit-test source; forward focus to the editor.
+                    editor.Focus();
+                    e.Handled = true;
+                    return;
+                }
+            }
             if (Keyboard.FocusedElement is TextBox focusedField
                 && (e.OriginalSource is not DependencyObject clickSource
                     || !IsDescendantOf(clickSource, focusedField)))
@@ -1139,8 +1359,11 @@ namespace KillerPDF.Controls
                                         RenderAllAnnotations(pageIdx);
                                         SelectAnnotation(pa, paBounds);
                                     }
+                                    if (pa is TextAnnotation) TraceTextPosition("SELECT_DRAG_ARM", pageIdx, AnnotGetPos(pa), $"click=({pos.X:F2},{pos.Y:F2})");
                                     _isDraggingAnnot = true;
+                                    _dragAnnotMoved = false;
                                     _dragAnnotStart = pos;
+                                    _dragAnnotStartScreen = _activeCanvas.PointToScreen(pos);
                                     _dragAnnotOrigPos = AnnotGetPos(pa);
                                     _dragAnnot = pa;
                                     _activeCanvas.CaptureMouse();
@@ -1185,8 +1408,42 @@ namespace KillerPDF.Controls
                         e.Handled = true;
                         break;
                     }
+                    // Finish the previous editor BEFORE hit-testing existing text. During re-edit
+                    // its annotation is temporarily absent from _annotations; hit-testing first
+                    // therefore misses it and PlaceTextBox creates a second box at the pointer.
+                    // Snapshot the editor bounds so a click on it is never treated as new placement,
+                    // even when the editor belongs to a different page overlay.
+                    bool clickedPreviousEditor = false;
+                    if (_activeTextBox is { Parent: SafeCanvas previousLayer } previousEditor
+                        && previousEditor.Tag is int previousPage && previousPage == pageIdx)
+                    {
+                        var previousClick = e.GetPosition(previousLayer);
+                        double px = Canvas.GetLeft(previousEditor), py = Canvas.GetTop(previousEditor);
+                        double pw = previousEditor.ActualWidth > 0 ? previousEditor.ActualWidth : previousEditor.Width;
+                        double ph = previousEditor.ActualHeight > 0 ? previousEditor.ActualHeight : Math.Max(previousEditor.MinHeight, 24);
+                        clickedPreviousEditor = new Rect(px, py, pw, ph).Contains(previousClick);
+                    }
                     CommitActiveTextBox();
-                    PlaceTextBox(pos, pageIdx);
+                    var existingText = _annotations.TryGetValue(pageIdx, out var textPageAnnotations)
+                        ? textPageAnnotations.OfType<TextAnnotation>()
+                            .LastOrDefault(a => HitTestAnnotation(a, pos, out _))
+                        : null;
+                    if (clickedPreviousEditor && existingText is null)
+                    {
+                        e.Handled = true;
+                        break;
+                    }
+                    TraceTextPosition(existingText is null ? "HIT_MISS" : "HIT_EXISTING", pageIdx, pos,
+                        $"clickedPreviousEditor={clickedPreviousEditor} count={textPageAnnotations?.Count ?? 0}");
+                    if (existingText is not null)
+                    {
+                        if (e.ClickCount >= 2)
+                            EditTextAtPosition(pos, pageIdx);
+                        else
+                            SelectAnnotation(existingText, AnnotBounds(existingText));
+                    }
+                    else
+                        PlaceTextBox(pos, pageIdx);
                     e.Handled = true;
                     break;
 
@@ -1256,6 +1513,38 @@ namespace KillerPDF.Controls
                     ShapeToolMouseDown(pageIdx, pos, e);
                     break;
 
+                case EditTool.TextMarker:
+                    // SEMANTIC ANCHOR: TEXT_MARKER_PERSISTED_GEOMETRY_INVARIANT
+                    // The filled polygon is persisted as an InkAnnotation. Renderer and PDF burn
+                    // both consume the SAME polygon; never save a second unstyled centerline.
+                    ClearSelection();
+                    _isDrawing = true;
+                    _textMarkerSamples.Clear();
+                    _textMarkerSamples.Add(pos);
+                    _activeInk = new InkAnnotation { PageIndex = pageIdx, StrokeWidth = 0.01 };
+                    _activeInk.SetColor(Colors.Transparent);
+                    _activeInk.SetFillColor(TextMarkerColor);
+                    // SEMANTIC ANCHOR: TEXT_MARKER_PREVIEW_PERFORMANCE_INVARIANT
+                    // Append into a bounded live path; never compute polygon unions on MouseMove.
+                    // The saved InkAnnotation is still built once on MouseUp.
+                    // SEMANTIC ANCHOR: TEXT_MARKER_LIVE_ALPHA_SSOT
+                    // One group opacity is the single live-preview alpha; segment brushes are opaque.
+                    // Keep the existing annotation fill alpha as the persistence source of truth.
+                    _textMarkerLiveDrawings = null;
+                    _textMarkerLiveChunk = null;
+                    _textMarkerLiveChunkPoints = 0;
+                    var markerPreview = new System.Windows.Shapes.Path
+                    {
+                        Fill = new SolidColorBrush(TextMarkerColor),
+                        Opacity = 1.0,
+                        IsHitTestVisible = false
+                    };
+                    UpdateTextMarkerLivePreview(markerPreview);
+                    _activeCanvas.Children.Add(markerPreview);
+                    _activePreview = markerPreview;
+                    _activeCanvas.CaptureMouse();
+                    break;
+
                 case EditTool.Draw:
                     ClearSelection();
                     _isDrawing = true;
@@ -1305,6 +1594,7 @@ namespace KillerPDF.Controls
                 case EditTool.Signature:
                     if (_pendingSignature is not null)
                     {
+                        HideSignaturePlacementPreview();
                         PlaceSignature(pos, pageIdx);
                         e.Handled = true;
                     }
@@ -1383,6 +1673,90 @@ namespace KillerPDF.Controls
             Canvas.SetTop(_brushPreview, center.Y - d / 2);
         }
 
+        // Non-interactive placement preview; follows the cursor without requiring a drag rectangle.
+        private FrameworkElement? _signaturePlacementPreview;
+        private SavedSignature? _signaturePlacementSource;
+
+        private void HideSignaturePlacementPreview()
+        {
+            if (_signaturePlacementPreview is not null)
+            {
+                (_signaturePlacementPreview.Parent as Canvas)?.Children.Remove(_signaturePlacementPreview);
+                _signaturePlacementPreview = null;
+                _signaturePlacementSource = null;
+            }
+        }
+
+        private void ShowSignaturePlacementPreview(Canvas canvas, Point position)
+        {
+            var sig = _pendingSignature;
+            if (_currentTool != EditTool.Signature || sig is null)
+            {
+                HideSignaturePlacementPreview();
+                return;
+            }
+            double scale = sig.Kind == SignatureKind.Initials ? 0.3 : 0.5;
+            double w = sig.CanvasWidth * scale;
+            double h = sig.CanvasHeight * scale;
+            if (w <= 0 || h <= 0 || double.IsNaN(w) || double.IsNaN(h) ||
+                double.IsInfinity(w) || double.IsInfinity(h)) return;
+
+            // Reuse the preview element while the mouse moves; only rebuild it when the
+            // selected saved signature changes (the pending reference is stable).
+            if (_signaturePlacementPreview is null || !ReferenceEquals(_signaturePlacementSource, sig))
+            {
+                HideSignaturePlacementPreview();
+                FrameworkElement visual;
+                if (sig.ImageData is not null)
+                {
+                    try
+                    {
+                        var bytes = Convert.FromBase64String(sig.ImageData);
+                        var bmp = new BitmapImage();
+                        bmp.BeginInit();
+                        bmp.StreamSource = new MemoryStream(bytes);
+                        bmp.CacheOption = BitmapCacheOption.OnLoad;
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        visual = new System.Windows.Controls.Image { Source = bmp, Width = w, Height = h, Stretch = Stretch.Fill };
+                    }
+                    catch { return; }
+                }
+                else
+                {
+                    var drawing = new Canvas { Width = w, Height = h };
+                    foreach (var stroke in sig.Strokes)
+                    {
+                        if (stroke.Count < 2) continue;
+                        var poly = new Polyline
+                        {
+                            Stroke = Brushes.Black,
+                            StrokeThickness = sig.StrokeWidth * scale,
+                            StrokeStartLineCap = PenLineCap.Round,
+                            StrokeEndLineCap = PenLineCap.Round,
+                            StrokeLineJoin = PenLineJoin.Round,
+                            IsHitTestVisible = false
+                        };
+                        foreach (var pt in stroke) poly.Points.Add(new Point(pt.X * scale, pt.Y * scale));
+                        drawing.Children.Add(poly);
+                    }
+                    visual = drawing;
+                }
+                visual.IsHitTestVisible = false;
+                visual.Opacity = 0.65;
+                _signaturePlacementSource = sig;
+                _signaturePlacementPreview = visual;
+                Panel.SetZIndex(visual, 9001);
+            }
+            if (!ReferenceEquals(_signaturePlacementPreview.Parent, canvas))
+            {
+                (_signaturePlacementPreview.Parent as Canvas)?.Children.Remove(_signaturePlacementPreview);
+                canvas.Children.Add(_signaturePlacementPreview);
+            }
+            Canvas.SetLeft(_signaturePlacementPreview, position.X);
+            Canvas.SetTop(_signaturePlacementPreview, position.Y);
+        }
+
         private void HideBrushPreview()
         {
             if (_brushPreview is not null)
@@ -1394,6 +1768,7 @@ namespace KillerPDF.Controls
         internal void Canvas_MouseLeave(object sender, MouseEventArgs e)
         {
             HideBrushPreview();
+            HideSignaturePlacementPreview();
             ShowLinkHoverStatus(null);   // restore the status bar when the pointer leaves the page
         }
 
@@ -1433,6 +1808,14 @@ namespace KillerPDF.Controls
                     ? System.Windows.Input.Cursors.Hand
                     : SelectableTextCursor(hpage, hpos);
                 ShowLinkHoverStatus(hoverTarget);
+            }
+
+            if (sender is Canvas signatureHoverCanvas)
+            {
+                if (_currentTool == EditTool.Signature && _pendingSignature is not null)
+                    ShowSignaturePlacementPreview(signatureHoverCanvas, e.GetPosition(signatureHoverCanvas));
+                else
+                    HideSignaturePlacementPreview();
             }
 
             // Brush cursor: with the Draw tool active and no button down, show a circle the size of the
@@ -1594,8 +1977,24 @@ namespace KillerPDF.Controls
             // Annotation drag-to-move
             if (_isDraggingAnnot && _dragAnnot is not null)
             {
-                double dx = pos.X - _dragAnnotStart.X;
-                double dy = pos.Y - _dragAnnotStart.Y;
+                // Compare screen positions in the same (current) canvas coordinate system.
+                // A scrolled/repositioned canvas must not turn a stationary click into a move.
+                if (e.LeftButton != MouseButtonState.Pressed || !gc.IsMouseCaptured)
+                    return;
+                Point currentScreen = gc.PointToScreen(e.GetPosition(gc));
+                Point startInCurrentCanvas = gc.PointFromScreen(_dragAnnotStartScreen);
+                Point currentInCurrentCanvas = gc.PointFromScreen(currentScreen);
+                double dx = currentInCurrentCanvas.X - startInCurrentCanvas.X;
+                double dy = currentInCurrentCanvas.Y - startInCurrentCanvas.Y;
+                if (!_dragAnnotMoved)
+                {
+                    if (Math.Abs(dx) < SystemParameters.MinimumHorizontalDragDistance &&
+                        Math.Abs(dy) < SystemParameters.MinimumVerticalDragDistance)
+                        return;
+                    if (_dragAnnot is TextAnnotation) TraceTextPosition("DRAG_THRESHOLD", _dragAnnot.PageIndex, _dragAnnotOrigPos,
+                        $"pointer=({pos.X:F2},{pos.Y:F2}) delta=({dx:F2},{dy:F2}) leftPressed={e.LeftButton == MouseButtonState.Pressed}");
+                    _dragAnnotMoved = true;
+                }
                 if (_dragGroupOrig.Count > 0)
                 {
                     // Rigid group move: clamp ONE shared delta against the group's combined bounds so the
@@ -1720,6 +2119,14 @@ namespace KillerPDF.Controls
                     sell.Height = Math.Abs(pos.Y - _drawStart.Y);
                     break;
 
+                case EditTool.TextMarker when _activePreview is System.Windows.Shapes.Path markerPreview && _activeInk is not null:
+                    if ((_textMarkerSamples[^1] - pos).LengthSquared >= 0.25)
+                    {
+                        _textMarkerSamples.Add(pos);
+                        UpdateTextMarkerLivePreview(markerPreview);
+                    }
+                    break;
+
                 case EditTool.Draw when _activePreview is Polyline poly && _activeInk is not null:
                     _activeInk.Points.Add(pos);
                     poly.Points.Add(pos);
@@ -1763,6 +2170,25 @@ namespace KillerPDF.Controls
 
         internal void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            // SEMANTIC ANCHOR: INLINE_CARET_MOUSE_RELEASE_DIAGNOSTICS
+            // DIAGNOSTIC ONLY: Observe the mouse-release boundary after PlaceTextBox().
+            // Never change focus, caret, capture, editor content, or event handling.
+            if (_currentTool == EditTool.Text && _activeTextBox is { } caretEditor)
+            {
+                void TraceRelease(string stage)
+                {
+                    if (!ReferenceEquals(_activeTextBox, caretEditor)) return;
+                    TraceTextPosition(stage, caretEditor.Tag is int caretPage ? caretPage : _currentPage,
+                        new Point(Canvas.GetLeft(caretEditor), Canvas.GetTop(caretEditor)),
+                        $"focused={caretEditor.IsKeyboardFocused}; keyboardOwner={ReferenceEquals(Keyboard.FocusedElement, caretEditor)}; " +
+                        $"caretIndex={caretEditor.CaretIndex}; selectionLength={caretEditor.SelectionLength}; " +
+                        $"mouseCaptured={Mouse.Captured?.GetType().Name ?? "null"}; " +
+                        $"source={e.OriginalSource?.GetType().Name ?? "null"}");
+                }
+                TraceRelease("CARET_MOUSE_UP");
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                    new Action(() => TraceRelease("CARET_AFTER_MOUSE_UP")));
+            }
             // Don't process release events that originate inside the crop confirm bar.
             if (_cropConfirmBar is not null && e.OriginalSource is DependencyObject cropSrc &&
                 IsDescendantOf(cropSrc, _cropConfirmBar))
@@ -1805,6 +2231,9 @@ namespace KillerPDF.Controls
             {
                 _isDraggingAnnot = false;
                 _activeCanvas?.ReleaseMouseCapture();
+                bool didMoveAnnotation = _dragAnnotMoved;
+                if (_dragAnnot is TextAnnotation) TraceTextPosition("DRAG_END", _dragAnnot.PageIndex, AnnotGetPos(_dragAnnot), $"moved={didMoveAnnotation}");
+                _dragAnnotMoved = false;
                 if (_dragAnnot is not null)
                 {
                     var da = _dragAnnot;
@@ -1812,7 +2241,7 @@ namespace KillerPDF.Controls
                     int oldPage = da.PageIndex;
                     // Released over a different page? Move it there (position was updated live during drag).
                     var drop = PageCanvasUnderPointer(e);
-                    if (_dragGroupOrig.Count == 0 && drop is { } d && d.page != oldPage && _doc is not null
+                    if (didMoveAnnotation && _dragGroupOrig.Count == 0 && drop is { } d && d.page != oldPage && _doc is not null
                         && d.page >= 0 && d.page < _doc.PageCount)
                     {
                         var pt = e.GetPosition(d.canvas);
@@ -1838,7 +2267,7 @@ namespace KillerPDF.Controls
                     }
                     else if (da.GroupId.Length > 0) SelectGroup(da);
                     else SelectAnnotation(da, AnnotBounds(da));
-                    MarkDirty();
+                    if (didMoveAnnotation) MarkDirty();
                 }
                 _dragGroupOrig.Clear();
                 return;
@@ -2059,6 +2488,63 @@ namespace KillerPDF.Controls
                 case EditTool.Shape when _activePreview is Shape:
                     // #127 Phase 3: rectangle/ellipse drag commit - see Shapes.cs.
                     CommitShapeDrag(pageIdx);
+                    break;
+
+                case EditTool.TextMarker when _activeInk is not null:
+                    if ((_textMarkerSamples[^1] - releasePos).Length >= 0.5)
+                        _textMarkerSamples.Add(releasePos);
+                    if (_textMarkerSamples.Count > 1 && _activePreview is System.Windows.Shapes.Path)
+                    {
+                        // Full geometry is computed exactly once, after the interactive preview ends.
+                        // SEMANTIC ANCHOR: TEXT_MARKER_PERSISTENCE_UNDO_SSOT
+                        // Every contour uses the established InkAnnotation renderer/exporter.
+                        // Record the complete stroke as ONE undo operation, even if the geometry
+                        // contains multiple contours. Do not change serialized annotation types.
+                        // SEMANTIC ANCHOR: TEXT_MARKER_PREVIEW_FINAL_TRACE
+                        // Compare the sampled live centerline to the resulting persisted contours.
+                        // Log elapsed union time and contour properties without changing the result.
+                        var markerBuildTimer = Stopwatch.StartNew();
+                        var contours = BuildTextMarkerContours();
+                        markerBuildTimer.Stop();
+                        double maxStep = 0, travel = 0;
+                        for (int i = 1; i < _textMarkerSamples.Count; i++)
+                        {
+                            double step = (_textMarkerSamples[i] - _textMarkerSamples[i - 1]).Length;
+                            maxStep = Math.Max(maxStep, step);
+                            travel += step;
+                        }
+                        TraceTextMarkerStroke($"finalize page={pageIdx} width={TextMarkerNibSize:F2} " +
+                            $"alpha={TextMarkerColor.A} samples={_textMarkerSamples.Count} " +
+                            $"travel={travel:F1} maxStep={maxStep:F1} " +
+                            $"liveChunks={_textMarkerLiveDrawings?.Children.Count ?? 0} " +
+                            $"contours={contours.Count} unionMs={markerBuildTimer.Elapsed.TotalMilliseconds:F1}");
+                        for (int ci = 0; ci < contours.Count; ci++)
+                            TraceTextMarkerStroke($"  contour[{ci}] {DescribeTextMarkerContour(contours[ci])}");
+                        if (contours.Count > 0)
+                        {
+                            if (!_annotations.TryGetValue(pageIdx, out var pageAnnotations))
+                                _annotations[pageIdx] = pageAnnotations = [];
+                            var added = new List<PageAnnotation>(contours.Count);
+                            foreach (var contour in contours)
+                            {
+                                var ink = new InkAnnotation { PageIndex = pageIdx, StrokeWidth = _activeInk.StrokeWidth, Points = contour };
+                                ink.SetColor(_activeInk.GetColor());
+                                ink.SetFillColor(_activeInk.GetFillColor());
+                                pageAnnotations.Add(ink);
+                                added.Add(ink);
+                            }
+                            PushUndo(new UndoEntry(UndoKind.AnnotationGroup, pageIdx,
+                                WasDirty: _isDirty, AnnotGroup: added));
+                            MarkDirty();
+                        }
+                    }
+                    _activeCanvas?.Children.Remove(_activePreview);
+                    _textMarkerLiveDrawings = null;
+                    _textMarkerLiveChunk = null;
+                    _textMarkerLiveChunkPoints = 0;
+                    RenderAllAnnotations(pageIdx);
+                    _textMarkerSamples.Clear();
+                    _activeInk = null;
                     break;
 
                 case EditTool.Draw when _activeInk is not null:
@@ -2483,6 +2969,7 @@ namespace KillerPDF.Controls
             keep ??= _resizeSigAnnot;
 
             _isDraggingAnnot = false;
+            _dragAnnotMoved = false;
             _isResizingSig = false;
             _dragAnnot = null;
             _resizeTextAnnot = null;

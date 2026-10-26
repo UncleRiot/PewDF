@@ -13,8 +13,8 @@
      ============================================================ -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:KillerPDF.Controls"
-                    xmlns:kui="clr-namespace:KillerPDF.Controls">
+                    xmlns:local="clr-namespace:PewDF.Controls"
+                    xmlns:kui="clr-namespace:PewDF.Controls">
 
     <Style x:Key="OutlineButton" TargetType="Button">
         <Setter Property="AutomationProperties.Name" Value="{Binding RelativeSource={RelativeSource Self}, Path=ToolTip}"/>

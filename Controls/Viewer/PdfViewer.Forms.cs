@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Moved from Shell/Forms.cs; the namespace and class line are the only changes. Window members
     // spelled bare here resolve through PdfViewer.Bridge.cs.
@@ -910,15 +910,6 @@ namespace KillerPDF.Controls
 
         // Returns a /DA default-appearance string with its font size replaced (or a sensible default
         // when none exists), used to bake a user font-size override into the saved field.
-        private static string WithDaFontSize(string? da, double pt)
-        {
-            string size = pt.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            if (string.IsNullOrWhiteSpace(da)) return $"/Helv {size} Tf 0 g";
-            var t = da!.Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries).ToList();
-            for (int i = 1; i < t.Count; i++)
-                if (t[i] == "Tf") { t[i - 1] = size; return string.Join(" ", t); }
-            return $"/Helv {size} Tf " + da;   // no Tf operator present; prepend a font selection
-        }
 
         // Guided AcroForm signing -------------------------------------------------------------------
         private enum FormFillRole { None, Signature, Initials, Date }

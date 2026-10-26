@@ -1,3 +1,4 @@
+// PewDF semantic anchor: Windows owns the normal caption; legacy non-client handling remains for fullscreen. Other window messages and PDF behavior unchanged.
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -13,10 +14,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -46,12 +47,13 @@ namespace KillerPDF
             // Alt+Space before anything else, or Windows draws its stock white HMENU.
             if (TryHandleSystemMenu(msg, wParam, lParam)) { handled = true; return IntPtr.Zero; }
 
-            if (msg == WM_NCCALCSIZE)
+            // PewDF native caption: do not suppress Windows non-client handling outside fullscreen.
+            if (_fullScreen && msg == WM_NCCALCSIZE)
             {
                 handled = WmNcCalcSize(hwnd, wParam, lParam);
                 return IntPtr.Zero;
             }
-            if (msg == WM_NCHITTEST)
+            if (_fullScreen && msg == WM_NCHITTEST)
             {
                 handled = true;
                 return new IntPtr(WmNcHitTest(hwnd, msg, wParam, lParam));
@@ -392,13 +394,6 @@ namespace KillerPDF
             SendMessage(hwnd, WM_NCLBUTTONDOWN, new IntPtr(HTBOTTOMRIGHT), IntPtr.Zero);
         }
 
-        private void Install_Click(object sender, RoutedEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo(
-                "https://github.com/SteveTheKiller/KillerPDF/releases/latest")
-                { UseShellExecute = true });
-        }
-
         private void MinimizeBtn_Click(object sender, RoutedEventArgs e) =>
             WindowState = WindowState.Minimized;
 
@@ -423,15 +418,27 @@ namespace KillerPDF
             RepositionAnnotationBars();
         }
 
-        // Re-applies the saved placement to every visible annotation bar. Called synchronously from the
-        // window events that resize/move the content area (resize, maximize/restore, move), so
-        // the bar tracks its anchored edge and stays fully on-screen through all of them.
+        // SEMANTIC ANCHOR: ANNOTATION_BAR_LAYOUT_OWNERSHIP
+        // PURPOSE: Reposition floating annotation bars in the PDF document area after window changes.
+        // INVARIANTS:
+        // - Only bars directly hosted by the PDF document area's Grid may be repositioned here.
+        // - Bars hosted in any sidebar or other container retain that container's layout ownership.
+        // - Sidebar alignment, margins, padding, borders and positions must not be changed by
+        //   floating annotation bar positioning during selection, refresh or window changes.
+        // - Existing floating PDF annotation bar behavior must remain unchanged.
+        // SSOT: The bar's actual Parent and the document-area Grid determine layout ownership;
+        // do not infer ownership from a bar's type, name or its previous location.
+        // Re-applies the saved placement to eligible visible annotation bars. Called synchronously
+        // from window events that resize/move the content area (resize, maximize/restore, move).
         internal void RepositionAnnotationBars()
         {
             if (PagePreviewPanel?.Parent is not Grid area) return;
             foreach (var bar in new[] { _drawSettingsBar, _textSettingsBar })
-                if (bar is not null)
+                if (bar is not null && ReferenceEquals(bar.Parent, area))
                 {
+                    // Only floating bars hosted by the document area may be positioned here.
+                    // The text sidebar hosts its bar in TextSidebarContent; positioning that bar
+                    // as a floating annotation bar overwrites its margin, padding and alignment.
                     if (WindowState == WindowState.Minimized || !bar.IsVisible)
                         CancelAnnotationBarLayout(bar);
                     else
@@ -749,6 +756,37 @@ namespace KillerPDF
             return false;
         }
 
+        // SEMANTIC ANCHOR: EXIT_SAVE_ALL_PANES
+        // INVARIANTS: A failed/cancelled save must never close the window. Save only the
+        // sessions that are dirty. Always restore the user's active pane/tab on failure.
+        // The existing SaveInPlace path is the SSOT for saving a document, including Save As.
+        private bool TrySaveAllDirtyDocumentsBeforeExit()
+        {
+            var originalViewer = ActiveViewer;
+            var originalSession = originalViewer.SessionsRef.FirstOrDefault(s => s.IsActive);
+            try
+            {
+                foreach (var viewer in new[] { Viewer, ViewerB })
+                {
+                    foreach (var session in viewer.SessionsRef.Where(s => s.IsDirty).ToArray())
+                    {
+                        FocusPane(viewer);
+                        viewer.SwitchToTabExt(session);
+                        SaveInPlace();
+                        viewer.CaptureActiveIfAny();
+                        if (session.IsDirty) return false;
+                    }
+                }
+                return !_isDirty && AllSessions().All(s => !s.IsDirty);
+            }
+            finally
+            {
+                FocusPane(originalViewer);
+                if (originalSession != null && originalViewer.SessionsRef.Contains(originalSession))
+                    originalViewer.SwitchToTabExt(originalSession);
+            }
+        }
+
         private bool _fadingOut;
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
@@ -766,14 +804,18 @@ namespace KillerPDF
             bool anyDirty = _isDirty || AllSessions().Any(s => s.IsDirty);
             if (anyDirty)
             {
-                // fadeClose:false so the prompt closes instantly instead of adding its own 150ms fade
-                // before the app's fade-out starts - otherwise the two run back-to-back (300ms of waiting).
-                // Default to No so a stray Enter can't silently discard unsaved work.
-                var res = KillerDialog.Show(this,
+                // SEMANTIC ANCHOR: EXIT_UNSAVED_DOCUMENTS
+                // INVARIANTS: This question has only two explicit decisions: Yes saves all
+                // dirty sessions in both panes, No discards and closes. Closing the dialog
+                // with X cancels app shutdown. A failed/cancelled save never closes the app.
+                // The shared PewDialog and localized Yes/No strings are the SSOT for
+                // buttons and dialog chrome; save operations use the existing SaveInPlace path.
+                var res = PewDialog.Show(this,
                     Loc("Str_Dlg_UnsavedExit"),
-                    Loc("Str_Dlg_AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning, fadeClose: false,
-                    defaultResult: MessageBoxResult.No);
-                if (res != MessageBoxResult.Yes)
+                    Loc("Str_Dlg_AppTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                    fadeClose: false, defaultResult: MessageBoxResult.Cancel);
+                if (res == MessageBoxResult.Cancel ||
+                    (res == MessageBoxResult.Yes && !TrySaveAllDirtyDocumentsBeforeExit()))
                 {
                     e.Cancel = true;
                     return;
@@ -793,9 +835,10 @@ namespace KillerPDF
             // preference just keeps its saved value for that close.
             if (!anyDirty && anyOpenDoc && App.GetSetting("RememberChoiceLocked") != "1")
             {
-                var (confirmed, closeTabs, remember) = KillerDialog.ShowQuitPrompt(this,
+                var (confirmed, closeTabs, remember) = PewDialog.ShowQuitPrompt(this,
                     Loc("Str_Dlg_QuitMsg"),
-                    Loc("Str_Chk_CloseTabs"), App.GetSetting("RememberOpenFiles") == "0",
+                    // SESSION_RESTORE_EXPLICIT_OPT_IN: closing tabs is the default unless the user opted in.
+                    Loc("Str_Chk_CloseTabs"), App.GetSetting("RestoreOpenTabsOptIn") != "1",
                     Loc("Str_Dlg_RememberChoice"),
                     Loc("Str_Btn_Quit"), Loc("Str_Btn_CancelDlg"));
                 if (!confirmed)
@@ -803,7 +846,7 @@ namespace KillerPDF
                     e.Cancel = true;
                     return;
                 }
-                App.SetSetting("RememberOpenFiles", closeTabs ? "0" : "1");
+                App.SetSetting("RestoreOpenTabsOptIn", closeTabs ? "0" : "1");
                 if (remember) App.SetSetting("RememberChoiceLocked", "1");
             }
             SaveWindowSettings();

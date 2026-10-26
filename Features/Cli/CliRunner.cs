@@ -17,14 +17,14 @@ using System.Windows.Media.Imaging;
 using Docnet.Core;
 using Docnet.Core.Models;
 using KillerPdf.Engine.Documents;
-using KillerPDF.Services;
+using PewDF.Services;
 // The scrubs, bitmap helpers, import helpers and PDFium interop all live in Services
 // (BitmapHelpers.cs, PdfImport.cs, PdfiumInterop.cs; KillerUI refactor,
 // 2026-07-31), called qualified below. No Features-to-Shell reaches remain in this file.
 // OpenBatchConsole and FlattenBatchDetail are shared with the batch runner.
-using static KillerPDF.Features.BatchRunner;
+using static PewDF.Features.BatchRunner;
 
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     // ============================================================
     // Command-line interface
@@ -34,7 +34,7 @@ namespace KillerPDF.Features
     // BEFORE the single-instance mutex, so CLI runs work while a GUI instance
     // is open, never forward to it, and never show a window. A launch with no
     // recognized command flag falls through to the normal GUI (including the
-    // classic "KillerPDF.exe file.pdf" file-association open).
+    // classic "PewDF.exe file.pdf" file-association open).
     //
     // Each command reuses the same pipeline its GUI equivalent runs - the
     // merge named-destination rewrite, the pre-save scrubs, the PDFium
@@ -170,12 +170,12 @@ namespace KillerPDF.Features
 
         private static string CliHelpText() => string.Join(Environment.NewLine,
         [
-            "KillerPDF " + AppVersion.Display + " - command line usage",
+            "PewDF " + AppVersion.Display + " - command line usage",
             "",
-            "  KillerPDF.exe <file.pdf>                                    open in the app",
-            "  KillerPDF.exe --version | -v                                print version",
-            "  KillerPDF.exe --help | -h | /?                              this text",
-            "  KillerPDF.exe --verify | /verify                            verify every installed payload file",
+            "  PewDF.exe <file.pdf>                                    open in the app",
+            "  PewDF.exe --version | -v                                print version",
+            "  PewDF.exe --help | -h | /?                              this text",
+            "  PewDF.exe --verify | /verify                            verify every installed payload file",
             "",
             "  --merge <out.pdf> <in1> <in2> ...        merge PDFs (and images) into one PDF",
             "  --extract-pages <in.pdf> <pages> <out.pdf>",
@@ -209,7 +209,7 @@ namespace KillerPDF.Features
             "                                           with per-page timings (render benchmark)",
             "",
             "Exit codes: 0 success, 1 operation failed, 2 bad usage.",
-            "Runs headless and works while the KillerPDF window is open.",
+            "Runs headless and works while the PewDF window is open.",
         ]);
 
         private static int CliVerifyPayload(TextWriter output)
@@ -300,7 +300,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count < 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --merge <out.pdf> <in1.pdf> <in2.pdf> ...");
+                con.WriteLine("Usage: PewDF.exe --merge <out.pdf> <in1.pdf> <in2.pdf> ...");
                 return 2;
             }
             string outPath = Path.GetFullPath(pos[0]);
@@ -331,7 +331,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --extract-pages <in.pdf> <pages> <out.pdf>   (pages like 1-3,5,9-12)");
+                con.WriteLine("Usage: PewDF.exe --extract-pages <in.pdf> <pages> <out.pdf>   (pages like 1-3,5,9-12)");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), spec = pos[1], outPath = Path.GetFullPath(pos[2]);
@@ -356,7 +356,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --split <in.pdf> <outputFolder>");
+                con.WriteLine("Usage: PewDF.exe --split <in.pdf> <outputFolder>");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outDir = Path.GetFullPath(pos[1]);
@@ -382,13 +382,13 @@ namespace KillerPDF.Features
         // ============================================================
         // Without a password: the same lossless PDFium strip the GUI uses at
         // open time (owner/permissions encryption), with the Import-rebuild
-        // fallback. With a password, The KillerPDF.Engine authenticates and
+        // fallback. With a password, The PewDF.Engine authenticates and
         // fully rewrites the document without its encryption dictionary.
         private static int CliDecrypt(List<string> pos, Dictionary<string, string> options, TextWriter con)
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --decrypt <in.pdf> <out.pdf> [--password <password>]");
+                con.WriteLine("Usage: PewDF.exe --decrypt <in.pdf> <out.pdf> [--password <password>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -503,7 +503,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --to-image <in.pdf> <outputFolder> [--dpi <n>] [--format png|jpg] [--pages <range>] [--transparent]");
+                con.WriteLine("Usage: PewDF.exe --to-image <in.pdf> <outputFolder> [--dpi <n>] [--format png|jpg] [--pages <range>] [--transparent]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outDir = Path.GetFullPath(pos[1]);
@@ -544,7 +544,7 @@ namespace KillerPDF.Features
                 {
                     w = pr.GetPageWidth();
                     h = pr.GetPageHeight();
-                    raw = KillerPDF.Services.PdfiumInterop.RenderPageWithAnnotations(
+                    raw = PewDF.Services.PdfiumInterop.RenderPageWithAnnotations(
                         renderPath, idx, w, h, transparent)
                         ?? (transparent
                             ? pr.GetImage()
@@ -570,7 +570,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --flatten <in.pdf> <out.pdf> [--dpi <n>]");
+                con.WriteLine("Usage: PewDF.exe --flatten <in.pdf> <out.pdf> [--dpi <n>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -599,7 +599,7 @@ namespace KillerPDF.Features
                     // #141: WithAnnotations, or the rebuild drops the file's own markup.
                     w = pr.GetPageWidth();
                     h = pr.GetPageHeight();
-                    raw = KillerPDF.Services.PdfiumInterop.RenderPageWithAnnotations(renderPath, i, w, h)
+                    raw = PewDF.Services.PdfiumInterop.RenderPageWithAnnotations(renderPath, i, w, h)
                         ?? pr.GetImage(new Docnet.Core.Converters.NaiveTransparencyRemover());
                 }
                 int rot = rotations != null && i < rotations.Length ? rotations[i] : 0;
@@ -644,7 +644,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1)
             {
-                con.WriteLine("Usage: KillerPDF.exe --print <in.pdf> [--printer <name>] [--pages <range>] [--copies <n>]");
+                con.WriteLine("Usage: PewDF.exe --print <in.pdf> [--printer <name>] [--pages <range>] [--copies <n>]");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]);
@@ -705,7 +705,7 @@ namespace KillerPDF.Features
                     {
                         w = pr.GetPageWidth();
                         h = pr.GetPageHeight();
-                        raw = KillerPDF.Services.PdfiumInterop.RenderPageWithAnnotations(renderPath, idx, w, h)
+                        raw = PewDF.Services.PdfiumInterop.RenderPageWithAnnotations(renderPath, idx, w, h)
                             ?? pr.GetImage();   // #141
                     }
                     int rot = rotations != null && idx < rotations.Length ? rotations[idx] : 0;
@@ -768,7 +768,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2)
             {
-                con.WriteLine("Usage: KillerPDF.exe --ocr <in.pdf> <out.pdf> [--lang <code>]   (default eng)");
+                con.WriteLine("Usage: PewDF.exe --ocr <in.pdf> <out.pdf> [--lang <code>]   (default eng)");
                 return 2;
             }
             string inPath = Path.GetFullPath(pos[0]), outPath = Path.GetFullPath(pos[1]);
@@ -806,7 +806,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 4 || !int.TryParse(pos[2], out int degrees) || degrees is not (90 or 180 or 270))
             {
-                con.WriteLine("Usage: KillerPDF.exe --rotate-pages <in.pdf> <pages> <90|180|270> <out.pdf>");
+                con.WriteLine("Usage: PewDF.exe --rotate-pages <in.pdf> <pages> <90|180|270> <out.pdf>");
                 return 2;
             }
             if (!CliPrepareEditedCopy(pos[0], pos[3], out string output, out int pageCount, con)) return 2;
@@ -821,7 +821,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3)
             {
-                con.WriteLine("Usage: KillerPDF.exe --delete-pages <in.pdf> <pages> <out.pdf>");
+                con.WriteLine("Usage: PewDF.exe --delete-pages <in.pdf> <pages> <out.pdf>");
                 return 2;
             }
             if (!CliPrepareEditedCopy(pos[0], pos[2], out string output, out int pageCount, con)) return 2;
@@ -841,7 +841,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 4 || !int.TryParse(pos[2], out int position))
             {
-                con.WriteLine("Usage: KillerPDF.exe --move-pages <in.pdf> <pages> <position> <out.pdf>");
+                con.WriteLine("Usage: PewDF.exe --move-pages <in.pdf> <pages> <position> <out.pdf>");
                 return 2;
             }
             if (!CliPrepareEditedCopy(pos[0], pos[3], out string output, out int pageCount, con)) return 2;
@@ -861,7 +861,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3 || !int.TryParse(pos[1], out int position))
             {
-                con.WriteLine("Usage: KillerPDF.exe --insert-blank <in.pdf> <position> <out.pdf> [--width <points>] [--height <points>]");
+                con.WriteLine("Usage: PewDF.exe --insert-blank <in.pdf> <position> <out.pdf> [--width <points>] [--height <points>]");
                 return 2;
             }
             if (!CliPrepareEditedCopy(pos[0], pos[2], out string output, out int pageCount, con)) return 2;
@@ -884,7 +884,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 3 || !int.TryParse(pos[1], out int page))
             {
-                con.WriteLine("Usage: KillerPDF.exe --duplicate-page <in.pdf> <page> <out.pdf>");
+                con.WriteLine("Usage: PewDF.exe --duplicate-page <in.pdf> <page> <out.pdf>");
                 return 2;
             }
             if (!CliPrepareEditedCopy(pos[0], pos[2], out string output, out int pageCount, con)) return 2;
@@ -903,7 +903,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 1 || !File.Exists(pos[0]))
             {
-                con.WriteLine("Usage: KillerPDF.exe --document-info <in.pdf>");
+                con.WriteLine("Usage: PewDF.exe --document-info <in.pdf>");
                 return 2;
             }
             string path = Path.GetFullPath(pos[0]);
@@ -921,7 +921,7 @@ namespace KillerPDF.Features
         {
             if (pos.Count != 2 || !File.Exists(pos[0]) || string.IsNullOrWhiteSpace(pos[1]))
             {
-                con.WriteLine("Usage: KillerPDF.exe --search-text <in.pdf> <query>");
+                con.WriteLine("Usage: PewDF.exe --search-text <in.pdf> <query>");
                 return 2;
             }
             string path = Path.GetFullPath(pos[0]);

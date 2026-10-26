@@ -1,4 +1,4 @@
-namespace KillerPDF.Features
+namespace PewDF.Features
 {
     /// <summary>
     /// What SearchController needs from the window hosting it, beyond the shared shell services.

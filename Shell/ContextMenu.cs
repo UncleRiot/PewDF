@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -150,21 +150,6 @@ namespace KillerPDF
         }
 
         // A short human label for the kind of annotation right-clicked, shown as a disabled menu header.
-        private static string AnnotationKindLabel(PageAnnotation a) => a switch
-        {
-            CoverAnnotation => Loc("Str_Annot_Cover"),
-            TextAnnotation => Loc("Str_Annot_TextBox"),
-            InkAnnotation => Loc("Str_Annot_Drawing"),
-            SignatureAnnotation => Loc("Str_Annot_Signature"),
-            ImageAnnotation => Loc("Str_Annot_Image"),
-            HighlightAnnotation h => h.Style switch
-            {
-                HighlightStyle.Strikethrough => Loc("Str_Annot_Strikethrough"),
-                HighlightStyle.Underline => Loc("Str_Annot_Underline"),
-                _ => Loc("Str_Annot_Highlight")
-            },
-            _ => Loc("Str_Annot_Item")
-        };
 
         // Per-type menu for a clicked annotation. Page-level items (tools, rotate, stamp) are omitted.
         private void AddAnnotationMenuItems(PageAnnotation hit)
@@ -329,7 +314,7 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_DuplicateFailed") + "\n" + ex.Message, "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_DuplicateFailed") + "\n" + ex.Message, "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

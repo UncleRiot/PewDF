@@ -1,20 +1,19 @@
-namespace KillerPDF.Services
+﻿namespace PewDF.Services
 {
     // ============================================================
     // OCR catalog - pure data, no IO, no App, no bootstrap.
     // ============================================================
     //
-    // Split out of OcrLanguages.cs so the test project can link THIS file alone. KillerPDF.Tests
+    // Split out of OcrLanguages.cs so the test project can link THIS file alone. PewDF.Tests
     // compiles individual sources rather than referencing the app assembly, and OcrLanguages
     // reaches App.GetSetting, OcrNativeBootstrap and HttpClient - none of which a data check needs.
     //
-    // THE RULE THIS FILE ENCODES: OCR languages track interface languages. If KillerPDF ships a UI
+    // THE RULE THIS FILE ENCODES: OCR languages track interface languages. If PewDF ships a UI
     // in a language, it ships an OCR model for that language. There is no interface language whose
     // text the app cannot read.
     //
-    // It drifted once already, because nothing checked: the UI shipped hu-HU while the catalog
-    // stayed at eleven entries, and killerpdf.net kept claiming OCR covered ten languages and that
-    // Polish and Hungarian did not need models. OcrCatalogTests now reads Strings\*.xaml and fails
+    // Keep language coverage consistent with the model catalog and UI resources.
+    // OcrCatalogTests reads Strings\*.xaml and fails
     // the build if these lists and that folder disagree, and release.ps1 runs the suite.
     internal static class OcrCatalog
     {

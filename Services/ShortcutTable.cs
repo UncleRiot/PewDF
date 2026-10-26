@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace KillerPDF
+namespace PewDF
 {
     // ============================================================
     // THE shortcut table. One source of truth for both views of the shortcuts overlay: the list
@@ -12,7 +12,7 @@ namespace KillerPDF
     // another while the code did neither consistently. Deriving both views from one array means a
     // binding cannot be described two ways, and ShortcutTableTests holds that.
     //
-    // Deliberately free of WPF and of MainWindow, so KillerPDF.Tests can link the file the way it
+    // Deliberately free of WPF and of MainWindow, so PewDF.Tests can link the file the way it
     // links OcrCatalog.cs. Anything that needs a Brush or a Control belongs in the overlay files.
     // ============================================================
 

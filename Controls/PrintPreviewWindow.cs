@@ -12,12 +12,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Docnet.Core;
 using Docnet.Core.Models;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
-    /// KillerPDF's own print dialog with a working preview. WPF's built-in PrintDialog
+    /// PewDF's own print dialog with a working preview. WPF's built-in PrintDialog
     /// reports "This app doesn't support print preview", so we render the rasterized
     /// pages ourselves, expose printer / orientation / copies / page-range settings,
     /// and drive the spooler via a non-UI PrintDialog when the user clicks Print.
@@ -589,7 +589,7 @@ namespace KillerPDF
             };
             panel.Children.Add(margins);
 
-            // Pages per sheet (N-up): KillerPDF composes the sheet itself.
+            // Pages per sheet (N-up): PewDF composes the sheet itself.
             panel.Children.Add(Label(S("Str_Print_PagesPerSheet")));
             var nup = new ComboBox { Margin = new Thickness(0, 4, 0, 12), Height = 26 };
             ApplyComboStyle(nup);
@@ -803,14 +803,25 @@ namespace KillerPDF
             navigation.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             navigation.ColumnDefinitions.Add(new ColumnDefinition());
             navigation.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            _previousPage = MakeButton("‹", false);
-            _previousPage.Width = 44;
+            // NAV_CHEVRON_SSOT: Match the search navigation button footprint (26 x 24 DIP),
+            // preserve the dialog theme and handlers; reuse and rotate the common vector path.
+            // INVARIANT: Neither print navigation button stretches to the 42-DIP strip height.
+            _previousPage = UiKit.Make("", false);
+            _previousPage.Content = NavigationChevron.Create(-90);
+            _previousPage.Width = 26;
+            _previousPage.Height = 24;
+            _previousPage.VerticalAlignment = VerticalAlignment.Center;
+            _previousPage.Padding = new Thickness(0);
             _previousPage.ToolTip = S("Str_Kb_PrevPage");
             _previousPage.Click += (_, _) => { if (_previewIndex > 0) { _previewIndex--; UpdatePreview(); } };
             Grid.SetColumn(_previousPage, 0);
             navigation.Children.Add(_previousPage);
-            _nextPage = MakeButton("›", false);
-            _nextPage.Width = 44;
+            _nextPage = UiKit.Make("", false);
+            _nextPage.Content = NavigationChevron.Create(90);
+            _nextPage.Width = 26;
+            _nextPage.Height = 24;
+            _nextPage.VerticalAlignment = VerticalAlignment.Center;
+            _nextPage.Padding = new Thickness(0);
             _nextPage.ToolTip = S("Str_Kb_NextPage");
             _nextPage.Click += (_, _) => { if (_previewIndex < SheetCount() - 1) { _previewIndex++; UpdatePreview(); } };
             Grid.SetColumn(_nextPage, 2);
@@ -1231,7 +1242,7 @@ namespace KillerPDF
         {
             if (_queue == null)
             {
-                KillerDialog.Show(this, S("Str_Dlg_NoPrinter"), "KillerPDF",
+                PewDialog.Show(this, S("Str_Dlg_NoPrinter"), "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -1241,7 +1252,7 @@ namespace KillerPDF
             var indices = SelectedIndices();
             if (indices.Count == 0)
             {
-                KillerDialog.Show(this, S("Str_Dlg_NoValidPages"), "KillerPDF",
+                PewDialog.Show(this, S("Str_Dlg_NoValidPages"), "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -1308,7 +1319,7 @@ namespace KillerPDF
                         if (idx < 0 || idx >= _pages.Length) continue;
                         using var pr = dr.GetPageReader(idx);
                         int w = pr.GetPageWidth(), h = pr.GetPageHeight();
-                        var pixels = KillerPDF.Services.PdfiumInterop.RenderPageWithAnnotations(_renderPath, idx, w, h)
+                        var pixels = PewDF.Services.PdfiumInterop.RenderPageWithAnnotations(_renderPath, idx, w, h)
                             ?? pr.GetImage();
                         var bs = BitmapSource.Create(w, h, 96, 96, PixelFormats.Bgra32, null, pixels, w * 4);   // #141
                         bs.Freeze();
@@ -1340,8 +1351,8 @@ namespace KillerPDF
                 // Re-derive Print rather than switching it straight back on: the Pages box could have
                 // been retyped behind the scrim, and a range that now matches nothing must stay disabled.
                 UpdatePreview();
-                KillerDialog.Show(this, S("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, S("Str_Err_PrintFailed") + "\n" + ex.GetType().Name + ": " + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1395,7 +1406,7 @@ namespace KillerPDF
             // STA: both the XPS serializer and the spooler reach apartment-bound COM underneath.
             thread.SetApartmentState(System.Threading.ApartmentState.STA);
             thread.IsBackground = true;
-            thread.Name = "KillerPDF print spool";
+            thread.Name = "PewDF print spool";
             thread.Start();
             return done.Task;
         }

@@ -1,7 +1,8 @@
-<Application x:Class="KillerPDF.App"
+﻿<Application x:Class="PewDF.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:KillerPDF">
+             xmlns:local="clr-namespace:PewDF"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -16,10 +17,135 @@
                      the place for anything else - see Controls/FileDialog.xaml. -->
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- SEMANTIC ANCHOR: FLAT_THEME_SURFACE_SSOT.
+                 INVARIANT: GrainOpacity is always zero for every theme and window.
+                 The application-level local resource overrides theme-dictionary defaults;
+                 do not reintroduce a persistent user toggle or per-theme exceptions. -->
+            <sys:Double x:Key="GrainOpacity">0</sys:Double>
+
+            <!-- SEMANTIC ANCHOR: NAV_CHEVRON_GEOMETRY_SSOT.
+                 One vector source for directional navigation. Rotate the path only; button
+                 templates, hit targets, spacing, theme brushes and event handlers remain local.
+                 INVARIANT: The visible search chevron is 10x6 DIP, 1-DIP stroke, round ends. -->
+            <PathGeometry x:Key="NavigationChevronUpGeometry" Figures="M 1,5 L 5,1 L 9,5"/>
+            <Style x:Key="NavigationChevronPathStyle" TargetType="Path">
+                <Setter Property="Data" Value="{StaticResource NavigationChevronUpGeometry}"/>
+                <Setter Property="Width" Value="10"/>
+                <Setter Property="Height" Value="6"/>
+                <Setter Property="Stretch" Value="Uniform"/>
+                <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="StrokeStartLineCap" Value="Round"/>
+                <Setter Property="StrokeEndLineCap" Value="Round"/>
+                <Setter Property="StrokeLineJoin" Value="Round"/>
+            </Style>
+
             <!-- Chrome close-button corner. Defined at app scope (not just on MainWindow) so the dialog
                  windows that borrow the ChromeCloseButton style can resolve it too - otherwise the
                  DynamicResource is unfound inside a dialog and the red hover box renders square. -->
             <CornerRadius x:Key="ChromeCloseCorner">0,7,0,0</CornerRadius>
+
+            <!-- SEMANTIC ANCHOR: DIALOG_CAPTION_ICON_SIZE_SSOT
+                 Dialog caption icons share one size across generated and XAML dialogs.
+                 Main-window TitleIconSize and native window icons remain independent. -->
+            <sys:Double x:Key="DialogCaptionIconSize">20</sys:Double>
+
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_SECTION_GAP_SSOT
+                 Applies to gaps BETWEEN logically distinct tool-pane sections across tools.
+                 Internal label/control spacing and floating dialogs are intentionally separate. -->
+            <sys:Double x:Key="ToolPaneSectionGap">20</sys:Double>
+
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_VISUAL_METRICS_SSOT
+                 These reusable metrics capture the approved Text tool-pane appearance.
+                 Future panes should use these shared metrics where the same controls recur.
+                 INVARIANT: changing a metric must be intentional and checked against all consumers;
+                 this change must not restyle other existing tool panes implicitly. -->
+            <sys:Double x:Key="ToolPaneColorSwatchSize">27</sys:Double>
+            <sys:Double x:Key="ToolPaneColorSwatchMargin">2</sys:Double>
+            <sys:Double x:Key="ToolPaneColorSwatchCornerRadius">3</sys:Double>
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_COLOR_PICKER_SSOT
+                 INVARIANT: every right-side tool-pane color picker (Textmarker,
+                 Draw, Line, Shape, Highlight and future matching controls) uses
+                 ToolPaneColorSwatchSize, ToolPaneColorSwatchMargin and
+                 ToolPaneColorSwatchCornerRadius. Active chips use SelectionAccent
+                 and the shared selected/idle border thickness.
+                 Palette colors and selection behavior remain tool-specific.
+                 Labels and numeric/value text inherit the sidebar typography. -->
+            <sys:Double x:Key="ToolPaneColorSwatchSelectedBorderThickness">2</sys:Double>
+            <sys:Double x:Key="ToolPaneColorSwatchIdleBorderThickness">1</sys:Double>
+            <sys:Double x:Key="ToolPaneNumericFieldWidth">48</sys:Double>
+            <sys:Double x:Key="ToolPaneNumericFieldHeight">28</sys:Double>
+            <sys:Double x:Key="ToolPaneNumericStepperWidth">21</sys:Double>
+            <sys:Double x:Key="ToolPaneNumericStepperGap">3</sys:Double>
+            <sys:Double x:Key="ToolPaneNumericStepperGlyphSize">9</sys:Double>
+            <sys:Double x:Key="ToolPaneControlSliderWidth">170</sys:Double>
+            <!-- Compact composite rows retain their width while using shared metrics. -->
+            <sys:Double x:Key="ToolPaneCompactSliderWidth">90</sys:Double>
+            <sys:Double x:Key="ToolPaneLabelControlGap">6</sys:Double>
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_OPACITY_VALUE_SSOT - shared right-aligned percentage column. -->
+            <sys:Double x:Key="ToolPaneOpacityValueGap">4</sys:Double>
+            <sys:Double x:Key="ToolPaneOpacityValueWidth">40</sys:Double>
+            <sys:Double x:Key="ToolPaneSwatchRowMaxWidth">310</sys:Double>
+            <sys:Double x:Key="ToolPaneHeadingTopGap">10</sys:Double>
+            <sys:Double x:Key="ToolPaneHeadingBottomGap">5</sys:Double>
+            <sys:Double x:Key="ToolPaneContentInsetHorizontal">0</sys:Double>
+            <sys:Double x:Key="ToolPaneContentInsetVertical">2</sys:Double>
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_SPECIALIZED_METRICS_SSOT
+                 Shared metrics govern recurring geometry across pane implementations.
+                 Invariant: specialized control widths and compact palettes may differ from
+                 general inputs; preserve existing geometry when moving values here.
+                 Future panes should reuse matching metrics instead of local literals. -->
+            <sys:Double x:Key="ToolPaneCompactSwatchSize">18</sys:Double>
+            <sys:Double x:Key="ToolPaneCompactSwatchMargin">1</sys:Double>
+            <sys:Double x:Key="ToolPaneCropFieldWidth">78</sys:Double>
+            <sys:Double x:Key="ToolPaneCropPairGap">10</sys:Double>
+            <sys:Double x:Key="ToolPaneCropRowTopGap">4</sys:Double>
+            <sys:Double x:Key="ToolPaneCropFieldHeight">22</sys:Double>
+            <sys:Double x:Key="ToolPaneCropPagesWidth">105</sys:Double>
+            <sys:Double x:Key="ToolPaneCropUnitWidth">54</sys:Double>
+            <sys:Double x:Key="ToolPaneCropApplyWidth">124</sys:Double>
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_DRAW_BAR_ALIGNMENT_SSOT
+                 The reused floating annotation bar has a different content origin than
+                 the Text pane. Pane-hosted draw controls align to the approved Text column. -->
+            <sys:Double x:Key="ToolPaneDrawBarContentOffset">6</sys:Double>
+            <!-- Typography stays inherited from the sidebar host, as in the approved layout.
+                 Never override individual labels with unrelated local font sizes. -->
+
+            <!-- SEMANTIC ANCHOR: TOOL_PANE_NUMERIC_STEPPER_THEME_SSOT
+                 Shared numeric stepper chrome for tool panes: all states use theme resources,
+                 never the operating-system default hover or pressed color. -->
+            <Style x:Key="ToolPaneNumericStepButton" TargetType="RepeatButton">
+                <Setter Property="OverridesDefaultStyle" Value="True"/>
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                <Setter Property="Background" Value="{DynamicResource ComboButtonBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RepeatButton">
+                            <Border x:Name="face" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="face" Property="Background" Value="{DynamicResource CardBorderBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="face" Property="Background" Value="{DynamicResource RowSelectedBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
             <!-- Themed slider (size/opacity bars): groove + thumb that match the scrollbar palette.
                  OverridesDefaultStyle so none of WPF's default blue track/selection can show through.
@@ -91,16 +217,27 @@
 
             <!-- ============================================================================
                  PRODUCT-SPECIFIC DESIGN TOKENS. Shared trademark palette tokens come from KillerUI;
-                 these local resources cover KillerPDF-only tools and dialogs.
+                 these local resources cover PewDF-only tools and dialogs.
                  Theme COLORS live in Themes/*.xaml; these are the theme-independent type,
                  shape, and elevation primitives. Code-built UI reads the same keys through
                  UiKit (UiKit.cs), so XAML and code can never drift apart.
                  ============================================================================ -->
 
             <!-- Type families -->
-            <FontFamily x:Key="UiFont">./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI</FontFamily>
-            <!-- Assembly-relative: release payloads run as KillerPDF.App.exe while legacy and
-                 IDE builds run as KillerPDF.exe. Hard-coding either assembly name makes the
+            <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
+            <!-- SEMANTIC ANCHOR: Shortcut overlay typography is owned here, not by individual
+                 rows or headings. All visible captions follow UiFont (Windows system font). -->
+            <sys:Double x:Key="KpdfShortcutBodyFontSize">13</sys:Double>
+            <sys:Double x:Key="KpdfShortcutKeysFontSize">12</sys:Double>
+            <sys:Double x:Key="KpdfShortcutHeadingFontSize">13</sys:Double>
+            <Thickness x:Key="KpdfShortcutRowSpacing">0,0,0,5</Thickness>
+            <!-- PewDF dialog typography: one source for all code-built dialog chrome and messages. -->
+            <sys:Double x:Key="DialogBodyFontSize">14</sys:Double>
+            <sys:Double x:Key="DialogSecondaryFontSize">12</sys:Double>
+            <sys:Double x:Key="DialogButtonFontSize">14</sys:Double>
+            <sys:Double x:Key="DialogCaptionFontSize">14</sys:Double>
+            <!-- Assembly-relative font references support both PewDF.App.exe and
+                 PewDF.exe build outputs. Hard-coding either assembly name makes the
                  embedded wordmark faces silently fall back in the other build. The name after
                  # must match the font's name table; an approximate name makes WPF substitute the
                  system font. -->
@@ -110,8 +247,8 @@
                  same as the websites. -->
             <FontFamily x:Key="WordmarkFont">./Fonts/#Punktype</FontFamily>
             <FontFamily x:Key="WordmarkFontPdf">./Fonts/#Lacquer</FontFamily>
-            <FontFamily x:Key="BrandSansFont">./Fonts/#Killer Sans</FontFamily>
-            <FontFamily x:Key="MonoFont">./Fonts/#Killer Sans UI, Segoe UI, Microsoft JhengHei UI, Nirmala UI</FontFamily>
+            <FontFamily x:Key="BrandSansFont">Segoe UI</FontFamily>
+            <FontFamily x:Key="MonoFont">Segoe UI</FontFamily>
             <FontFamily x:Key="IconFont">Segoe MDL2 Assets</FontFamily>
 
             <!-- Corner radii (one rounding scale for the whole app) -->
@@ -162,7 +299,7 @@
                  ran 139 / 157 / 174 / 188 against an unshadowed 220, so it was still at ~85% of
                  its travel when the window edge cut it off. Blur 16 (the family value) completes
                  the falloff inside 8px. If the gutter is ever widened, the blur can grow with it.
-                 Opacity stays at 0.78 rather than the family 0.6: KillerPDF's card is usually
+                 Opacity stays at 0.78 rather than the family 0.6: PewDF's card is usually
                  filled edge to edge by a WHITE page, so the boundary is a near-full-range value
                  jump and the family opacity is swallowed by it - the right gutter needs more
                  depth, and a lower opacity left a hard edge on the gradient. (2026-07-31) -->

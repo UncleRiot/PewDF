@@ -2,11 +2,11 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using KillerPDF.Controls;
-using KillerPDF.Services;
+using PewDF.Controls;
+using PewDF.Services;
 using KillerPdf.Engine.Documents;
 
-namespace KillerPDF;
+namespace PewDF;
 
 public partial class MainWindow
 {
@@ -46,8 +46,7 @@ public partial class MainWindow
 
         // Keep the overflow entry visible while its comparison choices are open.
         // Otherwise the parent click handler closes the anchor and dismisses both menus.
-        if (ReferenceEquals(sender, MiCompare)) e.Handled = true;
-        ShowComparisonMenu(sender as FrameworkElement ?? ComparePdfBtn, source.Value);
+        ShowComparisonMenu(sender as FrameworkElement ?? RibbonPreviewOverflowButton, source.Value);
     }
 
     private void ShowComparisonMenu(FrameworkElement anchor, PdfViewer.ComparisonDocument source)
@@ -55,8 +54,6 @@ public partial class MainWindow
         var menu = MakeThemedMenu();
         menu.PlacementTarget = anchor;
         menu.Placement = PlacementMode.Bottom;
-        if (ReferenceEquals(anchor, MiCompare))
-            menu.Closed += (_, _) => OverflowChevron.IsChecked = false;
         PopulateComparisonChoices(menu.Items, source);
         menu.IsOpen = true;
     }
@@ -139,7 +136,7 @@ public partial class MainWindow
     private void BrowseForComparison(PdfViewer.ComparisonDocument source)
     {
 
-        var dialog = new Controls.FileDialog(Controls.FileDialogMode.Open)
+        var dialog = new Microsoft.Win32.OpenFileDialog()
         {
             Filter = Loc("Str_Filter_Pdf") + "|*.pdf",
             Title = Loc("Str_Compare_SelectTitle")
@@ -190,8 +187,6 @@ public partial class MainWindow
 
         _comparisonActive = true;
         _comparisonReport = null;
-        ComparePdfBtn.Tag = "on";
-        ComparePdfBtn.ToolTip = Loc("Str_TT_ExitComparison");
         ComparisonFilesText.Text = $"{source.Title}  ↔  {comparison.Title}";
         ComparisonResultText.Text = Loc("Str_Compare_Comparing");
         ComparisonBar.Visibility = Visibility.Visible;
@@ -303,8 +298,6 @@ public partial class MainWindow
         _comparisonRightPath = null;
         Viewer.ClearDifferenceRegionsExt();
         ViewerB.ClearDifferenceRegionsExt();
-        ComparePdfBtn.Tag = null;
-        ComparePdfBtn.ToolTip = Loc("Str_TT_ComparePDFs");
         ComparisonBar.Visibility = Visibility.Collapsed;
         ComparisonDetailsPopup.IsOpen = false;
         ComparisonFilesText.Text = string.Empty;

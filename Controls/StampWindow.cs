@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// Combined "Stamp" tool, modeled on the Transform window: a live page preview on the left and an
@@ -94,7 +94,7 @@ namespace KillerPDF
             _spec = existing?.Clone() ?? new StampSpec { NumbersEnabled = true };
             Result = _spec;
 
-            Title = "KillerPDF - " + S("Str_Stamp_Suffix");
+            Title = "PewDF - " + S("Str_Stamp_Suffix");
             System.Windows.Automation.AutomationProperties.SetAutomationId(this, "StampDialog");
             Width = 980;
             Height = 720;
@@ -215,7 +215,7 @@ namespace KillerPDF
             // Family shadow under the content pane, like the main window (flat on 98SE).
             root.Children.Add(UiKit.PaneWithShadow(previewWrap));
 
-            Content = DialogChrome.Frame(this, Owner, "KillerPDF - " + S("Str_Stamp_Suffix"), () => { Applied = false; Close(); }, root);
+            Content = DialogChrome.Frame(this, Owner, "PewDF - " + S("Str_Stamp_Suffix"), () => { Applied = false; Close(); }, root);
 
             // Esc-to-close is wired by DialogChrome.Frame; Enter commits.
             KeyDown += (_, e) => { if (e.Key == Key.Enter) CommitAndClose(); };
@@ -504,8 +504,8 @@ namespace KillerPDF
 
         private void ChooseImage()
         {
-            var ofd = new KillerPDF.Controls.FileDialog(KillerPDF.Controls.FileDialogMode.Open)
-                          { Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All files|*.*", ShowImagePreview = true };
+            var ofd = new Microsoft.Win32.OpenFileDialog()
+                          { Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif|All files|*.*" };
             if (ofd.ShowDialog(this) == true)
             {
                 _wmImagePath = ofd.FileName;

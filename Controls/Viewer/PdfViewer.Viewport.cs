@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Page viewport: builds the page tiles and annotation overlays for all four view modes (single,
     // continuous, two-page, grid) and handles preview scrolling.
@@ -1598,8 +1598,6 @@ namespace KillerPDF.Controls
             if (_doc is not null) StartRerenderTimer();
         }
 
-        private void ResetZoom() => SetTrueZoom(1.0);
-
         // On-screen pixel gap between grid tiles, so adjacent pages don't visually merge - the
         // document pane background shows through it. Tile margins live inside the zoom transform,
         // so every use divides by _zoomLevel to keep the gap a constant GridGapPx on screen.
@@ -1695,8 +1693,24 @@ namespace KillerPDF.Controls
             SetZoom(trueZoom / zf);
         }
 
-        internal void ZoomIn_Click(object sender, RoutedEventArgs e)  { if (_viewMode == ViewMode.Grid) GridZoomStep(false); else SetZoom(_zoomLevel + ZoomStep); }
-        internal void ZoomOut_Click(object sender, RoutedEventArgs e) { if (_viewMode == ViewMode.Grid) GridZoomStep(true);  else SetZoom(_zoomLevel - ZoomStep); }
+        // SEMANTIC ANCHOR: +/- buttons select integer, predictable visible zoom presets.
+        // The internal render scale is NOT the displayed percent (fit/continuous modes differ).
+        // Mouse-wheel / touchpad precision zoom intentionally remains continuous.
+        private static readonly int[] ButtonZoomLevels =
+            [10, 25, 50, 75, 90, 100, 115, 130, 145, 160, 175, 200, 250, 300, 400, 500];
+
+        private void StepButtonZoom(bool zoomIn)
+        {
+            if (_viewMode == ViewMode.Grid) { GridZoomStep(!zoomIn); return; }
+            double current = DisplayZoomPct();
+            int target = zoomIn
+                ? ButtonZoomLevels.FirstOrDefault(p => p > current + 0.01, ButtonZoomLevels[^1])
+                : ButtonZoomLevels.LastOrDefault(p => p < current - 0.01, ButtonZoomLevels[0]);
+            SetTrueZoom(target / 100.0);
+        }
+
+        internal void ZoomIn_Click(object sender, RoutedEventArgs e) => StepButtonZoom(true);
+        internal void ZoomOut_Click(object sender, RoutedEventArgs e) => StepButtonZoom(false);
 
         /// <summary>Set by SyncZoomBox around its programmatic writes. Same story as
         /// _syncingPageList: the box's real subscription is the WINDOW's XAML-bound stub, so the

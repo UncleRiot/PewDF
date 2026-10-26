@@ -1,17 +1,17 @@
 using System.IO;
 using System.Text.Json;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
 internal static class AppDataPaths
 {
-    private const string LauncherPathVariable = "KILLERPDF_LAUNCHER_PATH";
     private static readonly Lock SettingsGate = new();
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     private static readonly string DefaultLocalRoot = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KillerPDF");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PewDF");
     internal static string? StartupSmokeRoot { get; set; }
+    // SEMANTIC ANCHOR: PEWDF_USERDATA_IDENTITY_SSOT: Read and write only PewDF-owned user paths.
     internal static string LocalRoot => StartupSmokeRoot ?? DefaultLocalRoot;
 
     internal static string? PortableRoot
@@ -21,12 +21,14 @@ internal static class AppDataPaths
             if (StartupSmokeRoot is not null) return StartupSmokeRoot;
             try
             {
-                string? launcher = Environment.GetEnvironmentVariable(LauncherPathVariable);
+                string? launcher = Environment.GetEnvironmentVariable("PEWDF_LAUNCHER_PATH");
                 if (string.IsNullOrWhiteSpace(launcher)) return null;
                 string fullPath = Path.GetFullPath(launcher);
                 if (!File.Exists(fullPath)) return null;
                 string? directory = Path.GetDirectoryName(fullPath);
-                return directory is null ? null : Path.Combine(directory, "KillerPDF-Data");
+                if (directory is null) return null;
+                string current = Path.Combine(directory, "PewDF-Data");
+                return current;
             }
             catch { return null; }
         }

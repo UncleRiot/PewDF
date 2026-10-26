@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     /// <summary>Renders the app artwork once for its device-pixel footprint.</summary>
     public sealed class AppIcon : Image

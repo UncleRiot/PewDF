@@ -5,7 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
-namespace KillerPDF
+namespace PewDF
 {
     // ============================================================
     // Visual keyboard for the shortcuts overlay.
@@ -19,7 +19,7 @@ namespace KillerPDF
     public partial class MainWindow
     {
         // KbLayer, the binding table and its types live in Services/ShortcutTable.cs, which is free
-        // of WPF so KillerPDF.Tests can link it.
+        // of WPF so PewDF.Tests can link it.
         private KbLayer _kbLayer = KbLayer.Base;
         private bool _kbBuilt;
         private TextBlock? _kbDetail;

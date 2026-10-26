@@ -3,12 +3,12 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     internal static class ProtocolRegistrar
     {
-        internal const string Scheme = "killerpdf";
-        private const string RegistryPath = @"Software\Classes\killerpdf";
+        internal const string Scheme = "pewdf";
+        private const string RegistryPath = @"Software\Classes\pewdf";
 
         internal static void Register() => Register(Registry.CurrentUser, null);
 
@@ -24,14 +24,14 @@ namespace KillerPDF.Services
                     ?? throw new InvalidOperationException("The current executable path is unavailable.");
                 using var protocol = root.CreateSubKey(RegistryPath);
                 if (protocol == null) return;
-                protocol.SetValue("", "URL:KillerPDF Protocol");
+                protocol.SetValue("", "URL:PewDF Protocol");
                 protocol.SetValue("URL Protocol", "");
                 using (var icon = protocol.CreateSubKey("DefaultIcon"))
                     icon?.SetValue("", $"\"{appPath}\",0");
                 using var command = protocol.CreateSubKey(@"shell\open\command");
                 command?.SetValue("", $"\"{appPath}\" \"%1\"");
             }
-            catch (Exception ex) { Debug.WriteLine($"Failed to register KillerPDF protocol: {ex.Message}"); }
+            catch (Exception ex) { Debug.WriteLine($"Failed to register PewDF protocol: {ex.Message}"); }
         }
 
         /// <summary>The executable a registration points at, or null when there is none to read.</summary>
@@ -101,11 +101,11 @@ namespace KillerPDF.Services
         {
             /// <summary>Accepted; there is a target to open.</summary>
             None,
-            /// <summary>Not a killerpdf: launch at all, so it is not ours to complain about.</summary>
+            /// <summary>Not a pewdf: launch at all, so it is not ours to complain about.</summary>
             NotAHandoff,
-            /// <summary>A killerpdf: launch whose host is something other than "open".</summary>
+            /// <summary>A pewdf: launch whose host is something other than "open".</summary>
             UnknownCommand,
-            /// <summary>killerpdf://open with no url parameter.</summary>
+            /// <summary>pewdf://open with no url parameter.</summary>
             MissingUrl,
             /// <summary>A url parameter that is not an absolute address.</summary>
             MalformedUrl,
@@ -114,7 +114,7 @@ namespace KillerPDF.Services
         }
 
         /// <summary>
-        /// True when the argument is a killerpdf: URL, valid or not. The launch paths use this to
+        /// True when the argument is a pewdf: URL, valid or not. The launch paths use this to
         /// decide whether an argument is aimed at the protocol handler before asking why it failed.
         /// </summary>
         internal static bool IsHandoffLaunch(string? argument) =>

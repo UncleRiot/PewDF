@@ -14,21 +14,57 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Moved from Shell/TextEditing.cs; the namespace and class line are the only changes. Window
     // members spelled bare here resolve through PdfViewer.Bridge.cs.
     public partial class PdfViewer
     {
+        // TEXT-POSITION-DIAG: temporary targeted diagnostics; never log document content.
+        private static readonly object TextPositionLogGate = new();
+        private static readonly string TextPositionLogPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "PewDF", "text-position-debug.log");
+
+        private static void TraceTextPosition(string stage, int page, Point position, string details = "")
+        {
+            if (!PewDF.Services.DebugLogging.Enabled) return;
+            try
+            {
+                lock (TextPositionLogGate)
+                {
+                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(TextPositionLogPath)!);
+                    File.AppendAllText(TextPositionLogPath,
+                        $"{DateTime.Now:O} | {stage} | page={page} | pos=({position.X:F2},{position.Y:F2}) | {details}{Environment.NewLine}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Text position diagnostics failed: {ex.Message}");
+            }
+        }
+
         private readonly ConditionalWeakTable<Canvas, SafeCanvas> _textEditorLayers = [];
 
         private SafeCanvas TextEditorLayerFor(Canvas pageCanvas)
         {
             if (_textEditorLayers.TryGetValue(pageCanvas, out SafeCanvas? existing))
+            {
+                // SEMANTIC ANCHOR: TEXT_EDITOR_LAYER_OWNERSHIP
+                // INVARIANT: A cached editor layer must remain a visual child of its
+                // owning page canvas, including after a document is closed and reopened.
+                // The cache is not proof of current visual-tree attachment.
+                if (!ReferenceEquals(existing.Parent, pageCanvas))
+                {
+                    if (existing.Parent is Panel previousParent)
+                        previousParent.Children.Remove(existing);
+                    pageCanvas.Children.Add(existing);
+                }
                 return existing;
+            }
             var layer = new SafeCanvas
             {
                 Width = pageCanvas.Width,
@@ -55,16 +91,73 @@ namespace KillerPDF.Controls
                     pageCanvas.Children.RemoveAt(index);
         }
 
+        // SEMANTIC ANCHOR: INLINE_EDITOR_LAYER_DIAGNOSTICS
+        // DIAGNOSTIC ONLY: compare editor-layer attachment, geometry and caret rectangle
+        // across documents, before input and after the first few characters.
+        // INVARIANT: Never change focus, text, layout or visual-tree ownership here.
+        private void TraceEditorLayerGeometry(TextBox editor, string phase)
+        {
+            if (editor.Parent is not SafeCanvas layer) return;
+            Rect caretRect;
+            try { caretRect = editor.GetRectFromCharacterIndex(editor.CaretIndex); }
+            catch (ArgumentOutOfRangeException) { caretRect = Rect.Empty; }
+            Canvas? owner = layer.Parent as Canvas;
+            TraceTextPosition("EDITOR_LAYER_" + phase, editor.Tag is int page ? page : _currentPage,
+                new Point(Canvas.GetLeft(editor), Canvas.GetTop(editor)),
+                $"layerLoaded={layer.IsLoaded}; layerVisible={layer.IsVisible}; " +
+                $"layerSize={layer.ActualWidth:F2}x{layer.ActualHeight:F2}; " +
+                $"layerDeclared={layer.Width:F2}x{layer.Height:F2}; " +
+                $"ownerAttached={ReferenceEquals(owner, _activeCanvas)}; " +
+                $"ownerLoaded={owner?.IsLoaded}; ownerSize={owner?.ActualWidth:F2}x{owner?.ActualHeight:F2}; " +
+                $"editorLoaded={editor.IsLoaded}; editorVisible={editor.IsVisible}; " +
+                $"editorSize={editor.ActualWidth:F2}x{editor.ActualHeight:F2}; " +
+                $"editorFocus={editor.IsKeyboardFocused}; textLength={editor.Text.Length}; " +
+                $"caretRect={caretRect}; clipToBounds={layer.ClipToBounds}");
+        }
+
+        // SEMANTIC ANCHOR: INLINE_TEXT_EDITOR_FOCUS
+        // INVARIANT: After placing a new inline editor, keyboard focus and a visible
+        // insertion caret belong to the editor, not the page canvas or sidebar.
+        // Request focus once after creation; WPF handles later pointer-based caret placement.
+        // Keep resize handle ownership separate; preserve select-all for re-editing.
         private void QueueTextEditorFocus(TextBox textBox, bool selectAll = false)
         {
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, new Action(() =>
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
             {
                 if (!ReferenceEquals(_activeTextBox, textBox)
                     || textBox.Parent is not SafeCanvas) return;
                 textBox.Focus();
                 Keyboard.Focus(textBox);
                 if (selectAll) textBox.SelectAll();
-                if (!ReferenceEquals(_tehBox, textBox)) AttachTextEditResizeHandles(textBox);
+                else textBox.CaretIndex = textBox.Text.Length;
+                // SEMANTIC ANCHOR: INLINE_CARET_DIAGNOSTICS
+                // DIAGNOSTIC ONLY: distinguish a focused, empty editor from a caret
+                // rendering issue; never record user text or modify editor state.
+                if (!selectAll && textBox.Text.Length == 0)
+                {
+                    void TraceCaretState(string phase)
+                    {
+                        var brush = textBox.CaretBrush as SolidColorBrush;
+                        TraceTextPosition("CARET_" + phase, textBox.Tag is int p ? p : _currentPage,
+                            new Point(Canvas.GetLeft(textBox), Canvas.GetTop(textBox)),
+                            $"focused={textBox.IsKeyboardFocused}; keyboardOwner={ReferenceEquals(Keyboard.FocusedElement, textBox)}; " +
+                            $"loaded={textBox.IsLoaded}; visible={textBox.IsVisible}; enabled={textBox.IsEnabled}; " +
+                            $"size={textBox.ActualWidth:F2}x{textBox.ActualHeight:F2}; caretIndex={textBox.CaretIndex}; " +
+                            $"caretColor={brush?.Color.ToString() ?? textBox.CaretBrush?.GetType().Name ?? "null"}; " +
+                            $"caretOpacity={textBox.CaretBrush?.Opacity:F2}; templateHost={textBox.Template.FindName("PART_ContentHost", textBox)?.GetType().Name ?? "null"}");
+                    }
+                    TraceCaretState("FOCUS");
+                    TraceEditorLayerGeometry(textBox, "FOCUS");
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(() =>
+                        {
+                            if (ReferenceEquals(_activeTextBox, textBox))
+                            {
+                                TraceCaretState("IDLE");
+                                TraceEditorLayerGeometry(textBox, "IDLE");
+                            }
+                        }));
+                }
             }));
         }
 
@@ -161,6 +254,7 @@ namespace KillerPDF.Controls
                     _textFontName = string.IsNullOrEmpty(placed.FontName) ? "Segoe UI" : placed.FontName;
                     _textBold = placed.Bold; _textItalic = placed.Italic; _textStrike = placed.Strike; _textUnderline = placed.Underline;
 
+                    TraceTextPosition("REEDIT_FOUND", pageIdx, placed.Position, $"object={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(placed)} click=({canvasPos.X:F2},{canvasPos.Y:F2})");
                     _reeditOriginal = placed;
                     placedPage.Remove(placed);
                     RenderAllAnnotations(pageIdx);
@@ -193,8 +287,8 @@ namespace KillerPDF.Controls
                     StyleEditBox(ptb);   // restore the box's typeface + B/I/S
                     ptb.PreviewKeyDown += TextBox_PreviewKeyDown;
                     ptb.LostFocus += TextBox_LostFocus;
-                    ptb.Loaded += (_, _) => QueueTextEditorFocus(ptb, selectAll: true);
-                    ptb.PreviewMouseLeftButtonDown += (_, _) => QueueTextEditorFocus(ptb);
+                    // Layout handles are independent from the one-time keyboard focus request.
+                    AttachTextEditResizeHandles(ptb);
                     QueueTextEditorFocus(ptb, selectAll: true);
                     ShowTextSettings();
                     SetStatus(Loc("Str_St_EditingText"));
@@ -446,8 +540,8 @@ namespace KillerPDF.Controls
             StyleEditBox(tb);
             tb.PreviewKeyDown += TextBox_PreviewKeyDown;
             tb.LostFocus += TextBox_LostFocus;
-            tb.Loaded += (_, _) => QueueTextEditorFocus(tb, selectAll: true);
-            tb.PreviewMouseLeftButtonDown += (_, _) => QueueTextEditorFocus(tb);
+            // A re-edit selects text once; subsequent clicks use native WPF caret placement.
+            AttachTextEditResizeHandles(tb);
             QueueTextEditorFocus(tb, selectAll: true);
             ShowTextSettings();
             SetStatus(Loc("Str_St_EditingText"));
@@ -497,6 +591,7 @@ namespace KillerPDF.Controls
 
         private void PlaceTextBox(Point pos, int pageIdx)
         {
+            TraceTextPosition("PLACE_NEW", pageIdx, pos, $"activeEditor={_activeTextBox is not null}");
             // _textFontSize is a point size; convert to the page's canvas (render-dim) units so
             // it renders and exports as real points. DrawAnnotationsOnDocument multiplies by
             // sy = page.Height.Point / renderH, so dividing by sy here makes "14" export as 14pt.
@@ -515,7 +610,8 @@ namespace KillerPDF.Controls
                 BorderBrush = (SolidColorBrush)FindResource("PrimaryBrush"),
                 SelectionBrush = AccentBrush(),
                 CaretBrush = new SolidColorBrush(_textColor),
-                Template = FlatTextBoxTemplate(),
+                // DIAGNOSTIC A/B: use WPF default TextBox template for newly placed boxes only.
+                // Restore FlatTextBoxTemplate() after the isolated caret test.
                 BorderThickness = new Thickness(1),
                 FontFamily = UiKit.UiFont,
                 FontSize = fontCanvas,
@@ -533,10 +629,28 @@ namespace KillerPDF.Controls
             StyleEditBox(tb);   // current typeface + B/I/S
             tb.PreviewKeyDown += TextBox_PreviewKeyDown;
             tb.LostFocus += TextBox_LostFocus;
+            tb.PreviewTextInput += (_, _) =>
+            {
+                if (ReferenceEquals(_activeTextBox, tb) && tb.Text.Length == 0)
+                    TraceTextPosition("CARET_FIRST_INPUT", pageIdx,
+                        new Point(Canvas.GetLeft(tb), Canvas.GetTop(tb)),
+                        $"focused={tb.IsKeyboardFocused}; loaded={tb.IsLoaded}; visible={tb.IsVisible}; " +
+                        $"caretIndex={tb.CaretIndex}; size={tb.ActualWidth:F2}x{tb.ActualHeight:F2}");
+            };
+            tb.TextChanged += (_, _) =>
+            {
+                if (ReferenceEquals(_activeTextBox, tb) && tb.Text.Length <= 4)
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                        new Action(() =>
+                        {
+                            if (ReferenceEquals(_activeTextBox, tb))
+                                TraceEditorLayerGeometry(tb, "TEXT_CHANGED");
+                        }));
+            };
             // Input priority runs after the placement click has completed, so that click cannot
             // immediately take focus back from the new editor.
-            tb.Loaded += (_, _) => QueueTextEditorFocus(tb);
-            tb.PreviewMouseLeftButtonDown += (_, _) => QueueTextEditorFocus(tb);
+            // The editor owns its pointer events; repeated focus requests must not reset its caret.
+            AttachTextEditResizeHandles(tb);
             QueueTextEditorFocus(tb);
         }
 
@@ -690,11 +804,14 @@ namespace KillerPDF.Controls
                 _reeditOriginal = null;
                 RenderAllAnnotations(rp);
             }
-            if (_currentTool != EditTool.Text) HideTextSettings();
+            if (_currentTool != EditTool.Text && _activeTextBox is null && _selectedAnnotation is not TextAnnotation) HideTextSettings();
         }
 
         private void TextBox_LostFocus(object sender, RoutedEventArgs e)
         {
+            if (_activeTextBox is not null)
+                TraceTextPosition("LOST_FOCUS", _activeTextBox.Tag is int fp ? fp : _currentPage,
+                    new Point(Canvas.GetLeft(_activeTextBox), Canvas.GetTop(_activeTextBox)));
             // Don't commit while a resize handle is being dragged (the box temporarily loses focus).
             if (_draggingTextEditHandle) return;
             // Commit if the box has content, or (for an existing-text edit) even when emptied, so the
@@ -703,6 +820,9 @@ namespace KillerPDF.Controls
             {
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
+                    // Interacting with the right text sidebar must not commit an inline edit.
+                    // Its stepper controls are non-focusable, so the mouse position matters too.
+                    if (_textSettingsBar is { IsVisible: true, IsMouseOver: true }) return;
                     // A ComboBox popup has its own visual tree, so its focused item is not a
                     // descendant of the settings bar. Check the owning ComboBox as well.
                     if (_textSettingsBar is not null)
@@ -729,6 +849,9 @@ namespace KillerPDF.Controls
         private void CommitActiveTextBox()
         {
             if (_activeTextBox is null) return;
+            TraceTextPosition("COMMIT_BEGIN", _activeTextBox.Tag is int cp ? cp : _currentPage,
+                new Point(Canvas.GetLeft(_activeTextBox), Canvas.GetTop(_activeTextBox)),
+                $"reedit={_reeditOriginal is not null} editor={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(_activeTextBox)}");
             var tb = _activeTextBox;
             _activeTextBox = null;
             RemoveTextEditHandles();
@@ -774,7 +897,9 @@ namespace KillerPDF.Controls
                     ? tb.Height
                     : MeasureTextBoxHeight(content, boxW, tb.FontSize);
                 // Keep the placed box fully on-page so its corners (and resize handles) stay reachable.
+                TraceTextPosition("COMMIT_BEFORE_CLAMP", pageIdx, ta.Position, $"size=({ta.Width:F2},{ta.Height:F2})");
                 ta.Position = ClampRectToPage(pageIdx, new Rect(ta.Position, new Size(ta.Width, ta.Height))).Location;
+                TraceTextPosition("COMMIT_AFTER_CLAMP", pageIdx, ta.Position);
                 // Carry the pairing so the cover knows its partner text exists (renders dashed).
                 ta.PairId = _pendingCover is not null ? _pendingCover.PairId : reeditPair;
                 if (_pendingCover is not null)
@@ -822,7 +947,7 @@ namespace KillerPDF.Controls
                 string family = Services.FontCoverage.PickFamily(want, ta.Content);
                 string missing = Services.FontCoverage.UncoveredChars(family, ta.Content);
                 if (missing.Length == 0) return;
-                KillerDialog.Show(Host!.Window, string.Format(Loc("Str_Font_NoGlyphs"), missing), "KillerPDF",
+                PewDialog.Show(Host!.Window, string.Format(Loc("Str_Font_NoGlyphs"), missing), "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch { /* the warning must never be the thing that breaks placing text */ }

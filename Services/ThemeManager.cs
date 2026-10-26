@@ -7,7 +7,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 
-namespace KillerPDF.Services
+namespace PewDF.Services
 {
     internal enum Theme
     {
@@ -130,8 +130,8 @@ namespace KillerPDF.Services
             }
         }
 
-        /// <summary>Complete the standalone installer palette without reading or saving preferences.</summary>
-        internal static void InitializeInstallerTheme() => LoadDict(Theme.Dark, DarkAccent.Green);
+        // INVARIANT: Theme initialization is owned by the active application theme flow;
+        // do not reintroduce a separate installer-only entry point for the portable app.
 
         // Filled buttons and the outline button's hover fill carry the family's soft vertical
         // gradient (the KillerNotes treatment): the outline color itself at the top, 16% darker at the bottom.
@@ -281,7 +281,7 @@ namespace KillerPDF.Services
             appResources["RadWindow"] = liveResources["WindowCornerRadius"];
             appResources["RadCard"] = liveResources["PanelCornerRadius"];
             appResources["RadControl"] = liveResources["ControlCornerRadius"];
-            appResources["UiFont"] = liveResources["UiFont"];
+            appResources["UiFont"] = SystemFonts.MessageFontFamily;
 
             // One SystemIdle pass to nudge any elements whose effective value didn't auto-update
             // (e.g. ControlTemplate trigger bindings with TargetName that missed the per-key signal).
@@ -429,7 +429,7 @@ namespace KillerPDF.Services
             // copy the active value into that higher-precedence slot (98SE supplies Microsoft
             // Sans Serif; the other themes use Killer Sans UI over the Segoe stack).
             if (!d.Contains("UiFont"))
-                d["UiFont"] = KillerPDF.UiKit.KillerSansUiStack;
+                d["UiFont"] = SystemFonts.MessageFontFamily;
             Alias("ComboFieldBrush", "PaneBrush");
             Alias("ComboFieldHoverBrush", "RowHoverBrush");
             Alias("ComboPopupBrush", "PaneBrush");
@@ -544,8 +544,8 @@ namespace KillerPDF.Services
             if (!d.Contains("TitleBarHeight")) d["TitleBarHeight"] = 32.0;
             if (!d.Contains("FooterHeight")) d["FooterHeight"] = 24.0;
             if (!d.Contains("FooterStatusPadding")) d["FooterStatusPadding"] = new Thickness(16, 0, 16, 0);
-            if (!d.Contains("FooterStatusFont")) d["FooterStatusFont"] = KillerPDF.UiKit.KillerSansUiStack;
-            if (!d.Contains("FooterMetaFont")) d["FooterMetaFont"] = KillerPDF.UiKit.KillerSansUiStack;
+            if (!d.Contains("FooterStatusFont")) d["FooterStatusFont"] = PewDF.UiKit.KillerSansUiStack;
+            if (!d.Contains("FooterMetaFont")) d["FooterMetaFont"] = PewDF.UiKit.KillerSansUiStack;
             if (!d.Contains("FooterPadding")) d["FooterPadding"] = new Thickness(16, 0, 16, 0);
             if (!d.Contains("FooterCellMargin")) d["FooterCellMargin"] = new Thickness(0);
             if (!d.Contains("FooterCellPadding")) d["FooterCellPadding"] = new Thickness(0);
@@ -590,7 +590,7 @@ namespace KillerPDF.Services
             d["CaptionGlyphWeight"] = classicCaption ? FontWeights.Bold : FontWeights.Normal;
             d["CaptionFontGlyphVisibility"] = classicCaption ? Visibility.Collapsed : Visibility.Visible;
             d["CaptionDrawnGlyphVisibility"] = classicCaption ? Visibility.Visible : Visibility.Collapsed;
-            if (!d.Contains("ChromeFontFamily")) d["ChromeFontFamily"] = KillerPDF.UiKit.KillerSansUiStack;
+            if (!d.Contains("ChromeFontFamily")) d["ChromeFontFamily"] = SystemFonts.MessageFontFamily;
             if (!d.Contains("TitleIconSize")) d["TitleIconSize"] = 27.0;
             if (!d.Contains("TitleIconMargin")) d["TitleIconMargin"] = new Thickness(0, 0, 7, 0);
             if (!d.Contains("TitleBarPadding")) d["TitleBarPadding"] = new Thickness(12, 0, 0, 0);
@@ -600,7 +600,7 @@ namespace KillerPDF.Services
                 d["TitleLogoMargin"] = d["UseDialogCaption"] is true ? d["TitleBarPadding"] : new Thickness(3, 4, 0, 0);
             // The titlebar filename sits on the wordmark baseline: Killer Sans, dropped 3px to meet the
             // bottom of "Killer". A classic caption keeps the caption font beside its plain title.
-            if (!d.Contains("FileNameFont")) d["FileNameFont"] = classicCaption ? d["ChromeFontFamily"] : KillerPDF.UiKit.BrandSansFont;
+            if (!d.Contains("FileNameFont")) d["FileNameFont"] = SystemFonts.MessageFontFamily;
             if (!d.Contains("FileNameFontSize")) d["FileNameFontSize"] = classicCaption ? 11.0 : 18.0;
             if (!d.Contains("FileNameTransform"))
             {
@@ -692,7 +692,7 @@ namespace KillerPDF.Services
             var flyoutRadius = d["FlyoutCornerRadius"] is CornerRadius fr ? fr : new CornerRadius(6);
             d["AnnotationBarCornerRadius"] = new CornerRadius(
                 0, 0, flyoutRadius.BottomRight, flyoutRadius.BottomLeft);
-            if (!d.Contains("MenuFontFamily")) d["MenuFontFamily"] = KillerPDF.UiKit.KillerSansUiStack;
+            if (!d.Contains("MenuFontFamily")) d["MenuFontFamily"] = SystemFonts.MessageFontFamily;
             if (!d.Contains("MenuFontSize")) d["MenuFontSize"] = 12.0;
             if (!d.Contains("MenuItemPadding")) d["MenuItemPadding"] = new Thickness(8, 6, 10, 6);
             if (!d.Contains("ComboButtonMinWidth")) d["ComboButtonMinWidth"] = 22.0;

@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Controls;
+namespace PewDF.Controls;
 
 public partial class PdfViewer
 {

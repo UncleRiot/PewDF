@@ -10,9 +10,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     /// <summary>Open or Save. Picked at construction; changes the accept button and the rules.</summary>
     public enum FileDialogMode { Open, Save }
@@ -258,10 +258,8 @@ namespace KillerPDF.Controls
             // Open mode has nothing to name, so the box is for typing/filtering a path, not a
             // new file. It stays visible: typing an exact name is faster than hunting for it.
             BuildFilters();
-            BuildPlaces();
             PlacesList.ItemsSource = Places;
             FileList.ItemsSource   = Entries;
-            InitTree();
             ApplyView();
 
             // A seeded FileName can be a bare name ("export.ics"), a full path, or empty.
@@ -272,22 +270,22 @@ namespace KillerPDF.Controls
                 if (FileName.IndexOfAny(['\\', '/']) >= 0)
                 {
                     var d = Path.GetDirectoryName(FileName);
-                    if (!string.IsNullOrEmpty(d) && Directory.Exists(d)) startDir = d!;
+                    if (!string.IsNullOrEmpty(d)) startDir = d!;
                     seedName = Path.GetFileName(FileName);
                 }
                 else seedName = FileName;
             }
-            if (string.IsNullOrWhiteSpace(startDir) || !Directory.Exists(startDir))
+            if (string.IsNullOrWhiteSpace(startDir))
             {
                 string? remembered = App.GetSetting(LastDirKey);
-                startDir = !string.IsNullOrWhiteSpace(remembered) && Directory.Exists(remembered)
+                startDir = !string.IsNullOrWhiteSpace(remembered)
                     ? remembered!
                     : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             }
 
             _built = true;
-            NavigateTo(startDir);
             FileNameBox.Text = seedName;
+            string initialFolder = startDir;
 
             // Save: preselect the stem so typing replaces the name but keeps the extension
             // visible. Open: caret at the end.
@@ -299,7 +297,87 @@ namespace KillerPDF.Controls
             }
             else FileNameBox.CaretIndex = FileNameBox.Text.Length;
 
-            return ShowDialog();
+            // A layered, animated picker can be displayed behind its owner when the
+            // initial activation occurs before its first rendered frame. Bring it to
+            // the foreground once it is ready, without making it permanently topmost.
+            EventHandler? firstContentRendered = null;
+            firstContentRendered = (_, _) =>
+            {
+                ContentRendered -= firstContentRendered;
+                Activate();
+                Focus();
+                // Do not query Explorer Quick Access or drive readiness on the UI thread
+                // before the picker has appeared. Shell COM requires its own STA.
+                LoadNavigationAsync();
+                NavigateTo(initialFolder);
+            };
+            ContentRendered += firstContentRendered;
+            try
+            {
+                return ShowDialog();
+            }
+            finally
+            {
+                ContentRendered -= firstContentRendered;
+            }
+        }
+
+        /// <summary>Load potentially slow Shell/drive information off the UI thread.</summary>
+        private void LoadNavigationAsync()
+        {
+            var thread = new System.Threading.Thread(() =>
+            {
+                List<(string Label, string Path)> quickAccess;
+                var drives = new List<(DriveInfo Drive, string Label)>();
+                try { quickAccess = ExplorerQuickAccessPlaces(); }
+                catch { quickAccess = []; }
+                try
+                {
+                    foreach (var drive in DriveInfo.GetDrives())
+                    {
+                        try
+                        {
+                            if (!drive.IsReady) continue;
+                            string label = string.IsNullOrWhiteSpace(drive.VolumeLabel)
+                                ? drive.DriveType.ToString() : drive.VolumeLabel.Trim();
+                            drives.Add((drive, label));
+                        }
+                        catch (IOException) { }
+                        catch (UnauthorizedAccessException) { }
+                    }
+                }
+                catch (IOException) { }
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    if (!IsVisible) return;
+                    Places.Clear();
+                    var added = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var path in PinnedPaths())
+                        if (added.Add(path.TrimEnd('\\'))) AddPlace(LabelFor(path), path, pinned: true);
+                    foreach (var place in quickAccess)
+                        if (added.Add(place.Path.TrimEnd('\\')))
+                            AddPlace(place.Label, place.Path);
+                    foreach (var (drive, label) in drives)
+                    {
+                        var root = drive.RootDirectory.FullName;
+                        if (added.Add(root.TrimEnd('\\')))
+                            Places.Add(new PickerPlace($"{drive.Name.TrimEnd('\\')}  {label}", root, false));
+                    }
+                    if (TreeRoots.Count == 0)
+                    {
+                        FolderTreeCtl.ItemsSource = TreeRoots;
+                        foreach (var (drive, label) in drives)
+                            TreeRoots.Add(new FolderNode(drive, string.IsNullOrWhiteSpace(label)
+                                ? drive.Name.TrimEnd('\\')
+                                : $"{label} ({drive.Name.TrimEnd('\\')})"));
+                        InitializeTreeScrolling();
+                    }
+                    SyncPlacesSelection();
+                    _ = RevealInTree(_currentDir);
+                }));
+            }) { IsBackground = true };
+            thread.SetApartmentState(System.Threading.ApartmentState.STA);
+            thread.Start();
         }
 
         // ── Filters ──────────────────────────────────────────────────────────────
@@ -523,7 +601,7 @@ namespace KillerPDF.Controls
 
         private void AddPlace(string label, string path, bool pinned = false)
         {
-            if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+            if (!string.IsNullOrEmpty(path))
                 Places.Add(new PickerPlace(label, path, pinned));
         }
 
@@ -599,52 +677,77 @@ namespace KillerPDF.Controls
 
         // ── Navigation ───────────────────────────────────────────────────────────
 
-        private void NavigateTo(string dir)
-        {
-            if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir)) return;
+        private int _navigationGeneration;
 
+        // File-system enumeration must never run on the dialog's UI thread. A slow
+        // network folder can take seconds to answer even a basic metadata query.
+        private async void NavigateTo(string dir)
+        {
+            if (string.IsNullOrWhiteSpace(dir)) return;
+
+            int generation = ++_navigationGeneration;
+            bool showHidden = _showHidden;
             _navigating = true;
             UpdateImagePreview(null);
-            _currentDir  = dir;
+            _currentDir = dir;
             PathBox.Text = dir;
             _raw.Clear();
-
-            try
-            {
-                // The toggle gates two things together: attribute Hidden/System AND leading-dot
-                // names - the Unix convention is all over a Windows home folder (.gradle, .ssh)
-                // and those carry no Hidden attribute. Same gate in the folder tree (FolderTree.cs).
-                foreach (var sub in Directory.EnumerateDirectories(dir))
-                {
-                    DirectoryInfo info;
-                    try { info = new DirectoryInfo(sub); } catch { continue; }
-                    if (!_showHidden)
-                    {
-                        if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
-                        if (info.Name.StartsWith('.')) continue;
-                    }
-                    _raw.Add(new PickerEntry(info.Name, sub, true, 0, SafeTime(() => info.LastWriteTime)));
-                }
-                foreach (var file in Directory.EnumerateFiles(dir))
-                {
-                    FileInfo fi;
-                    try { fi = new FileInfo(file); } catch { continue; }
-                    if (!_showHidden)
-                    {
-                        if ((fi.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
-                        if (fi.Name.StartsWith('.')) continue;
-                    }
-                    _raw.Add(new PickerEntry(fi.Name, file, false, SafeLen(fi), SafeTime(() => fi.LastWriteTime)));
-                }
-            }
-            catch { /* unauthorized / unreadable - show what we have */ }
-
             ApplySort();
-            UpButton.IsEnabled = Directory.GetParent(dir) != null;
+            UpdateInfoSummary();
+            _navigating = false;
+
+            var result = await Task.Run(() =>
+            {
+                var entries = new List<PickerEntry>();
+                bool exists;
+                try { exists = Directory.Exists(dir); }
+                catch { exists = false; }
+                if (!exists) return (Exists: false, Entries: entries, HasParent: false);
+
+                try
+                {
+                    foreach (var sub in Directory.EnumerateDirectories(dir))
+                    {
+                        try
+                        {
+                            var info = new DirectoryInfo(sub);
+                            if (!showHidden &&
+                                ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0 ||
+                                 info.Name.StartsWith('.'))) continue;
+                            entries.Add(new PickerEntry(info.Name, sub, true, 0, SafeTime(() => info.LastWriteTime)));
+                        }
+                        catch { /* one inaccessible folder must not prevent the listing */ }
+                    }
+                    foreach (var file in Directory.EnumerateFiles(dir))
+                    {
+                        try
+                        {
+                            var info = new FileInfo(file);
+                            if (!showHidden &&
+                                ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0 ||
+                                 info.Name.StartsWith('.'))) continue;
+                            entries.Add(new PickerEntry(info.Name, file, false, SafeLen(info), SafeTime(() => info.LastWriteTime)));
+                        }
+                        catch { /* one inaccessible file must not prevent the listing */ }
+                    }
+                }
+                catch { /* inaccessible directory: keep the dialog responsive */ }
+                bool hasParent;
+                try { hasParent = Directory.GetParent(dir) != null; }
+                catch { hasParent = false; }
+                return (Exists: true, Entries: entries, HasParent: hasParent);
+            });
+
+            if (generation != _navigationGeneration || !IsVisible) return;
+            if (!result.Exists) return;
+            _navigating = true;
+            _raw.Clear();
+            _raw.AddRange(result.Entries);
+            ApplySort();
+            UpButton.IsEnabled = result.HasParent;
             UpdateInfoSummary();
             SyncPlacesSelection();
             _navigating = false;
-
             RecordRecent(dir);
             _ = RevealInTree(dir);
         }
@@ -679,24 +782,9 @@ namespace KillerPDF.Controls
 
         /// <summary>Ready drives only - an empty optical drive or a dropped mapping would sit
         /// there as a node that throws the moment anyone touches it.</summary>
-        private void InitTree()
+
+        private void InitializeTreeScrolling()
         {
-            if (TreeRoots.Count > 0) return;
-            FolderTreeCtl.ItemsSource = TreeRoots;
-
-            DriveInfo[] drives;
-            try { drives = DriveInfo.GetDrives(); }
-            catch (IOException) { return; }
-
-            foreach (var d in drives)
-            {
-                bool ready;
-                try { ready = d.IsReady; }
-                catch (IOException) { continue; }
-                catch (UnauthorizedAccessException) { continue; }
-                if (ready) TreeRoots.Add(new FolderNode(d));
-            }
-
             // Edge fades follow the scroll position (KillerShell TreePanel.cs). ScrollChanged is
             // handled at the TreeView rather than dug out of its template: it bubbles, so the
             // inner ScrollViewer is reached without needing to have found it first. Loaded and
@@ -1318,14 +1406,14 @@ namespace KillerPDF.Controls
 
                 if (OverwritePrompt && File.Exists(full))
                 {
-                    // Killendar asks this through its own ConfirmDialog. KillerPDF already has a
-                    // themed confirm (KillerDialog) that every other prompt in the app uses, so
+                    // Killendar asks this through its own ConfirmDialog. PewDF already has a
+                    // themed confirm (PewDialog) that every other prompt in the app uses, so
                     // this goes through that instead of importing a second one - two dialogs that
                     // ask the same kind of question is exactly how a UI starts to look stitched
                     // together. Same question, same buttons, one implementation.
-                    var answer = KillerDialog.Show(this,
+                    var answer = PewDialog.Show(this,
                         string.Format(Loc("Str_Dlg_OverwriteMsg"), Path.GetFileName(full)),
-                        "KillerPDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        "PewDF", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (answer != MessageBoxResult.Yes) { FileNameBox.Focus(); return; }
                 }
             }

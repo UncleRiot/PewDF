@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     /// <summary>
     /// Editing state and narrow shell-facing adapters owned by each viewer instance. Annotations,
@@ -34,6 +34,15 @@ namespace KillerPDF.Controls
         private Color _highlightColor = Color.FromArgb(80, 255, 255, 0);
         private Color _lineAnnotColor = Color.FromArgb(255, 220, 38, 38);
         private InkAnnotation? _activeInk;
+        // SEMANTIC ANCHOR: TEXT_MARKER_GEOMETRY_SSOT: only one sampled centerline owns the in-progress marker.
+        // Its closed polygon is the persisted shape, shared by overlay rendering and PDF export.
+        private readonly List<Point> _textMarkerSamples = [];
+        // SEMANTIC ANCHOR: TEXT_MARKER_SETTINGS_SSOT
+        // The active viewer owns its marker settings; the pane edits this state only.
+        // Each new annotation snapshots the settings at stroke start for stable persistence.
+        internal Color TextMarkerColor { get; set; } = Color.FromArgb(115, 255, 235, 25);
+        internal double TextMarkerNibSize { get; set; } = 20.0;
+        internal double TextMarkerNibAngle { get; set; } = 45.0;
 
         // ── Text (typewriter) tool ───────────────────────────────────────────────────────────
         private TextBox? _activeTextBox;
@@ -75,6 +84,7 @@ namespace KillerPDF.Controls
 
         // ── Drag-to-move ─────────────────────────────────────────────────────────────────────
         private bool _isDraggingAnnot;
+        private bool _dragAnnotMoved;
         private Point _dragAnnotStart;
         private Point _dragAnnotOrigPos;
         private PageAnnotation? _dragAnnot;
@@ -114,7 +124,6 @@ namespace KillerPDF.Controls
         private bool _isDirty;
 
         // ── State owned by files that did not move ───────────────────────────────────────────
-        private Border? _searchBar => Host!.SearchBar;
         private Features.SearchController Search => Host!.Search;
         private bool _ocrRegionMode;
         private SavedSignature? _pendingSignature;

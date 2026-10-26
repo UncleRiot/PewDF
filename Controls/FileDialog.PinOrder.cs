@@ -3,7 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     public partial class FileDialog
     {

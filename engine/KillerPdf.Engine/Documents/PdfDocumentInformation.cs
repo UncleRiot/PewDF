@@ -101,9 +101,12 @@ public sealed record PdfDocumentInformation
             }
             return new DateTimeOffset(year, month, day, hour, minute, second, offset);
         }
-        catch (Exception error) when (error is FormatException or ArgumentOutOfRangeException)
+        // SEMANTIC ANCHOR: MALFORMED_PDF_METADATA_DATE. Invalid optional date metadata
+        // must not prevent the remaining document information from being displayed.
+        // Do not alter or silently rewrite the original PDF metadata.
+        catch (Exception error) when (error is FormatException or ArgumentOutOfRangeException or ArgumentException)
         {
-            throw new InvalidOperationException($"The /{key} document information value is not a valid PDF date.", error);
+            return null;
         }
     }
 

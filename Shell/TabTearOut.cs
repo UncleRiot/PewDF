@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
-using KillerPDF.Controls;
+using PewDF.Controls;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {

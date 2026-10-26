@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace PewDF
 {
     // Configurable sidebar placement (left or right). The layout uses three columns in
     // MainContentGrid: one sized sidebar column, a 6px splitter, and a star document column.
@@ -209,40 +209,12 @@ namespace KillerPDF
             UpdateFooterFade();
         }
 
-        // Portable follows the document area: centred under the pane in single view, centred on
-        // the pane divider in split view. When that spot would run into the page-size readout it
-        // anchors immediately left of it instead. The status text trims before the badge.
+        // SEMANTIC ANCHOR: Footer has no portable install badge. Status stays left-aligned;
+        // viewer controls own the right section. Avoid reflowing a removed badge.
         private void UpdateFooterFade()
         {
-            if (StatusText is null || PortableBadge is null || FooterBorder is null
-                || FooterDocumentControls is null || FooterVersionCell is null) return;
-            if (Viewer is null || PortableBadge.Parent is not FrameworkElement host || host.ActualWidth <= 0) return;
-
-            Grid.SetColumn(PortableBadge, 0);
-            Grid.SetColumnSpan(PortableBadge, 4);
-            PortableBadge.HorizontalAlignment = HorizontalAlignment.Left;
-
-            double badgeWidth = PortableBadge.ActualWidth;
-            if (PortableBadge.Visibility != Visibility.Visible || badgeWidth <= 0)
-            {
-                PortableBadge.Margin = new Thickness(0);
+            if (StatusText is not null)
                 StatusText.MaxWidth = double.PositiveInfinity;
-                return;
-            }
-
-            double X(UIElement e, double x) => e.TranslatePoint(new Point(x, 0), host).X;
-            bool split = ViewerB is not null && ViewerB.Visibility == Visibility.Visible && ViewerB.ActualWidth > 0;
-            double target = split
-                ? (X(Viewer, Viewer.ActualWidth) + X(ViewerB!, 0)) / 2   // the divider between the panes
-                : X(Viewer, Viewer.ActualWidth / 2);                     // the middle of the pane
-
-            double anchoredLeft = X(FooterDocumentControls, 0) - 8 - badgeWidth;   // just left of the page size
-            double left = Math.Min(target - badgeWidth / 2, anchoredLeft);
-            double statusLeft = X(StatusText, 0);
-            left = Math.Max(left, statusLeft);
-
-            PortableBadge.Margin = new Thickness(left, 0, 0, 0);
-            StatusText.MaxWidth = Math.Max(0, left - statusLeft - 16);
         }
 
         private void FooterAnchor_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateFooterFade();

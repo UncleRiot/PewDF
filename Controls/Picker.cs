@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     // Row and place models for FileDialog.
     public sealed class PickerPlace(string label, string path, bool pinned = false)
@@ -11,9 +11,9 @@ namespace KillerPDF.Controls
         /// <summary>True for a user-pinned (removable) entry; drives are dynamic and never pinned.</summary>
         public bool Pinned { get; } = pinned;
 
-        /// <summary>Real shell icon, resolved by PATH - a drive shows its true icon (USB,
-        /// network, optical) and a special folder its own. Cached in ShellIcons.</summary>
-        public System.Windows.Media.ImageSource? Icon => Services.ShellIcons.Place(Path);
+        /// <summary>Cached generic folder icon. A real-path shell lookup can stall the
+        /// entire picker when a pinned location or network drive is offline.</summary>
+        public System.Windows.Media.ImageSource? Icon => Services.ShellIcons.Small(Path, true);
     }
 
     // One row in the folder pane: a subfolder or a (dimmed, non-pickable) file.

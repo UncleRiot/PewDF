@@ -1,11 +1,11 @@
-using KillerPDF.Features;
-using KillerPDF.Controls;
+using PewDF.Features;
+using PewDF.Controls;
 using System.Windows;
 using System.Windows.Input;
 using System;
 using System.Linq;
 
-namespace KillerPDF
+namespace PewDF
 {
     // MainWindow's half of IViewerHost.
     //
@@ -19,7 +19,9 @@ namespace KillerPDF
     {
         void IViewerHost.MarkDirty(bool dirty) => MarkDirty(dirty);
 
-        void IViewerHost.SetTool(EditTool tool) => SetTool(tool);
+        // SEMANTIC ANCHOR: PROGRAMMATIC_TOOL_RESTORE_INVARIANT
+        // Viewer-initiated tool changes are state transitions, never repeat-click pane toggles.
+        void IViewerHost.SetTool(EditTool tool) => SetTool(tool, restoringPane: true);
         bool IViewerHost.SidebarShowingOutlines => _sidebarShowingOutlines;
         void IViewerHost.PopulateRecentFilesList(PdfViewer viewer) => PopulateRecentFilesList(viewer);
         void IViewerHost.SwitchSidebarToPagesTab() => SwitchSidebarToPagesTab();
@@ -28,7 +30,7 @@ namespace KillerPDF
         void IViewerHost.OpenFile(string path) => OpenFile(path);
         void IViewerHost.UpdateFooterFade() => UpdateFooterFade();
         void IViewerHost.UpdateTabStripFade() => UpdateTabStripFade();
-        System.Windows.Controls.Border? IViewerHost.SearchBar => _searchBar;
+        // INLINE_SEARCH_UI_SSOT: The persistent inline toolbar owns search UI; no floating-bar host property.
         Features.SearchController IViewerHost.Search => Search;
         System.Windows.Controls.TextBlock IViewerHost.FileNameLabel => FileNameLabel;
         System.Windows.Controls.TreeView IViewerHost.OutlineTree => OutlineTree;

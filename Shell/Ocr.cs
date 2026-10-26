@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KillerPDF.Features;
-using KillerPDF.Services;
+using PewDF.Features;
+using PewDF.Services;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow : IOcrHost
     {
@@ -193,14 +193,14 @@ namespace KillerPDF
                 HideBusyOverlay(busy);
                 OcrLanguages.TryDeleteFile(dest + ".part");
                 if (ct.IsCancellationRequested) SetStatus(string.Format(Loc("Str_St_LangCanceled"), name));
-                else KillerDialog.Show(this, string.Format(Loc("Str_Dlg_DownloadTimeout"), name),
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                else PewDialog.Show(this, string.Format(Loc("Str_Dlg_DownloadTimeout"), name),
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             catch (Exception ex)
             {
                 HideBusyOverlay(busy);
                 OcrLanguages.TryDeleteFile(dest + ".part");
-                KillerDialog.Show(this, string.Format(Loc("Str_Err_LangDataFailed"), name) + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(this, string.Format(Loc("Str_Err_LangDataFailed"), name) + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -267,7 +267,7 @@ namespace KillerPDF
             catch (Exception ex)
             {
                 HideBusyOverlay(busy);
-                KillerDialog.Show(this, Loc("Str_Err_HqDownloadFailed") + "\n" + ex.Message, "KillerPDF",
+                PewDialog.Show(this, Loc("Str_Err_HqDownloadFailed") + "\n" + ex.Message, "PewDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -291,9 +291,9 @@ namespace KillerPDF
             if (missing.Count == 0) return true;
 
             string names = string.Join(", ", missing.ConvertAll(OcrLanguages.NameForCode));
-            var choice = KillerDialog.Show(this,
+            var choice = PewDialog.Show(this,
                 string.Format(Loc("Str_Dlg_LangDownloadAsk"), names),
-                "KillerPDF", MessageBoxButton.OKCancel, MessageBoxImage.Information);
+                "PewDF", MessageBoxButton.OKCancel, MessageBoxImage.Information);
             if (choice != MessageBoxResult.OK) return false;
 
             var ct = BeginCancellableOp(Loc("Str_Op_LangDownload"));
@@ -325,8 +325,8 @@ namespace KillerPDF
             }
             catch (Exception ex)
             {
-                KillerDialog.Show(this, Loc("Str_Err_ModelDownloadFailed") + "\n" + ex.Message,
-                    "KillerPDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                PewDialog.Show(this, Loc("Str_Err_ModelDownloadFailed") + "\n" + ex.Message,
+                    "PewDF", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             finally
@@ -412,7 +412,7 @@ namespace KillerPDF
 
         private void BeginOcrRegion()
         {
-            if (_doc is null || _currentFile is null) { KillerDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
+            if (_doc is null || _currentFile is null) { PewDialog.Show(this, Loc("Str_Msg_OpenFirst")); return; }
             SetTool(EditTool.Select);
             _ocrRegionMode = true;
             SetStatus(Loc("Str_St_OcrDragBox"));

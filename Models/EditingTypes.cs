@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Media;
 
-namespace KillerPDF
+namespace PewDF
 {
-    public enum EditTool { Select, Text, FormField, Highlight, Strikethrough, Underline, Draw, Signature, Image, Crop, Line, Rotate, Shape, Measure }
+    public enum EditTool { Select, Text, FormField, Highlight, Strikethrough, Underline, Draw, TextMarker, Signature, Image, Crop, Line, Rotate, Shape, Measure }
 
     /// <summary>Sub-mode of the Shapes tool (#127 Phase 3): drag a rectangle or ellipse, or click
     /// out a free-form polygon vertex by vertex.</summary>
@@ -201,7 +201,7 @@ namespace KillerPDF
     /// </summary>
     /// <summary>Distinguishes a full signature from a (smaller) initials stamp. Default is Signature
     /// so signatures saved before this field existed still deserialize correctly.</summary>
-    public enum SignatureKind { Signature, Initials }
+    public enum SignatureKind { Signature, Initials, ImageStamp }
 
     public class SavedSignature
     {

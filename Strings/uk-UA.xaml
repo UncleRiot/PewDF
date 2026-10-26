@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================
-         KillerPDF  -  Українська (uk-UA)
+         PewDF  -  Українська (uk-UA)
          ================================================================ -->
 
     <!-- ── Toolbar tooltips ─────────────────────────────────────────── -->
@@ -48,7 +48,7 @@
     <sys:String x:Key="Str_TT_CollapseSidebar">Згорнути бічну панель (F9)</sys:String>
     <sys:String x:Key="Str_TT_ExpandSidebar">Розгорнути бічну панель (F9)</sys:String>
     <sys:String x:Key="Str_TT_KeyboardShortcuts">Комбінації клавіш (F1)</sys:String>
-    <sys:String x:Key="Str_TT_About">Про KillerPDF (F12)</sys:String>
+    <sys:String x:Key="Str_TT_About">Про PewDF (F12)</sys:String>
 
     <!-- ── About overlay ─────────────────────────────────────────────── -->
     <sys:String x:Key="Str_About_Version">ВЕРСІЯ</sys:String>
@@ -56,7 +56,7 @@
     <sys:String x:Key="Str_About_Thumbprint">ВІДБИТОК</sys:String>
     <sys:String x:Key="Str_About_ExeSha">SHA256 EXE</sys:String>
     <sys:String x:Key="Str_About_Computing">Обчислення...</sys:String>
-    <sys:String x:Key="Str_Tagline">Швидкий безкоштовний інструментарій PDF для Windows з анотаціями, об'єднанням, OCR, підписанням і формами. Утиліта з ліцензією GPLv3 від {0}.</sys:String>
+    <sys:String x:Key="Str_Tagline">Швидкий безкоштовний інструментарій PDF для Windows з анотаціями, об'єднанням, OCR, підписанням і формами. PewDF — форк KillerPDF.</sys:String>
 
     <!-- ── Sidebar tabs ──────────────────────────────────────────────── -->
     <sys:String x:Key="Str_TabPages">СТОРІНКИ</sys:String>
@@ -69,6 +69,7 @@
     <!-- ── Settings panel ───────────────────────────────────────────── -->
     <sys:String x:Key="Str_Theme">Тема</sys:String>
     <sys:String x:Key="Str_Language">Мова</sys:String>
+    <sys:String x:Key="Str_General">Загальні</sys:String>
     <sys:String x:Key="Str_Toolbar">ПАНЕЛЬ ІНСТРУМЕНТІВ</sys:String>
     <sys:String x:Key="Str_Toolbar_Header">Панель інструментів</sys:String>
     <sys:String x:Key="Str_Toolbar_TextNone">Без тексту</sys:String>
@@ -137,7 +138,6 @@
     <!-- ── Status bar ────────────────────────────────────────────────── -->
     <sys:String x:Key="Str_Ready">Готово</sys:String>
     <sys:String x:Key="Str_Portable">ПОРТАТИВНА</sys:String>
-    <sys:String x:Key="Str_InstallBtn">Установити KillerPDF</sys:String>
 
     <!-- ── Status messages (format strings - use string.Format) ─────── -->
     <sys:String x:Key="Str_Opened">Відкрито {0} - сторінок: {1}</sys:String>
@@ -212,37 +212,20 @@
 Якщо зберегти зараз, файл буде перезаписано, а ці зміни втрачено. Спершу збережіть іншу панель, якщо хочете їх зберегти.</sys:String>
     <sys:String x:Key="Str_St_SplitOn">Розділену панель увімкнено - F10, щоб закрити</sys:String>
     <sys:String x:Key="Str_St_SplitOff">Розділену панель вимкнено</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallTitle">Установлення KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallMsg" xml:space="preserve">Установити KillerPDF на цей комп'ютер?
 
-Установлення копіює програму до папки «Програми» для швидшого запуску та додає пункт у меню «Пуск». Після цього цей портативний файл можна залишити або видалити.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateMachineMsg" xml:space="preserve">Оновити наявну установку KillerPDF для всіх користувачів?
-
-Це замінить копію в Program Files швидшою версією з кількох файлів. Будь-яку старішу копію для окремого користувача буде видалено, щоб KillerPDF відображався лише один раз. Після цього цей портативний файл можна залишити або видалити.</sys:String>
-    <sys:String x:Key="Str_Dlg_UpdateUserMsg" xml:space="preserve">Оновити наявну установку KillerPDF?
-
-Це замінить установлену копію швидшою версією з кількох файлів. Після цього цей портативний файл можна залишити або видалити.</sys:String>
-    <sys:String x:Key="Str_Dlg_OneInstallOnly" xml:space="preserve">KillerPDF уже встановлено для всіх користувачів цього комп'ютера. Оновіть цю установку або видаліть її перед тим, як вибрати установку для окремого користувача.
-
-KillerPDF не створюватиме двох установлених копій.</sys:String>
-    <sys:String x:Key="Str_Btn_DoInstall">Установити</sys:String>
-    <sys:String x:Key="Str_Btn_DoUpdate">Оновити</sys:String>
-    <sys:String x:Key="Str_Chk_Desktop">Додати ярлик на робочий стіл</sys:String>
-    <sys:String x:Key="Str_Chk_AllUsers">Установити для всіх користувачів цього комп'ютера (потрібні права адміністратора)</sys:String>
-    <sys:String x:Key="Str_Status_InstallFailed">Установлення не завершено - KillerPDF і далі працює як портативна програма.</sys:String>
-    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Бажаєте зробити KillerPDF програмою перегляду PDF за промовчанням?
+    <sys:String x:Key="Str_Dlg_SetDefaultPdfMsg" xml:space="preserve">Бажаєте зробити PewDF програмою перегляду PDF за промовчанням?
 
 Відкриє «Параметри Windows» - «Програми за промовчанням».</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedClose">Є незбережені зміни. Закрити цей файл без збереження?</sys:String>
-    <sys:String x:Key="Str_Dlg_UnsavedExit">Є незбережені зміни. Закрити KillerPDF без збереження?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedClose">Зберегти зміни?</sys:String>
+    <sys:String x:Key="Str_Dlg_UnsavedExit">Зберегти зміни?</sys:String>
     <sys:String x:Key="Str_Dlg_PageOutOfRange" xml:space="preserve">У цьому документі є сторінки (кількість: {0}), розмір яких виходить за межі, що підтримує Adobe Reader (від 3 до 14 400 пунктів на сторону). Adobe показує їх як порожні.
 
 Змінити їх до підтримуваного розміру? Вигляд і пропорції сторінок збережуться.</sys:String>
     <sys:String x:Key="Str_Dlg_FailedOpen" xml:space="preserve">Не вдалося відкрити PDF:
 {0}</sys:String>
-    <sys:String x:Key="Str_Dlg_AppTitle">KillerPDF</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocs">Відкрито документів: {0}. Закрити їх усі, коли ви вийдете з KillerPDF?</sys:String>
-    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Відкрито 1 документ. Закрити його, коли ви вийдете з KillerPDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_AppTitle">PewDF</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocs">Відкрито документів: {0}. Закрити їх усі, коли ви вийдете з PewDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_CloseAllDocsOne">Відкрито 1 документ. Закрити його, коли ви вийдете з PewDF?</sys:String>
     <sys:String x:Key="Str_Dlg_RememberChoice">Запам'ятати мій вибір</sys:String>
 
 
@@ -257,7 +240,6 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Theme_Ectoplasm">Ектоплазма</sys:String>
     <sys:String x:Key="Str_Theme_Decay">Тлін</sys:String>
     <sys:String x:Key="Str_Theme_Mourning">Жалоба</sys:String>
-    <sys:String x:Key="Str_Theme_FilmGrain">Зернистість плівки</sys:String>
     <sys:String x:Key="Str_Theme_Sepulchre">Гробниця</sys:String>
     <sys:String x:Key="Str_Theme_Delirium">Марення</sys:String>
     <sys:String x:Key="Str_Theme_Malaise">Нездужання</sys:String>
@@ -354,7 +336,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Stamp_FontSize">Розмір шрифту (пт)</sys:String>
     <sys:String x:Key="Str_Stamp_Cancel">Скасувати</sys:String>
     <sys:String x:Key="Str_Stamp_Stamp">Проставити</sys:String>
-    <sys:String x:Key="Str_Stamp_Suffix">Штамп на сторінках</sys:String>
+    <sys:String x:Key="Str_Stamp_Suffix">Водяні знаки та номери сторінок</sys:String>
     <sys:String x:Key="Str_Stamp_SecNumbers">Номери сторінок</sys:String>
     <sys:String x:Key="Str_Stamp_SecWatermark">Водяний знак</sys:String>
     <sys:String x:Key="Str_Stamp_Color">Колір</sys:String>
@@ -368,8 +350,8 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Stamp_Opacity">Непрозорість</sys:String>
     <sys:String x:Key="Str_Stamp_Mirror">Віддзеркалювати на суміжних сторінках (зовнішній край)</sys:String>
     <sys:String x:Key="Str_Stamp_Applied">Штамп проставлено на сторінках: {0}</sys:String>
-    <sys:String x:Key="Str_TT_StampTool">Штамп на сторінках (S)</sys:String>
-    <sys:String x:Key="Str_Ctx_StampPages">Штамп на сторінках</sys:String>
+    <sys:String x:Key="Str_TT_StampTool">Водяні знаки та номери сторінок (S)</sys:String>
+    <sys:String x:Key="Str_Ctx_StampPages">Водяні знаки та номери сторінок</sys:String>
     <sys:String x:Key="Str_Pos_BottomCenter">Знизу по центру</sys:String>
     <sys:String x:Key="Str_Pos_BottomRight">Знизу праворуч</sys:String>
     <sys:String x:Key="Str_Pos_BottomLeft">Знизу ліворуч</sys:String>
@@ -378,7 +360,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Pos_TopLeft">Зверху ліворуч</sys:String>
 
     <!-- ── Print dialog ───────────────────────────────────────────────── -->
-    <sys:String x:Key="Str_Print_Title">KillerPDF - Друк</sys:String>
+    <sys:String x:Key="Str_Print_Title">PewDF - Друк</sys:String>
     <sys:String x:Key="Str_Print_Printer">Принтер</sys:String>
     <sys:String x:Key="Str_Print_Paper">Розмір паперу</sys:String>
     <sys:String x:Key="Str_Print_PaperAuto">Як у документі</sys:String>
@@ -437,7 +419,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Drop_Separate">Відкрити окремо</sys:String>
     <sys:String x:Key="Str_Drop_NothingOpenable">Не знайдено PDF чи зображень для відкриття.</sys:String>
     <sys:String x:Key="Str_Drop_ManyTabs">Буде відкрито окремих вкладок: {0}. Продовжити?</sys:String>
-    <sys:String x:Key="Str_Drop_TooMany">У цій папці або архіві файлів: {0}. KillerPDF відкриє лише перші {1}. Продовжити?</sys:String>
+    <sys:String x:Key="Str_Drop_TooMany">У цій папці або архіві файлів: {0}. PewDF відкриє лише перші {1}. Продовжити?</sys:String>
     <sys:String x:Key="Str_Status_Merged">Об'єднано файлів: {0} - ще не збережено</sys:String>
     <sys:String x:Key="Str_Drop_Merging">Об'єднання файлів...</sys:String>
     <sys:String x:Key="Str_Drop_MergeCanceled">Об'єднання скасовано</sys:String>
@@ -598,14 +580,14 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_KS_FullScreen">На весь екран</sys:String>
     <sys:String x:Key="Str_FullScreen_Hint">Натисніть F11 або Esc, щоб вийти з повноекранного режиму</sys:String>
     <!-- Quit prompt (family standard) -->
-    <sys:String x:Key="Str_Dlg_QuitMsg">Вийти з KillerPDF?</sys:String>
+    <sys:String x:Key="Str_Dlg_QuitMsg">Вийти з PewDF?</sys:String>
     <sys:String x:Key="Str_Chk_CloseTabs">Закрити мої відкриті вкладки</sys:String>
     <sys:String x:Key="Str_Btn_Quit">Вийти</sys:String>
     <sys:String x:Key="Str_Btn_CancelDlg">Скасувати</sys:String>
 
 
     <!-- Status-bar messages (extracted from code) -->
-    <sys:String x:Key="Str_St_DataCleared">Усі дані KillerPDF очищено</sys:String>
+    <sys:String x:Key="Str_St_DataCleared">Усі дані PewDF очищено</sys:String>
     <sys:String x:Key="Str_St_OcrRegionCanceled">OCR області скасовано</sys:String>
     <sys:String x:Key="Str_St_Erased">Стерто</sys:String>
     <sys:String x:Key="Str_St_Ungrouped">Розгруповано</sys:String>
@@ -653,8 +635,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_St_ClipEmpty">У буфері обміну немає що вставляти</sys:String>
 
     <!-- Dialog / message-box strings (extracted from code) -->
-    <sys:String x:Key="Str_Dlg_SaveBeforeUpdate">Збережіть зміни перед оновленням.</sys:String>
-    <sys:String x:Key="Str_Dlg_Uninstalled">KillerPDF видалено.</sys:String>
+
     <sys:String x:Key="Str_Dlg_SelectExtract">Виберіть сторінки для видобування.</sys:String>
     <sys:String x:Key="Str_Dlg_SelectDelete">Виберіть сторінки для видалення.</sys:String>
     <sys:String x:Key="Str_Dlg_NoPrinter">Немає доступного принтера.</sys:String>
@@ -740,6 +721,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Btn_Open">Відкрити</sys:String>
     <sys:String x:Key="Str_Btn_Replace">Замінити</sys:String>
     <sys:String x:Key="Str_Btn_Save">Зберегти</sys:String>
+    <sys:String x:Key="Str_Btn_DontSave">Не зберігати</sys:String>
     <sys:String x:Key="Str_Col_Modified">змінено</sys:String>
     <sys:String x:Key="Str_Col_Name">назва</sys:String>
     <sys:String x:Key="Str_Col_Size">розмір</sys:String>
@@ -798,7 +780,6 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Dlg_SaveFlattened">Зберегти зведений PDF</sys:String>
     <sys:String x:Key="Str_Dlg_SaveExtractedAs">Зберегти видобуті сторінки як</sys:String>
     <sys:String x:Key="Str_Dlg_InsertImage">Вставити зображення</sys:String>
-    <sys:String x:Key="Str_Dlg_InstallShortcut">Створити ярлик на робочому столі</sys:String>
     <sys:String x:Key="Str_Stamp_DefaultText">ЧЕРНЕТКА</sys:String>
     <sys:String x:Key="Str_Sign_NeedCertFile">Спершу виберіть файл сертифіката (.pfx / .p12).</sys:String>
     <sys:String x:Key="Str_Sign_NoStoreCert">У сховищі Windows немає доступного сертифіката підписання.</sys:String>
@@ -921,7 +902,7 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Dlg_SearchableSaved" xml:space="preserve">PDF з пошуком збережено:&#10;{0}&#10;&#10;Оброблено сторінок: {1}, розпізнано слів: {2}.</sys:String>
     <sys:String x:Key="Str_Dlg_Repaired" xml:space="preserve">«{0}» успішно відновлено.&#10;&#10;Закладки, форми та інші інтерактивні функції могли бути втрачені. Скористайтеся «Зберегти як», щоб записати відновлений файл в інше місце.</sys:String>
     <sys:String x:Key="Str_Dlg_RepairedRaster" xml:space="preserve">«{0}» відновлено растеризацією через PDFium.&#10;&#10;У відновленій копії текст не виділяється. Скористайтеся «Зберегти як», щоб записати її в інше місце.</sys:String>
-    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">«{0}» має пошкоджену структуру й не може бути доданий.&#10;&#10;Спробувати відновити його в KillerPDF? Буде створено відновлену копію. Оригінальний файл не зміниться.&#10;&#10;Примітка: у відновлених файлах можуть бути відсутні закладки, форми та інші інтерактивні функції.</sys:String>
+    <sys:String x:Key="Str_Dlg_RepairAsk" xml:space="preserve">«{0}» має пошкоджену структуру й не може бути доданий.&#10;&#10;Спробувати відновити його в PewDF? Буде створено відновлену копію. Оригінальний файл не зміниться.&#10;&#10;Примітка: у відновлених файлах можуть бути відсутні закладки, форми та інші інтерактивні функції.</sys:String>
     <sys:String x:Key="Str_Dlg_LangDownloadAsk" xml:space="preserve">Зараз буде завантажено мовну модель ({0}), щоб можна було запустити OCR.&#10;&#10;Додати більше мов або перейти на моделі вищої якості можна будь-коли в меню OCR.</sys:String>
     <sys:String x:Key="Str_Bar_More">Більше параметрів</sys:String>
     <sys:String x:Key="Str_Bar_TT_Level">Утримувати лінію на найближчій осі (горизонтальній або вертикальній)</sys:String>
@@ -935,14 +916,14 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_TT_SaveOptions">Параметри збереження</sys:String>
     <sys:String x:Key="Str_TT_OcrOptions">Параметри OCR</sys:String>
     <sys:String x:Key="Str_RecentHeading">НЕЩОДАВНІ</sys:String>
-    <sys:String x:Key="Str_KS_WindowTitle">KillerPDF - Комбінації клавіш</sys:String>
-    <sys:String x:Key="Str_UpdateAvailable">Доступне оновлення: {0}</sys:String>
-    <sys:String x:Key="Str_UpdatePrompt" xml:space="preserve">Завантажити та встановити KillerPDF {0}?&#10;&#10;Програма закриється та відкриється знову автоматично.</sys:String>
-    <sys:String x:Key="Str_UpdateDownloading">Завантаження...</sys:String>
+    <sys:String x:Key="Str_KS_WindowTitle">PewDF - Комбінації клавіш</sys:String>
+
+
+
     <sys:String x:Key="Str_ClearAllData">Очистити всі дані</sys:String>
     <sys:String x:Key="Str_ClearDataConfirm" xml:space="preserve">Буде видалено всі збережені параметри, завантажені мовні пакети OCR і тимчасові файли.&#10;&#10;Ваші файли PDF не постраждають. Продовжити?</sys:String>
-    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Параметри, мовні пакети й тимчасові файли очищено.&#10;&#10;Перезапустіть KillerPDF, щоб завершити очищення файлів, які ще використовуються в цьому сеансі.</sys:String>
-    <sys:String x:Key="Str_Crash_Title">KillerPDF - Неочікувана помилка</sys:String>
+    <sys:String x:Key="Str_ClearDataDone" xml:space="preserve">Параметри, мовні пакети й тимчасові файли очищено.&#10;&#10;Перезапустіть PewDF, щоб завершити очищення файлів, які ще використовуються в цьому сеансі.</sys:String>
+    <sys:String x:Key="Str_Crash_Title">PewDF - Неочікувана помилка</sys:String>
     <sys:String x:Key="Str_Crash_Log">Журнал: {0}</sys:String>
     <sys:String x:Key="Str_Crash_Copy">Копіювати звіт</sys:String>
     <sys:String x:Key="Str_Crash_OpenLogs">Відкрити журнали</sys:String>
@@ -1002,17 +983,6 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Compare_DetailsTitle">Подробиці порівняння PDF</sys:String>
 
     <!-- ── Browser handoff refusals ────────────────────────────────────── -->
-    <sys:String x:Key="Str_Handoff_Failed">KillerPDF не зміг відкрити PDF із браузера.</sys:String>
-    <sys:String x:Key="Str_Handoff_UnknownCommand">KillerPDF не знає цієї команди браузера.</sys:String>
-    <sys:String x:Key="Str_Handoff_MissingUrl">Передача не містила адреси PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_MalformedUrl">Не вдалося прочитати адресу PDF у переданих даних.</sys:String>
-    <sys:String x:Key="Str_Handoff_SchemeNotAllowed">KillerPDF відкриває передачі з браузера лише через https.</sys:String>
-    <sys:String x:Key="Str_Handoff_Unusable">Передачу з браузера не вдалося використати.</sys:String>
-    <sys:String x:Key="Str_Handoff_TooLarge">PDF перевищує обмеження передачі з браузера в 256 МБ.</sys:String>
-    <sys:String x:Key="Str_Handoff_NotPdf">Завантажений файл не є PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_DownloadFailed">KillerPDF не зміг завантажити PDF.</sys:String>
-    <sys:String x:Key="Str_Handoff_TimedOut">Час завантаження PDF вичерпано.</sys:String>
-    <sys:String x:Key="Str_Handoff_FileError">KillerPDF не зміг зберегти або прочитати завантажений PDF.</sys:String>
     <sys:String x:Key="Str_St_FormFieldDrag">Перетягніть, щоб створити текстове поле для заповнення</sys:String>
     <sys:String x:Key="Str_St_FormFieldCanceled">Створення текстового поля для заповнення скасовано</sys:String>
     <sys:String x:Key="Str_St_FormFieldCreateFailed">Не вдалося створити текстове поле для заповнення</sys:String>
@@ -1035,7 +1005,6 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_Form_Initial">Ініціали</sys:String>
     <sys:String x:Key="Str_Compare_PreviousRegion">Попередня змінена область</sys:String>
     <sys:String x:Key="Str_Compare_NextRegion">Наступна змінена область</sys:String>
-    <sys:String x:Key="Str_Portable_InstallTip">Портативний режим - отримати встановлену версію</sys:String>
     <sys:String x:Key="Str_Print_PreviewFailed">Не вдалося відобразити попередній перегляд:&#10;{0}</sys:String>
     <sys:String x:Key="Str_Print_PreparingToPrint">Підготовка до друку...</sys:String>
     <sys:String x:Key="Str_Link_GoToPage">Перейти до сторінки {0}</sys:String>
@@ -1046,10 +1015,28 @@ KillerPDF не створюватиме двох установлених коп
     <sys:String x:Key="Str_KS_ToggleTip">Увімкнути або вимкнути всі комбінації клавіш програми. Ctrl+Shift+K працює завжди.</sys:String>
     <sys:String x:Key="Str_KS_EnabledStatus">Комбінації клавіш увімкнено</sys:String>
     <sys:String x:Key="Str_KS_DisabledStatus">Комбінації клавіш вимкнено. Натисніть Ctrl+Shift+K, щоб увімкнути їх.</sys:String>
-    <sys:String x:Key="Str_StartupUpdateCheck">Перевіряти оновлення під час запуску</sys:String>
-    <sys:String x:Key="Str_StartupUpdatePrompt" xml:space="preserve">Доступний KillerPDF {0}. Завантажити та встановити зараз?&#10;&#10;Програма закриється та відкриється знову автоматично.</sys:String>
-    <sys:String x:Key="Str_AlwaysCheckOnStartup">Завжди перевіряти під час запуску</sys:String>
+
+
+
     <sys:String x:Key="Str_PasswordProtected">«{0}» захищено паролем.</sys:String>
     <sys:String x:Key="Str_About_Aka">AKA</sys:String>
     <sys:String x:Key="Str_Btn_Run">Виконати</sys:String>
+    <sys:String x:Key="Str_Settings">Налаштування</sys:String>
+    <sys:String x:Key="Str_Ribbon_About">Про програму</sys:String>
+    <sys:String x:Key="Str_Ribbon_Markieren">Позначити</sys:String>
+    <sys:String x:Key="Str_Ribbon_Textmarker">Маркер</sys:String>
+    <sys:String x:Key="Str_About_KillerPdfBase">Базова версія KillerPDF</sys:String>
+    <sys:String x:Key="Str_About_Support">Підтримати PewDF</sys:String>
+    <sys:String x:Key="Str_Lbl_ImageStamp">Image stamps</sys:String>
+    <sys:String x:Key="Str_TT_ImageStamp">Import and place reusable image stamps</sys:String>
+    <sys:String x:Key="Str_Ribbon_Extrahieren">Розділити</sys:String>
+    <sys:String x:Key="Str_SetDefaultPdfAction">Зробити стандартною програмою для PDF</sys:String>
+    <sys:String x:Key="Str_DebugLoggingAction">Увімкнути журнал налагодження</sys:String>
+    <sys:String x:Key="Str_ResetSettingsAction">Скинути налаштування</sys:String>
+    <sys:String x:Key="Str_OpenConfigFolderAction">Відкрити папку конфігурації</sys:String>
+    <sys:String x:Key="Str_ResetSettingsConfirm">Скинути всі налаштування?</sys:String>
+    <sys:String x:Key="Str_ResetSettingsRestart">Налаштування скинуто. Перезапустіть PewDF для застосування змін.</sys:String>
+    <sys:String x:Key="Str_DontAskAgain">Більше не запитувати</sys:String>
+    <sys:String x:Key="Str_AnswerYes">Так</sys:String>
+    <sys:String x:Key="Str_AnswerNo">Ні</sys:String>
 </ResourceDictionary>

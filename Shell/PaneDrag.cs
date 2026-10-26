@@ -2,9 +2,9 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using KillerPDF.Controls;
+using PewDF.Controls;
 
-namespace KillerPDF
+namespace PewDF
 {
     /// <summary>
     /// Moving a document tab from one pane to the other. Partial of MainWindow.

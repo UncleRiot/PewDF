@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF.Controls
+namespace PewDF.Controls
 {
     /// <summary>
     /// The viewer's outward surface: what the window still calls into.
@@ -207,6 +207,9 @@ namespace KillerPDF.Controls
         internal Point DrawStartRef { get => _drawStart; set => _drawStart = value; }
         internal UIElement? ActivePreviewRef { get => _activePreview; set => _activePreview = value; }
         internal System.Windows.Shapes.Rectangle? CropPreviewRectRef { get => _cropPreviewRect; set => _cropPreviewRect = value; }
+        // SEMANTIC ANCHOR: CROP_PANE_OWNER_CONTRACT: The viewer owns crop state and
+        // notifies the shell of visual creation/removal; the shell alone owns the pane.
+        internal Action<Border?>? CropPaneChanged { get; set; }
         internal Border? CropConfirmBarRef { get => _cropConfirmBar; set => _cropConfirmBar = value; }
         internal PageAnnotation? SelectedAnnotationRef { get => _selectedAnnotation; set => _selectedAnnotation = value; }
         internal Border? SelectionBorderRef { get => _selectionBorder; set => _selectionBorder = value; }

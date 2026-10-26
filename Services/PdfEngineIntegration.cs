@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,9 +14,9 @@ using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingGraphics = System.Drawing.Graphics;
 using DrawingImage = System.Drawing.Image;
 
-namespace KillerPDF.Services;
+namespace PewDF.Services;
 
-/// <summary>Bridges completed application state into The KillerPDF.Engine during migration.</summary>
+/// <summary>Bridges completed application state into The PewDF.Engine during migration.</summary>
 internal static class PdfEngineIntegration
 {
     internal sealed record FormEdits(
@@ -1267,7 +1267,10 @@ internal static class PdfEngineIntegration
             throw new ArgumentOutOfRangeException(nameof(insertionIndex));
         foreach (ImportedDocument import in sources)
         {
-            PdfDocument source = PdfDocument.Open(File.ReadAllBytes(import.Path));
+            PdfDocument source = NormalizeImportMetadataProperties(
+                RemoveInvalidImportThumbnails(
+                    NormalizeImportPieceInfoDates(
+                        PdfDocument.Open(File.ReadAllBytes(import.Path)))));
             int count = new PdfIncrementalPageEditor(source).PageCount;
             if (import.PageRotations.Count != count)
                 throw new ArgumentException(
@@ -1278,6 +1281,262 @@ internal static class PdfEngineIntegration
             offset += count;
         }
         ReplaceWithBuiltResult(path, editor.Build());
+    }
+
+    // Semantic anchor: IMPORT_RESOURCE_PROPERTY_COMPATIBILITY_INVARIANT
+    // SSOT: engine validation remains authoritative for optional-content properties.
+    // A /Resources/Properties entry carrying /Type /Metadata is metadata, not an
+    // optional-content OCG/OCMD. Drop only this misleading /Type key from an
+    // indirect property dictionary in an in-memory revision; retain its content,
+    // metadata reference and every page stream. Never modify the original PDF.
+    private static PdfDocument NormalizeImportMetadataProperties(PdfDocument source)
+    {
+        var root = new PdfName("Root"u8);
+        var pages = new PdfName("Pages"u8);
+        var kids = new PdfName("Kids"u8);
+        var resources = new PdfName("Resources"u8);
+        var xobjects = new PdfName("XObject"u8);
+        var properties = new PdfName("Properties"u8);
+        var type = new PdfName("Type"u8);
+        var metadata = new PdfName("Metadata"u8);
+        var visited = new HashSet<(int, int)>();
+        PdfIncrementalUpdateBuilder? update = null;
+
+        PdfObject Resolve(PdfObject value)
+        {
+            var chain = new HashSet<(int, int)>();
+            while (value is PdfIndirectReference reference)
+            {
+                if (!chain.Add((reference.ObjectNumber, reference.Generation)) || chain.Count > 32)
+                    throw new InvalidOperationException("Cyclic imported PDF object references.");
+                value = source.Resolve(reference);
+            }
+            return value;
+        }
+
+        void InspectResources(PdfObject value, int depth)
+        {
+            if (depth > 128) throw new InvalidOperationException("PDF resource nesting is too deep.");
+            if (value is PdfIndirectReference reference
+                && !visited.Add((reference.ObjectNumber, reference.Generation))) return;
+            if (Resolve(value) is not PdfDictionary dictionary) return;
+            if (dictionary.TryGetValue(properties, out PdfObject? propertyValue)
+                && Resolve(propertyValue) is PdfDictionary propertyList)
+            {
+                foreach (var entry in propertyList)
+                {
+                    if (entry.Value is not PdfIndirectReference propertyReference
+                        || Resolve(entry.Value) is not PdfDictionary property
+                        || !property.TryGetValue(type, out PdfObject? rawType)
+                        || Resolve(rawType) is not PdfName typeName
+                        || typeName.ValueAsLatin1() != "Metadata"
+                        || !property.TryGetValue(metadata, out PdfObject? rawMetadata)
+                        || Resolve(rawMetadata) is not PdfStream)
+                        continue;
+                    update ??= new PdfIncrementalUpdateBuilder(source);
+                    update.ReplaceObject(propertyReference.ObjectNumber,
+                        new PdfDictionary(property.Where(item => !item.Key.Equals(type))));
+                }
+            }
+            if (dictionary.TryGetValue(xobjects, out PdfObject? xobjectValue)
+                && Resolve(xobjectValue) is PdfDictionary objects)
+            {
+                foreach (var item in objects)
+                {
+                    PdfObject resolved = Resolve(item.Value);
+                    if (resolved is PdfStream stream
+                        && stream.Dictionary.TryGetValue(resources, out PdfObject? nested))
+                        InspectResources(nested, depth + 1);
+                }
+            }
+        }
+
+        void InspectPages(PdfObject value, int depth)
+        {
+            if (depth > 128) throw new InvalidOperationException("PDF page tree is too deep.");
+            if (Resolve(value) is not PdfDictionary node) return;
+            if (node.TryGetValue(resources, out PdfObject? pageResources))
+                InspectResources(pageResources, 0);
+            if (node.TryGetValue(kids, out PdfObject? children)
+                && Resolve(children) is PdfArray array)
+                foreach (PdfObject child in array) InspectPages(child, depth + 1);
+        }
+
+        if (!source.Trailer.TryGetValue(root, out PdfObject? rootValue)
+            || Resolve(rootValue) is not PdfDictionary catalog
+            || !catalog.TryGetValue(pages, out PdfObject? pageTree))
+            throw new InvalidOperationException("The imported PDF page catalog is invalid.");
+        InspectPages(pageTree, 0);
+        return update is null ? source : PdfDocument.Open(update.Build());
+    }
+
+    // Semantic anchor: IMPORT_PIECEINFO_DATE_COMPATIBILITY_INVARIANT
+    // SSOT: the engine remains responsible for validating imported PDF dates.
+    // Normalize only UTF-16BE BOM-encoded ASCII PDF dates in page /PieceInfo metadata;
+    // leave all other values untouched so malformed inputs still fail engine validation.
+    // Use an in-memory incremental revision; never alter the user's source file.
+    private static PdfDocument NormalizeImportPieceInfoDates(PdfDocument source)
+    {
+        var rootName = new PdfName("Root"u8);
+        var pagesName = new PdfName("Pages"u8);
+        var kidsName = new PdfName("Kids"u8);
+        var pieceInfoName = new PdfName("PieceInfo"u8);
+        var modifiedName = new PdfName("LastModified"u8);
+        PdfIncrementalUpdateBuilder? update = null;
+
+        PdfObject Resolve(PdfObject value)
+        {
+            var visited = new HashSet<(int, int)>();
+            while (value is PdfIndirectReference reference)
+            {
+                if (!visited.Add((reference.ObjectNumber, reference.Generation)) || visited.Count > 32)
+                    throw new InvalidOperationException("A PDF object has a cyclic reference chain.");
+                value = source.Resolve(reference);
+            }
+            return value;
+        }
+
+        static PdfString? Normalize(PdfObject value)
+        {
+            if (value is not PdfString date) return null;
+            ReadOnlySpan<byte> bytes = date.Bytes.Span;
+            if (bytes.Length < 14 || (bytes.Length & 1) != 0
+                || bytes[0] != 0xFE || bytes[1] != 0xFF) return null;
+            var ascii = new byte[(bytes.Length - 2) / 2];
+            for (int index = 0; index < ascii.Length; index++)
+            {
+                if (bytes[2 + index * 2] != 0 || bytes[3 + index * 2] > 0x7F)
+                    return null;
+                ascii[index] = bytes[3 + index * 2];
+            }
+            if (ascii.Length < 6 || ascii[0] != (byte)'D' || ascii[1] != (byte)':')
+                return null;
+            return new PdfString(ascii, date.Form);
+        }
+
+        void Visit(PdfObject value, int depth)
+        {
+            if (depth > 128)
+                throw new InvalidOperationException("The imported PDF page tree is too deep.");
+            if (Resolve(value) is not PdfDictionary node)
+                throw new InvalidOperationException("An imported PDF page tree node is not a dictionary.");
+            if (node.TryGetValue(kidsName, out PdfObject? kidsValue))
+            {
+                if (Resolve(kidsValue) is not PdfArray kids)
+                    throw new InvalidOperationException("An imported PDF page tree /Kids entry is invalid.");
+                foreach (PdfObject child in kids)
+                    Visit(child, depth + 1);
+                return;
+            }
+            if (!node.TryGetValue(pieceInfoName, out PdfObject? pieceValue)
+                || Resolve(pieceValue) is not PdfDictionary pieceInfo)
+                return;
+
+            var applications = new List<KeyValuePair<PdfName, PdfObject>>();
+            bool changed = false;
+            foreach (var application in pieceInfo)
+            {
+                if (Resolve(application.Value) is not PdfDictionary details
+                    || !details.TryGetValue(modifiedName, out PdfObject? rawDate))
+                {
+                    applications.Add(application);
+                    continue;
+                }
+                PdfString? normalized = Normalize(Resolve(rawDate));
+                if (normalized is null)
+                {
+                    applications.Add(application);
+                    continue;
+                }
+                applications.Add(new KeyValuePair<PdfName, PdfObject>(application.Key,
+                    new PdfDictionary(details.Select(entry => entry.Key.Equals(modifiedName)
+                        ? new KeyValuePair<PdfName, PdfObject>(entry.Key, normalized)
+                        : entry))));
+                changed = true;
+            }
+            if (!changed) return;
+            if (value is not PdfIndirectReference pageReference)
+                throw new InvalidOperationException("An imported PDF page must have an indirect reference.");
+            update ??= new PdfIncrementalUpdateBuilder(source);
+            var replacement = new PdfDictionary(node.Select(entry => entry.Key.Equals(pieceInfoName)
+                ? new KeyValuePair<PdfName, PdfObject>(entry.Key, new PdfDictionary(applications))
+                : entry));
+            update.ReplaceObject(pageReference.ObjectNumber, replacement);
+        }
+
+        if (!source.Trailer.TryGetValue(rootName, out PdfObject? root)
+            || Resolve(root) is not PdfDictionary catalog
+            || !catalog.TryGetValue(pagesName, out PdfObject? pages))
+            throw new InvalidOperationException("The imported PDF page catalog is invalid.");
+        Visit(pages, 0);
+        return update is null ? source : PdfDocument.Open(update.Build());
+    }
+
+    // Semantic anchor: IMPORT_THUMBNAIL_COMPATIBILITY_INVARIANT
+    // SSOT: the engine page editor is the only writer; do not rewrite or rasterize page content.
+    // Only malformed /Thumb references are removed from an in-memory import copy.
+    // The source PDF on disk and valid thumbnail streams must remain untouched.
+    private static PdfDocument RemoveInvalidImportThumbnails(PdfDocument source)
+    {
+        var rootName = new PdfName("Root"u8);
+        var pagesName = new PdfName("Pages"u8);
+        var kidsName = new PdfName("Kids"u8);
+        var thumbName = new PdfName("Thumb"u8);
+        var subtypeName = new PdfName("Subtype"u8);
+        var invalidPages = new List<int>();
+        int pageIndex = 0;
+
+        PdfObject Resolve(PdfObject value)
+        {
+            var visited = new HashSet<(int, int)>();
+            while (value is PdfIndirectReference reference)
+            {
+                if (!visited.Add((reference.ObjectNumber, reference.Generation)) || visited.Count > 32)
+                    throw new InvalidOperationException("A PDF object has a cyclic reference chain.");
+                value = source.Resolve(reference);
+            }
+            return value;
+        }
+
+        void Visit(PdfObject value, int depth)
+        {
+            if (depth > 128)
+                throw new InvalidOperationException("The imported PDF page tree is too deep.");
+            if (Resolve(value) is not PdfDictionary node)
+                throw new InvalidOperationException("An imported PDF page tree node is not a dictionary.");
+            if (node.TryGetValue(kidsName, out PdfObject? kidsValue))
+            {
+                if (Resolve(kidsValue) is not PdfArray kids)
+                    throw new InvalidOperationException("An imported PDF page tree /Kids entry is invalid.");
+                foreach (PdfObject child in kids)
+                    Visit(child, depth + 1);
+                return;
+            }
+            if (node.TryGetValue(thumbName, out PdfObject? thumbnail))
+            {
+                PdfObject resolved = Resolve(thumbnail);
+                bool valid = resolved is PdfStream stream
+                    && stream.Dictionary.TryGetValue(subtypeName, out PdfObject? subtype)
+                    && Resolve(subtype) is PdfName name && name.ValueAsLatin1() == "Image";
+                if (!valid)
+                    invalidPages.Add(pageIndex);
+            }
+            pageIndex++;
+        }
+
+        if (!source.Trailer.TryGetValue(rootName, out PdfObject? root)
+            || Resolve(root) is not PdfDictionary catalog
+            || !catalog.TryGetValue(pagesName, out PdfObject? pages))
+            throw new InvalidOperationException("The imported PDF page catalog is invalid.");
+        Visit(pages, 0);
+        if (invalidPages.Count == 0) return source;
+
+        var editor = new PdfIncrementalPageEditor(source);
+        if (pageIndex != editor.PageCount)
+            throw new InvalidOperationException("The imported PDF page count changed during thumbnail inspection.");
+        foreach (int index in invalidPages)
+            editor.ClearPageThumbnail(index);
+        return PdfDocument.Open(editor.Build());
     }
 
     /// <summary>Appends imported page rotations to the application rotation map.</summary>
@@ -1323,6 +1582,9 @@ internal static class PdfEngineIntegration
     /// <summary>Replaces a destination with a finished file in one step. The finished bytes are
     /// first copied beside the destination so the final swap stays on one volume, which leaves
     /// the previous destination intact when the write fails partway.</summary>
+    // OUTPUT_COMMIT_INVARIANT: the destination is never written in place. Failure to stage
+    // or replace a finished file must leave the previous destination bytes untouched.
+    // SSOT: all finished PDF and image outputs commit through this helper.
     internal static void ReplaceFileAtomically(string finishedPath, string destinationPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(finishedPath);
@@ -1332,29 +1594,44 @@ internal static class PdfEngineIntegration
             $".{Path.GetFileName(destinationPath)}.{Guid.NewGuid():N}.tmp");
         try
         {
-            try
-            {
-                File.Copy(finishedPath, temporaryPath, overwrite: false);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // The folder allows changing the existing file but not creating one beside it.
-                File.Copy(finishedPath, destinationPath, overwrite: true);
-                return;
-            }
+            // Never fall back to direct File.Copy(overwrite: true): a failed copy can corrupt
+            // an existing destination. If the directory disallows staging, report the error.
+            File.Copy(finishedPath, temporaryPath, overwrite: false);
             if (File.Exists(destinationPath))
             {
-                // Replace keeps the destination's permissions, creation time, and streams. Some
-                // file systems and network shares do not support it, so fall back to a rename.
                 try
                 {
                     File.Replace(temporaryPath, destinationPath, null, ignoreMetadataErrors: true);
                     return;
                 }
-                catch (IOException) { }
+                catch (IOException) { } // Atomic same-volume rename may be supported instead.
                 catch (PlatformNotSupportedException) { }
             }
             File.Move(temporaryPath, destinationPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+        }
+    }
+
+    // OUTPUT_COMMIT_INVARIANT: a byte-array export is staged through the same centralized
+    // save mechanism; no partially written final PDF/image can be exposed.
+    internal static void WriteFinishedBytesAtomically(byte[] bytes, string destinationPath)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationPath);
+        string directory = Path.GetDirectoryName(Path.GetFullPath(destinationPath))!;
+        string temporaryPath = Path.Combine(directory,
+            $".{Path.GetFileName(destinationPath)}.{Guid.NewGuid():N}.tmp");
+        try
+        {
+            using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            {
+                stream.Write(bytes);
+                stream.Flush(flushToDisk: true);
+            }
+            ReplaceFileAtomically(temporaryPath, destinationPath);
         }
         finally
         {

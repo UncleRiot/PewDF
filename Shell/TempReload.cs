@@ -13,10 +13,10 @@ using System.Windows.Shapes;
 using Docnet.Core;
 using Docnet.Core.Models;
 using Microsoft.Win32;
-using KillerPDF.Services;
+using PewDF.Services;
 using PdfPigDoc = UglyToad.PdfPig.PdfDocument;
 
-namespace KillerPDF
+namespace PewDF
 {
     public partial class MainWindow
     {
@@ -97,7 +97,7 @@ namespace KillerPDF
             }
 
             // Structural operations can finalize the freshly serialized working file through
-            // KillerPDF.Engine before PdfSharpCore reopens it. The callback owns atomic replacement
+            // PewDF.Engine before PdfSharpCore reopens it. The callback owns atomic replacement
             // of tempPath and runs only after the base save or repair path has completed.
             finalizeSavedFile?.Invoke(tempPath);
 

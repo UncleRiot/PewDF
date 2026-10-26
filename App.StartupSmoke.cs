@@ -1,16 +1,16 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
-using KillerPDF.Services;
+using PewDF.Services;
 
-namespace KillerPDF;
+namespace PewDF;
 
 public partial class App
 {
     internal static bool IsStartupSmoke { get; } = Environment.GetCommandLineArgs()
         .Skip(1).Any(a => string.Equals(a, "--startup-smoke", StringComparison.OrdinalIgnoreCase));
     internal static string SmokeDataRoot { get; } = Path.Combine(
-        Path.GetTempPath(), "KillerPDF-startup-smoke-" + Guid.NewGuid().ToString("N"));
+        Path.GetTempPath(), "PewDF-startup-smoke-" + Guid.NewGuid().ToString("N"));
     private static readonly Dictionary<string, string> SmokeSettings = new(StringComparer.Ordinal);
 
     // Separate from normal startup: no mutex, pipe server, registration, cleanup of user
@@ -19,7 +19,7 @@ public partial class App
     {
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         AppDataPaths.StartupSmokeRoot = SmokeDataRoot;
-        string? report = Environment.GetEnvironmentVariable("KILLERPDF_SMOKE_REPORT");
+        string? report = Environment.GetEnvironmentVariable("PEWDF_SMOKE_REPORT");
         string phase = "arguments";
         int finished = 0;
         System.Threading.Timer? watchdog = null;
@@ -27,7 +27,7 @@ public partial class App
         void Record(string message)
         {
             if (string.IsNullOrWhiteSpace(report))
-                throw new InvalidOperationException("KILLERPDF_SMOKE_REPORT is required.");
+                throw new InvalidOperationException("PEWDF_SMOKE_REPORT is required.");
             File.AppendAllText(report, message + Environment.NewLine);
         }
 
@@ -89,7 +89,6 @@ public partial class App
             base.OnStartup(e);
             phase = "theme and locale";
             ThemeManager.Initialize();
-            FilmGrain.Initialize();
             LocaleManager.Initialize();
             phase = "MainWindow constructor";
             var window = new MainWindow
