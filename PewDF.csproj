@@ -2,7 +2,7 @@
 
   <PropertyGroup>   
     <OutputType>WinExe</OutputType>
-    <!-- SEMANTIC ANCHOR: PEWDF_ASSEMBLY_IDENTITY_SSOT. App binary only; engine project keeps its identity. -->
+    <!-- SEMANTIC ANCHOR: PEWDF_ASSEMBLY_IDENTITY_SSOT. Awepp binary only; engine project keeps its identity. -->
     <AssemblyName>PewDF</AssemblyName>
     <Product>PewDF</Product>
     <Title>PewDF</Title>

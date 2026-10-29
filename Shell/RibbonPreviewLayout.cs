@@ -1,4 +1,4 @@
-// SEMANTIC ANCHOR: Ribbon-Test overflow is deterministic and single-row. Preserve existing buttons,
+﻿// SEMANTIC ANCHOR: Ribbon-Test overflow is deterministic and single-row. Preserve existing buttons,
 // routed Click handlers and group ordering. All captions use the fixed bottom row in MainWindow.xaml.
 // Measure original widths once, use actual host width for the right-to-left overflow, and never
 // change element parents or mutate layout during LayoutUpdated. Overflow icons mirror source glyphs;
@@ -114,7 +114,9 @@ namespace PewDF
             _previewInsertionAdorner.X = Math.Clamp(x, 2, Math.Max(2, panel.ActualWidth - 2));
             _previewInsertionAdorner.InvalidateVisual();
         }
-        private static string PreviewLayoutFile => Path.Combine(
+        // SEMANTIC ANCHOR: HOME_RIBBON_LAYOUT_FILE_SSOT
+        // Shared path for ribbon save/load, ribbon-only reset, and application preference reset.
+        internal static string PreviewLayoutFile => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "PewDF", "home-ribbon-layout.json");
         private static readonly string[] PreviewGroupNames = { "File", "Edit", "Draw", "Pages", "Document", "Forms" };

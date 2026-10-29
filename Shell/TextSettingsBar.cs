@@ -231,7 +231,7 @@ namespace PewDF
         // across tools instead of introducing tool-specific width overrides.
         // Expand/collapse and normal-window resizing must use this same value;
         // maximized/fullscreen windows keep their outer dimensions unchanged.
-        private const double TextSidebarToolsWidth = 350;
+        private const double TextSidebarToolsWidth = 320;
         private const double TextSidebarRailWidth = 24;
         // SEMANTIC ANCHOR: TOOL_PANE_SSOT: Both text and annotation tools share this column, width, toggle, and resize policy. Never resize independently for a tool switch.
         private bool _textSidebarChangingWidth;

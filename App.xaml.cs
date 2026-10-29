@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -786,6 +786,12 @@ namespace PewDF
         internal static void ResetPreferences()
         {
             if (IsStartupSmoke) { SmokeSettings.Clear(); return; }
+            // SEMANTIC ANCHOR: SETTINGS_RESET_RIBBON_LAYOUT_INVARIANT
+            // User-customized ribbon arrangement is a preference, not user content.
+            // Reset must remove its override using the same path as ribbon save/load (SSOT).
+            try { File.Delete(global::PewDF.MainWindow.PreviewLayoutFile); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
             if (Services.AppDataPaths.PortableRoot is not null)
             {
                 try { System.IO.File.Delete(Services.AppDataPaths.SettingsFile); } catch (IOException) { }

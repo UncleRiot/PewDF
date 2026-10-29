@@ -313,7 +313,12 @@ namespace PewDF
             HideSignaturePopup(keepPane: true);
 
             bool classicCaption = FindResource("UseDialogCaption") is true;
-            var stack = new StackPanel { Margin = classicCaption ? new Thickness(0) : new Thickness(4) };
+            // SEMANTIC ANCHOR: SIGNATURE_SIDEBAR_HORIZONTAL_ALIGNMENT_SSOT
+            // The shared sidebar owns its horizontal padding. Signature sections, tiles and
+            // actions must not add an extra horizontal offset in that sidebar; retain the
+            // existing inset for the separately hosted image-stamp popup.
+            double sectionInset = _imageStampPicker ? 4 : 0;
+            var stack = new StackPanel { Margin = classicCaption || !_imageStampPicker ? new Thickness(0) : new Thickness(4) };
 
             // Title doubles as a drag handle so the user can move the popup anywhere inside the
             // document area (position is remembered). Wrapped in a transparent Border so the whole
@@ -405,7 +410,7 @@ namespace PewDF
                     BorderBrush = _swatchDimBorder,
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(0),
-                    Margin = new Thickness(4, 2, 4, 2),
+                    Margin = new Thickness(sectionInset, 2, sectionInset, 2),
                     Padding = new Thickness(4),
                     Cursor = Cursors.Hand,
                     Height = 60,
@@ -510,7 +515,7 @@ namespace PewDF
                     FontFamily = UiKit.UiFont,
                     FontWeight = FontWeights.SemiBold,
                     FontSize = 11,
-                    Margin = new Thickness(4, 6, 4, 2)
+                    Margin = new Thickness(sectionInset, 6, sectionInset, 2)
                 });
 
                 var items = _signatureStore.Signatures.Where(x => x.Kind == kind).ToList();
@@ -539,12 +544,12 @@ namespace PewDF
                         FontFamily = UiKit.UiFont,
                         FontSize = 11,
                         FontStyle = FontStyles.Italic,
-                        Margin = new Thickness(4, 2, 4, 6),
+                        Margin = new Thickness(sectionInset, 2, sectionInset, 6),
                         HorizontalAlignment = HorizontalAlignment.Center
                     });
                 }
 
-                var rowBtns = new Grid { Margin = new Thickness(4, 8, 4, 2) };
+                var rowBtns = new Grid { Margin = new Thickness(sectionInset, 8, sectionInset, 2) };
                 rowBtns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 rowBtns.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                 var createBtn = UiKit.Make(Loc("Str_Sig_Create"), accent: true);
@@ -581,7 +586,7 @@ namespace PewDF
             {
                 Height = 1,
                 Fill = (SolidColorBrush)FindResource("CardBorderBrush"),
-                Margin = new Thickness(4, 6, 4, 2)
+                Margin = new Thickness(sectionInset, 6, sectionInset, 2)
             });
 
             AddSigSection(Loc("Str_Sig_Initials"), SignatureKind.Initials);

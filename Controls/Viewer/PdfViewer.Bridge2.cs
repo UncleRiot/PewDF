@@ -76,6 +76,10 @@ namespace PewDF.Controls
         private string _resizeCorner = "SE";
         private Point _resizeAnchor;
 
+        // TEXT_RESIZE_HANDLE_SIZE_SSOT: Text-edit and selected-text corner handles share one
+        // screen-space size. Apply the canvas inverse scale at creation so zoom does not
+        // change their apparent size; keep other annotation handles independent.
+        private const double TextResizeHandleScreenSize = 8;
         private readonly List<Rectangle> _textEditHandles = [];
         private bool _draggingTextEditHandle;
         private string _tehCorner = "SE";

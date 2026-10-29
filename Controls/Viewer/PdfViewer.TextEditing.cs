@@ -663,7 +663,7 @@ namespace PewDF.Controls
             _tehBox = tb;
             double inv = 1.0;
             if (_activeCanvas.LayoutTransform is ScaleTransform sc && sc.ScaleX > 0.0001) inv = 1.0 / sc.ScaleX;
-            double hs = 12 * inv;
+            double hs = TextResizeHandleScreenSize * inv;
             foreach (string tag in new[] { "NW", "NE", "SE", "SW" })
             {
                 var hd = new Rectangle

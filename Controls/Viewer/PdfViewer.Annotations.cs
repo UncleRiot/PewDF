@@ -831,7 +831,9 @@ namespace PewDF.Controls
             // highlight/strikethrough/underline, and ink).
             if (annot is PlacedAnnotation or TextAnnotation or HighlightAnnotation or InkAnnotation)
             {
-                double hSize = 14 * inv;
+                // TEXT_RESIZE_HANDLE_SIZE_SSOT: Match live text-edit handles; preserve
+                // the established size for all other selectable annotation types.
+                double hSize = (annot is TextAnnotation ? TextResizeHandleScreenSize : 14) * inv;
                 _resizeHandles.Clear();
                 foreach (string tag in new[] { "NW", "NE", "SE", "SW" })
                 {
