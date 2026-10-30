@@ -27,6 +27,29 @@ The goal is simple: **a powerful, practical, and portable PDF editor without sub
 
 ---
 
+## Windows SmartScreen warning
+
+<img width="438" height="173" alt="grafik" src="https://github.com/user-attachments/assets/429951bb-ab24-49a3-89a8-ecb4b0a7fec1" />
+
+Windows SmartScreen may block PewDF because the application is not yet widely recognized.
+
+This warning does not automatically mean that the application is malicious.
+
+Only continue if you downloaded PewDF from the official GitHub repository.
+
+### How to start it
+
+1. Click **More info**.
+2. Click **Run anyway**.
+3. Confirm the Windows security prompt, if one appears.
+4. PewDF will start.
+
+> **Important:** Do not run the application if you downloaded it from an unknown or untrusted source.
+
+<br>
+
+---
+
 <img width="1515" height="1122" alt="grafik" src="https://github.com/user-attachments/assets/817185de-b693-463a-8537-9c64f9f9b309" />
 
 ---
